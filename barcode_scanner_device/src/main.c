@@ -54,6 +54,10 @@
 #include "boards.h"
 
 /**
+ * https://devzone.nordicsemi.com/f/nordic-q-a/40616/nrf52832-turn-on-specific-led-with-specific-button-press-on-any-of-3-slave-boards-and-action-on-master-board
+ */
+
+/**
  * @brief Function for application main entry.
  */
 int main(void)
