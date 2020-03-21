@@ -37,39 +37,40 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ifndef CUSTOM_H
-#define CUSTOM_H
+#ifndef CUSTOM_BOARD
+#define CUSTOM_BOARD
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 #include "nrf_gpio.h"
 
-// LEDs
-#define LEDS_NUMBER 5
-#define LED_BOARD_1 30
-#define LED_BOARD_2 31
-#define LED_1 29
-#define LED_2 2
-#define LED_3 3
-#define LEDS_ACTIVE_STATE 1
-#define LEDS_INV_MASK LEDS_MASK
-#define LEDS_LIST {LED_BOARD_1, LED_BOARD_2, LED_1, LED_2, LED_3}
+// LEDs definitions for my CUSTOM_BOARD
+#define LEDS_NUMBER    2
 
-// Button
-#define BUTTONS_NUMBER 1
-#define BUTTON_1 4
+#define LED_1          30
+#define LED_2          31
+
+#define LEDS_ACTIVE_STATE 0
+
+#define LEDS_INV_MASK  LEDS_MASK
+
+#define LEDS_LIST { LED_1, LED_2 }
+
+#define BSP_LED_0      LED_1
+#define BSP_LED_1      LED_2
+
+#define BUTTONS_NUMBER 2
 #define BUTTON_PULL NRF_GPIO_PIN_PULLUP
+
+#define BUTTON_1       4
+
 #define BUTTONS_ACTIVE_STATE 0
-#define BUTTONS_LIST {BUTTON_1}
 
-// Buzzer pin
-#define BUZZER 5
+#define BUTTONS_LIST { BUTTON_1 }
 
-// Vibrator pion
-#define VIBRATOR 8
+#define BSP_BUTTON_0   BUTTON_1
 
 #define RX_PIN_NUMBER  8
 #define TX_PIN_NUMBER  6
@@ -154,8 +155,9 @@ extern "C"
 #define ARDUINO_A4_PIN              30    // Analog channel 4
 #define ARDUINO_A5_PIN              31    // Analog channel 5
 
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif // CUSTOM_H
+#endif // CUSTOM_BOARD

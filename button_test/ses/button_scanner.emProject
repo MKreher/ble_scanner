@@ -1,6 +1,6 @@
 <!DOCTYPE CrossStudio_Project_File>
-<solution Name="barcode_scanner" target="8" version="2">
-  <project Name="barcode_scanner">
+<solution Name="button_test" target="8" version="2">
+  <project Name="button_test">
     <configuration
       Name="Common"
       arm_architecture="v7EM"
