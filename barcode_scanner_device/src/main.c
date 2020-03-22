@@ -63,7 +63,8 @@
 #include "nrf_ble_gatt.h"
 #include "nrf_ble_qwr.h"
 #include "nrf_pwr_mgmt.h"
-
+#include "nrf_drv_clock.h"
+#include "nrf_gpio.h"
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
@@ -108,6 +109,15 @@ static uint8_t m_adv_handle = BLE_GAP_ADV_SET_HANDLE_NOT_SET;                   
 static uint8_t m_enc_advdata[BLE_GAP_ADV_SET_DATA_SIZE_MAX];                    /**< Buffer for storing an encoded advertising set. */
 static uint8_t m_enc_scan_response_data[BLE_GAP_ADV_SET_DATA_SIZE_MAX];         /**< Buffer for storing an encoded scan data. */
 
+
+/**@brief Function for initializing low-frequency clock.
+ */
+static void lfclk_config(void) {
+  ret_code_t err_code = nrf_drv_clock_init();
+  APP_ERROR_CHECK(err_code);
+
+  nrf_drv_clock_lfclk_request(NULL);
+}
 
 /**@brief Struct that contains pointers to the encoded advertising data. */
 static ble_gap_adv_data_t m_adv_data =
@@ -273,12 +283,12 @@ static void led_write_handler(uint16_t conn_handle, ble_lbs_t * p_lbs, uint8_t l
 {
     if (led_state)
     {
-        bsp_board_led_on(LEDBUTTON_LED);
+        bsp_board_led_on(bsp_board_pin_to_led_idx(LEDBUTTON_LED));
         NRF_LOG_INFO("Received LED ON!");
     }
     else
     {
-        bsp_board_led_off(LEDBUTTON_LED);
+        bsp_board_led_off(bsp_board_pin_to_led_idx(LEDBUTTON_LED));
         NRF_LOG_INFO("Received LED OFF!");
     }
 }
@@ -371,7 +381,7 @@ static void advertising_start(void)
     err_code = sd_ble_gap_adv_start(m_adv_handle, APP_BLE_CONN_CFG_TAG);
     APP_ERROR_CHECK(err_code);
 
-    bsp_board_led_on(ADVERTISING_LED);
+    bsp_board_led_on(bsp_board_pin_to_led_idx(ADVERTISING_LED));
 }
 
 
@@ -388,8 +398,8 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
     {
         case BLE_GAP_EVT_CONNECTED:
             NRF_LOG_INFO("Connected");
-            bsp_board_led_on(CONNECTED_LED);
-            bsp_board_led_off(ADVERTISING_LED);
+            bsp_board_led_on(bsp_board_pin_to_led_idx(CONNECTED_LED));
+            bsp_board_led_off(bsp_board_pin_to_led_idx(ADVERTISING_LED));
             m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
             err_code = nrf_ble_qwr_conn_handle_assign(&m_qwr, m_conn_handle);
             APP_ERROR_CHECK(err_code);
@@ -399,7 +409,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 
         case BLE_GAP_EVT_DISCONNECTED:
             NRF_LOG_INFO("Disconnected");
-            bsp_board_led_off(CONNECTED_LED);
+            bsp_board_led_off(bsp_board_pin_to_led_idx(CONNECTED_LED));
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
             err_code = app_button_disable();
             APP_ERROR_CHECK(err_code);
@@ -489,12 +499,12 @@ static void ble_stack_init(void)
  */
 static void button_event_handler(uint8_t pin_no, uint8_t button_action)
 {
+    NRF_LOG_INFO("button_event_handler()");
     ret_code_t err_code;
 
     switch (pin_no)
     {
         case LEDBUTTON_BUTTON:
-            bsp_board_led_invert(LED_BOARD_1);
             NRF_LOG_INFO("Send button state change.");
             err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, button_action);
             if (err_code != NRF_SUCCESS &&
@@ -526,6 +536,9 @@ static void buttons_init(void)
     };
 
     err_code = app_button_init(buttons, ARRAY_SIZE(buttons), BUTTON_DETECTION_DELAY);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = app_button_enable();
     APP_ERROR_CHECK(err_code);
 }
 
@@ -566,6 +579,7 @@ static void idle_state_handle(void)
 int main(void)
 {
     // Initialize.
+    lfclk_config();
     log_init();
     leds_init();
     timers_init();
@@ -580,12 +594,13 @@ int main(void)
 
     // Start execution.
     NRF_LOG_INFO("Blinky example started.");
-    //advertising_start();
+    advertising_start();
 
     // Enter main loop.
     for (;;)
     {
-        idle_state_handle();
+      __WFE(); // Activate only for Debugging
+      //idle_state_handle();  // Active if not Debugging
     }
 }
 

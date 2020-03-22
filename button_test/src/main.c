@@ -14,6 +14,19 @@
 #include "nrf_log_default_backends.h"
 #include "nrf_pwr_mgmt.h"
 
+// define Timer
+APP_TIMER_DEF(m_button_action);
+
+// Intervall in millis checking the button state
+#define BUTTON_STATE_POLL_INTERVAL_MS 100
+
+// macro for calculating the timer counter which indicates a long press 
+#define LONG_PRESS(MS) (uint32_t)(MS) / BUTTON_STATE_POLL_INTERVAL_MS
+
+// Delay from a GPIOTE event until a button is reported as pushed (in number of timer ticks).
+#define BUTTON_DETECTION_DELAY APP_TIMER_TICKS(50)
+
+
 /**@brief Function for initializing low-frequency clock.
  */
 static void lfclk_config(void) {
@@ -52,51 +65,42 @@ static void power_management_init(void) {
  * @details If there is no pending log operation, then sleep until the next event occurs.
  */
 static void idle_state_handle(void) {
-  NRF_LOG_INFO("idle_state_handle()");
   UNUSED_RETURN_VALUE(NRF_LOG_PROCESS());
   nrf_pwr_mgmt_run();
 }
 
-APP_TIMER_DEF(m_button_action);
-
-#define BUTTON_STATE_POLL_INTERVAL_MS 100UL
-#define LONG_PRESS(MS) (uint32_t)(MS) / BUTTON_STATE_POLL_INTERVAL_MS
-
 void button_timeout_handler(void *p_context) {
   ret_code_t err_code;
-  static uint32_t cnt;
+  static uint32_t button_timeout_cnt = 0;
 
   if (app_button_is_pushed(0)) {
-    cnt++;
-    if (cnt >= LONG_PRESS(10000)) {
-      cnt = 0;
+    button_timeout_cnt++;
+    if (button_timeout_cnt >= LONG_PRESS(5000)) {
+      button_timeout_cnt = 0; // reset counter variable
       NRF_LOG_INFO("Long Button press");
     } else {
       err_code = app_timer_start(m_button_action, APP_TIMER_TICKS(BUTTON_STATE_POLL_INTERVAL_MS), NULL);
       APP_ERROR_CHECK(err_code);
     }
   } else {
-    cnt = 0; // reset counter variable
+    err_code = app_timer_stop(m_button_action);
+    APP_ERROR_CHECK(err_code);
+    button_timeout_cnt = 0; // reset counter variable
     NRF_LOG_INFO("Short button press");
   }
 }
 
 void button_callback(uint8_t pin_no, uint8_t button_action) {
-  NRF_LOG_INFO("button_callback()");
-
   ret_code_t err_code;
 
   switch (pin_no) {
   case BUTTON_2:
-    NRF_LOG_INFO("Button state change.");
     if (button_action == APP_BUTTON_PUSH) {
-      NRF_LOG_INFO("Button push.");
+      NRF_LOG_INFO("Button push");
       err_code = app_timer_start(m_button_action, APP_TIMER_TICKS(BUTTON_STATE_POLL_INTERVAL_MS), NULL);
       APP_ERROR_CHECK(err_code);
     } else if (button_action == APP_BUTTON_RELEASE) {
-      NRF_LOG_INFO("Button released.");
-      err_code = app_timer_stop(m_button_action);
-      APP_ERROR_CHECK(err_code);
+      NRF_LOG_INFO("Button released");
     }
     break;
 
@@ -116,8 +120,7 @@ static void buttons_init() {
       {
           {BUTTON_2, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_callback}};
 
-  err_code = app_button_init(buttons, ARRAY_SIZE(buttons), 100);
-
+  err_code = app_button_init(buttons, ARRAY_SIZE(buttons), BUTTON_DETECTION_DELAY);
   APP_ERROR_CHECK(err_code);
 
   err_code = app_button_enable();

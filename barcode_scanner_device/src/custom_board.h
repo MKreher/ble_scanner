@@ -60,7 +60,7 @@ extern "C"
 
 // Button
 #define BUTTONS_NUMBER 1
-#define BUTTON_1 4
+#define BUTTON_1 13
 #define BUTTON_PULL NRF_GPIO_PIN_PULLUP
 #define BUTTONS_ACTIVE_STATE 0
 #define BUTTONS_LIST {BUTTON_1}
