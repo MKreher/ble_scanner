@@ -76,6 +76,8 @@ extern "C" {
 #define BSP_BUTTON_0   BUTTON_1
 #define BSP_BUTTON_1   BUTTON_2
 
+#define BUZZER         26
+
 #define RX_PIN_NUMBER  8
 #define TX_PIN_NUMBER  6
 #define CTS_PIN_NUMBER 7

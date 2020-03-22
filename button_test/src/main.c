@@ -90,6 +90,28 @@ void button_timeout_handler(void *p_context) {
   }
 }
 
+
+void led_on() {
+  NRF_LOG_INFO("LED ON");
+  nrf_gpio_pin_write(LED_3, 1);
+}
+
+void led_off() {
+  NRF_LOG_INFO("LED OFF");
+  nrf_gpio_pin_write(LED_3, 0);
+}
+
+void buzzer_on() {
+  NRF_LOG_INFO("BUZZER ON");
+  nrf_gpio_pin_write(BUZZER, 1);
+}
+
+void buzzer_off() {
+  NRF_LOG_INFO("BUZZER OFF");
+  nrf_gpio_pin_write(BUZZER, 0);
+}
+
+
 void button_callback(uint8_t pin_no, uint8_t button_action) {
   ret_code_t err_code;
 
@@ -99,8 +121,12 @@ void button_callback(uint8_t pin_no, uint8_t button_action) {
       NRF_LOG_INFO("Button push");
       err_code = app_timer_start(m_button_action, APP_TIMER_TICKS(BUTTON_STATE_POLL_INTERVAL_MS), NULL);
       APP_ERROR_CHECK(err_code);
+      led_on();
+      buzzer_on();
     } else if (button_action == APP_BUTTON_RELEASE) {
       NRF_LOG_INFO("Button released");
+      led_off();
+      buzzer_off(BUZZER);
     }
     break;
 
@@ -109,6 +135,7 @@ void button_callback(uint8_t pin_no, uint8_t button_action) {
     break;
   }
 }
+
 
 static void buttons_init() {
   NRF_LOG_INFO("buttons_init()");
@@ -131,12 +158,44 @@ static void buttons_init() {
   APP_ERROR_CHECK(err_code);
 }
 
-int main(void) {
+
+/**@brief Function for the LEDs initialization.
+ *
+ * @details Initializes all LEDs used by the application.
+ */
+static void init_leds()
+{
+  bsp_board_init(BSP_INIT_LEDS);
+}
+
+
+/**@brief Function for the buzzer initialization.
+ *
+ * @details Initializes the buzzer used by the application.
+ */
+static void init_buzzer()
+{
+  // Verstärkerschaltung: youtube.com/watch?v=SpE0Pv96BIQ
+   nrf_gpio_cfg_output(BUZZER);
+   nrf_gpio_pin_write(BUZZER,  0);
+   nrf_gpio_pin_clear(BUZZER);
+}
+
+
+/**
+ * Main function
+ */
+ int main(void) {
   lfclk_config();
   log_init();
   timers_init();
+  init_leds();
+  init_buzzer();
   buttons_init();
   power_management_init();
+
+  //led_on();
+  //buzzer_on();
 
   for (;;) {
     __WFE(); // Activate only for Debugging

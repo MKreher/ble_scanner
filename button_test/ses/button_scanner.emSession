@@ -45,7 +45,7 @@
  </TraceWindow>
  <Watch1>
   <Watches active="1" update="Never">
-   <Watchpoint expression="err_code" name="err_code" radix="-1" linenumber="150" filename="../src/main.c"/>
+   <Watchpoint expression="err_code" name="err_code" radix="-1" linenumber="194" filename="../src/main.c"/>
   </Watches>
  </Watch1>
  <Watch2>
@@ -58,8 +58,9 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="52" y="161" useTextEdit="1" useBinaryEdit="0" left="0" path="../src/main.c" selected="1" top="110" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="171" useTextEdit="1" useBinaryEdit="0" left="0" path="../src/main.c" selected="1" top="152" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="7490" useTextEdit="1" useBinaryEdit="0" left="0" path="../src/sdk_config.h" selected="0" top="7467" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="27" y="55" useTextEdit="1" useBinaryEdit="0" left="0" path="../src/custom_board.h" selected="0" top="46" codecName="Default"/>
  </Files>
  <ARMCrossStudioWindow activeProject="button_test" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="C:/Work/ble_scanner/barcode_scanner_device/src" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>

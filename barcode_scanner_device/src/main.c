@@ -70,9 +70,9 @@
 #include "nrf_log_default_backends.h"
 
   
-#define ADVERTISING_LED                 LED_2                                   /**< Is on when device is advertising. */
-#define CONNECTED_LED                   LED_3                                   /**< Is on when device has connected. */
-#define LEDBUTTON_LED                   LED_1                                   /**< LED to be toggled with the help of the LED Button Service. */
+#define ADVERTISING_LED                 LED_1                                   /**< Is on when device is advertising. */
+#define CONNECTED_LED                   LED_2                                   /**< Is on when device has connected. */
+#define LEDBUTTON_LED                   LED_3                                   /**< LED to be toggled with the help of the LED Button Service. */
 
 #define LEDBUTTON_BUTTON                BUTTON_1                                /**< Button that will trigger the notification event with the LED Button Service */
 
