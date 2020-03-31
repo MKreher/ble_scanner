@@ -69,7 +69,7 @@ extern "C"
 #define BUZZER 5
 
 // Vibrator pion
-#define VIBRATOR 8
+#define VIBRATOR 1
 
 #define RX_PIN_NUMBER  8
 #define TX_PIN_NUMBER  6

@@ -2,7 +2,9 @@
 <session>
  <Bookmarks/>
  <Breakpoints groups="Breakpoints" active_group="Breakpoints">
-  <BreakpointListItem trigger="" line="49" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="2" filename="../../nRF5_SDK_16.0.0/components/libraries/util/app_error_handler_gcc.c" useHWbreakpoint="false"/>
+  <BreakpointListItem trigger="" line="702" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="../src/main.c" useHWbreakpoint="false"/>
+  <BreakpointListItem trigger="" line="703" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="../src/main.c" useHWbreakpoint="false"/>
+  <BreakpointListItem trigger="" line="170" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="2" filename="../../nRF5_SDK_16.0.0/modules/nrfx/drivers/src/nrfx_uart.c" useHWbreakpoint="false"/>
   <Exceptions set="MemManage;UsageFault_Coprocessor;UsageFault_CheckingError;UsageFault_StateError;BusFault;ExceptionEntryReturnFault;HardFault"/>
  </Breakpoints>
  <ExecutionProfileWindow/>
@@ -25,8 +27,7 @@
   <ProjectSessionItem path="barcode_scanner"/>
   <ProjectSessionItem path="barcode_scanner;barcode_scanner"/>
   <ProjectSessionItem path="barcode_scanner;barcode_scanner;Application"/>
-  <ProjectSessionItem path="barcode_scanner;barcode_scanner;Board Definition"/>
-  <ProjectSessionItem path="barcode_scanner;barcode_scanner;nRF_BLE_Services"/>
+  <ProjectSessionItem path="barcode_scanner;barcode_scanner;nRF_Drivers"/>
   <ProjectSessionItem path="barcode_scanner;barcode_scanner;nRF_Libraries"/>
  </Project>
  <Register1>
@@ -60,17 +61,14 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="37" useTextEdit="1" useBinaryEdit="0" left="0" path="../src/custom_board.h" selected="0" top="37" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="72" useTextEdit="1" useBinaryEdit="0" left="0" path="../src/main.c" selected="1" top="39" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="86" useTextEdit="1" useBinaryEdit="0" left="0" path="../src/sdk_config.h" selected="0" top="59" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="153" useTextEdit="1" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/libraries/button/app_button.c" selected="0" top="130" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="76" useTextEdit="1" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/libraries/button/app_button.h" selected="0" top="70" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="108" useTextEdit="1" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/integration/nrfx/legacy/nrf_drv_gpiote.h" selected="0" top="79" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/modules/nrfx/drivers/src/nrfx_gpiote.c" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="99" useTextEdit="1" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/libraries/util/app_error_weak.c" selected="0" top="76" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="48" useTextEdit="1" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/libraries/util/app_error_handler_gcc.c" selected="0" top="30" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="152" useTextEdit="1" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/boards/boards.c" selected="0" top="139" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="58" useTextEdit="1" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/ble/ble_services/ble_lbs/ble_lbs.c" selected="0" top="25" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="736" useTextEdit="1" useBinaryEdit="0" left="0" path="../src/main.c" selected="1" top="736" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="4286" useTextEdit="1" useBinaryEdit="0" left="0" path="../src/sdk_config.h" selected="0" top="4279" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="39" useTextEdit="1" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/libraries/util/app_error_handler_gcc.c" selected="0" top="35" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="212" useTextEdit="1" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/libraries/serial/nrf_serial.c" selected="0" top="180" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="135" useTextEdit="1" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/integration/nrfx/legacy/nrf_drv_uart.c" selected="0" top="95" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="270" useTextEdit="1" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/modules/nrfx/drivers/src/nrfx_uart.c" selected="0" top="250" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="85" useTextEdit="1" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/modules/nrfx/drivers/include/nrfx_uarte.h" selected="0" top="54" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="71" useTextEdit="1" useBinaryEdit="0" left="0" path="../src/custom_board.h" selected="0" top="64" codecName="Default"/>
  </Files>
- <ARMCrossStudioWindow activeProject="barcode_scanner" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="C:/Work/ble_scanner/barcode_scanner_device/src" debugSearchPath="" autoConnectCapabilities="3199"/>
+ <ARMCrossStudioWindow activeProject="barcode_scanner" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="C:/Work/ble_scanner/nRF5_SDK_16.0.0/components/libraries/queue" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>

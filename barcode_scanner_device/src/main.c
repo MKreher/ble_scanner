@@ -47,6 +47,7 @@
 #include <string.h>
 #include "nordic_common.h"
 #include "nrf.h"
+#include "nrf_delay.h"
 #include "app_error.h"
 #include "ble.h"
 #include "ble_err.h"
@@ -65,6 +66,8 @@
 #include "nrf_pwr_mgmt.h"
 #include "nrf_drv_clock.h"
 #include "nrf_gpio.h"
+#include "nrf_drv_gpiote.h"
+#include "nrf_serial.h"
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
@@ -75,6 +78,18 @@
 #define LEDBUTTON_LED                   LED_3                                   /**< LED to be toggled with the help of the LED Button Service. */
 
 #define LEDBUTTON_BUTTON                BUTTON_1                                /**< Button that will trigger the notification event with the LED Button Service */
+
+#define UART_PIN_DISCONNECTED           0xFFFFFFFF
+
+// define pins to barcode module 
+#define BCM_TRIGGER                     14                                      /**< Pin #12 at barcode scanner module (Driving this pin low causes the scan engine to start a scan and decode session).*/
+#define BCM_WAKEUP                      15                                      /**< Pin #11 at barcode scanner module (When the scan engine is in low power mode, pulsing this pin low for 200 nsec awakens the scan engine). */
+#define BCM_LED                         16                                      /**< Pin #10 at barcode scanner module. */
+#define BCM_BUZZER                      17                                      /**< Pin #09 at barcode scanner module. */
+#define BCM_TX                          TX_PIN_NUMBER                           /**< RX-Pin #4 at barcode scanner module. */
+#define BCM_RX                          RX_PIN_NUMBER                           /**< TX-Pin #5 at barcode scanner module. */
+#define CTS_PIN                         UART_PIN_DISCONNECTED                   /**< Not connected. */
+#define RTS_PIN                         UART_PIN_DISCONNECTED                   /**< Not connected. */
 
 #define DEVICE_NAME                     "Nordic_Blinky"                         /**< Name of device. Will be included in the advertising data. */
 
@@ -492,6 +507,26 @@ static void ble_stack_init(void)
 }
 
 
+void startScanByTriggerPin() {
+  NRF_LOG_INFO("Start Scanning...");
+  /*
+  nrf_gpio_pin_write(BCM_WAKEUP, 1);
+  nrf_delay_ms(10);
+  nrf_gpio_pin_write(BCM_WAKEUP, 0);
+  nrf_delay_us(250);
+  nrf_gpio_pin_write(BCM_WAKEUP, 1);
+  */
+  nrf_gpio_pin_write(BCM_TRIGGER, 1);
+  nrf_delay_ms(10);
+  nrf_gpio_pin_write(BCM_TRIGGER, 0);
+}
+
+void stopScanByTriggerPin() {
+  NRF_LOG_INFO("Stop Scanning.");
+  nrf_gpio_pin_write(BCM_TRIGGER, 1);
+}
+
+
 /**@brief Function for handling events from the button handler module.
  *
  * @param[in] pin_no        The pin that the event applies to.
@@ -499,12 +534,20 @@ static void ble_stack_init(void)
  */
 static void button_event_handler(uint8_t pin_no, uint8_t button_action)
 {
-    NRF_LOG_INFO("button_event_handler()");
+    //NRF_LOG_INFO("button_event_handler()");
     ret_code_t err_code;
 
     switch (pin_no)
     {
         case LEDBUTTON_BUTTON:
+            if (button_action == APP_BUTTON_PUSH) {
+              //NRF_LOG_INFO("Button push");
+              startScanByTriggerPin();
+            } else if (button_action == APP_BUTTON_RELEASE) {
+              //NRF_LOG_INFO("Button released");
+              stopScanByTriggerPin();
+            }
+            /*
             NRF_LOG_INFO("Send button state change.");
             err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, button_action);
             if (err_code != NRF_SUCCESS &&
@@ -514,6 +557,7 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
             {
                 APP_ERROR_CHECK(err_code);
             }
+            */
             break;
 
         default:
@@ -561,6 +605,105 @@ static void power_management_init(void)
 }
 
 
+/**
+ * Pin change handler
+ */
+void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
+{
+  //NRF_LOG_INFO("in_pin_handler(): pin=%s, action=%s", pin, action);
+  NRF_LOG_INFO("in_pin_handler(): %s", pin);
+
+  if (nrf_gpio_pin_read(BCM_LED) > 0) {
+    NRF_LOG_INFO("Feedback-LED ON");
+    bsp_board_led_on(bsp_board_pin_to_led_idx(LED_BOARD_2));
+  } else {
+    NRF_LOG_INFO("Feedback-LED OFF");
+    bsp_board_led_off(bsp_board_pin_to_led_idx(LED_BOARD_2));
+  }
+
+  //nrf_drv_gpiote_out_toggle(PIN_OUT);
+}
+
+
+/**
+ * @brief Function for configuring: Configures GPIOTE to give an interrupt on pin change.
+ */
+static void gpio_init(void)
+{
+    ret_code_t err_code;
+    
+    // Initialization of GPIOTE is allready done by app_button library
+    //err_code = nrf_drv_gpiote_init();
+    //APP_ERROR_CHECK(err_code);
+
+    /*
+    nrf_drv_gpiote_out_config_t out_config = GPIOTE_CONFIG_OUT_SIMPLE(false);
+    err_code = nrf_drv_gpiote_out_init(PIN_OUT, &out_config);
+    APP_ERROR_CHECK(err_code);
+    */
+
+    nrf_drv_gpiote_in_config_t in_config = NRFX_GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
+    in_config.pull = NRF_GPIO_PIN_PULLUP;
+
+    err_code = nrf_drv_gpiote_in_init(BCM_LED, &in_config, in_pin_handler);
+    APP_ERROR_CHECK(err_code);
+
+    //err_code = nrf_drv_gpiote_in_init(BCM_RX, &in_config, in_pin_handler);
+    //APP_ERROR_CHECK(err_code);
+
+    nrf_drv_gpiote_in_event_enable(BCM_LED, true);
+    //nrf_drv_gpiote_in_event_enable(BCM_RX, true);
+}
+
+
+static void serial_sleep_handler(void)
+{
+    __WFE();
+    __SEV();
+    __WFE();
+}
+
+NRF_SERIAL_DRV_UART_CONFIG_DEF(m_uart0_drv_config,
+                      BCM_RX, BCM_TX, RTS_PIN, CTS_PIN,
+                      NRF_UART_HWFC_DISABLED, NRF_UART_PARITY_EXCLUDED,
+                      NRF_UART_BAUDRATE_9600,
+                      UART_DEFAULT_CONFIG_IRQ_PRIORITY);
+
+#define SERIAL_FIFO_TX_SIZE 32
+#define SERIAL_FIFO_RX_SIZE 32
+NRF_SERIAL_QUEUES_DEF(serial_queues, SERIAL_FIFO_TX_SIZE, SERIAL_FIFO_RX_SIZE);
+
+#define SERIAL_BUFF_TX_SIZE 1
+#define SERIAL_BUFF_RX_SIZE 1
+NRF_SERIAL_BUFFERS_DEF(serial_buffs, SERIAL_BUFF_TX_SIZE, SERIAL_BUFF_RX_SIZE);
+
+NRF_SERIAL_UART_DEF(serial_uart, 0);
+
+static void serial_event_handler(struct nrf_serial_s const *p_serial, nrf_serial_event_t event)
+{
+  NRF_LOG_INFO("serial_event_handler()");
+  if (event == NRF_SERIAL_EVENT_RX_DATA) {
+      char c;
+      APP_ERROR_CHECK(nrf_serial_read(&serial_uart, &c, sizeof(c), NULL, 500));
+      NRF_LOG_INFO("serial_event_handler: %s", c);
+  }
+}
+
+NRF_SERIAL_CONFIG_DEF(serial_config, NRF_SERIAL_MODE_IRQ, &serial_queues, &serial_buffs, serial_event_handler, serial_sleep_handler);
+
+
+
+/**
+ * Function for initializing serial communication.
+ */
+static void init_serial(void)
+{
+  ret_code_t ret_code;
+  ret_code = nrf_serial_init(&serial_uart, &m_uart0_drv_config, &serial_config);
+  APP_ERROR_CHECK(ret_code);
+}
+
+
 /**@brief Function for handling the idle state (main loop).
  *
  * @details If there is no pending log operation, then sleep until next the next event occurs.
@@ -573,6 +716,20 @@ static void idle_state_handle(void)
     }
 }
 
+// BARCODE MODULE STUFF >>>>>>>>>>>>>>
+
+static void barcode_module_init() {
+  nrf_gpio_cfg_output(BCM_TRIGGER);
+  nrf_gpio_pin_write(BCM_TRIGGER, 0);
+  nrf_gpio_cfg_output(BCM_WAKEUP);
+  nrf_gpio_pin_write(BCM_WAKEUP, 0);
+  nrf_gpio_cfg_output(BCM_TX);
+  nrf_gpio_cfg_input(BCM_RX, NRF_GPIO_PIN_NOPULL);
+  nrf_gpio_cfg_input(BCM_LED, NRF_GPIO_PIN_NOPULL);
+  nrf_gpio_cfg_input(BCM_BUZZER, NRF_GPIO_PIN_NOPULL);
+}
+
+// <<<<<<<<<<<<<< BARCODE MODULE STUFF
 
 /**@brief Function for application main entry.
  */
@@ -584,6 +741,9 @@ int main(void)
     leds_init();
     timers_init();
     buttons_init();
+    barcode_module_init();
+    gpio_init();
+    //init_serial();
     power_management_init();
     ble_stack_init();
     gap_params_init();
