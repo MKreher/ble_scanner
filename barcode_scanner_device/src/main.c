@@ -121,6 +121,9 @@ static uint8_t m_adv_handle = BLE_GAP_ADV_SET_HANDLE_NOT_SET;           /**< Adv
 static uint8_t m_enc_advdata[BLE_GAP_ADV_SET_DATA_SIZE_MAX];            /**< Buffer for storing an encoded advertising set. */
 static uint8_t m_enc_scan_response_data[BLE_GAP_ADV_SET_DATA_SIZE_MAX]; /**< Buffer for storing an encoded scan data. */
 
+char barcode_buffer[30];
+bool is_serial_timer_active = false;
+
 /**@brief Function for initializing low-frequency clock.
  */
 static void lfclk_config(void) {
@@ -557,7 +560,7 @@ static void power_management_init(void) {
  */
 void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action) {
   //NRF_LOG_INFO("in_pin_handler(): pin=%s, action=%s", pin, action);
-  NRF_LOG_INFO("in_pin_handler(): %d", pin);
+  NRF_LOG_INFO("in_pin_handler(): pin=%d", pin);
 
   if (nrf_gpio_pin_read(BCM_LED) > 0) {
     NRF_LOG_INFO("Feedback-LED ON");
@@ -592,11 +595,43 @@ static void gpio_init(void) {
   err_code = nrf_drv_gpiote_in_init(BCM_LED, &in_config, in_pin_handler);
   APP_ERROR_CHECK(err_code);
 
-  //err_code = nrf_drv_gpiote_in_init(BCM_RX, &in_config, in_pin_handler);
-  //APP_ERROR_CHECK(err_code);
-
   nrf_drv_gpiote_in_event_enable(BCM_LED, true);
-  //nrf_drv_gpiote_in_event_enable(BCM_RX, true);
+}
+
+
+
+APP_TIMER_DEF(my_serial_receive_timer_id);
+
+static void stop_serial_receive_timer(void) {
+  ret_code_t ret_code;
+  ret_code = app_timer_stop(my_serial_receive_timer_id);
+  APP_ERROR_CHECK(ret_code);
+  is_serial_timer_active = false;
+}
+
+static void serial_receive_timeout_handler() {
+  NRF_LOG_INFO("serial_receive_timeout_handler()");
+
+  NRF_LOG_INFO("Barcode: %s", barcode_buffer);
+
+  memset(barcode_buffer, 0, sizeof(barcode_buffer));
+  
+  stop_serial_receive_timer();
+}
+
+static void create_serial_receive_timer(void) {
+  ret_code_t ret_code;
+  ret_code = app_timer_create(&my_serial_receive_timer_id, APP_TIMER_MODE_SINGLE_SHOT, serial_receive_timeout_handler);
+  APP_ERROR_CHECK(ret_code);
+}
+
+static void start_serial_receive_timer(void) {
+  ret_code_t ret_code;
+  if (is_serial_timer_active == false) {
+    ret_code = app_timer_start(my_serial_receive_timer_id, APP_TIMER_TICKS(50), NULL);
+    APP_ERROR_CHECK(ret_code);
+    is_serial_timer_active = true;
+  }
 }
 
 static void serial_sleep_handler(void) {
@@ -622,13 +657,34 @@ NRF_SERIAL_BUFFERS_DEF(serial_buffs, SERIAL_BUFF_TX_SIZE, SERIAL_BUFF_RX_SIZE);
 
 NRF_SERIAL_UART_DEF(serial_uart, 0);
 
-
 /**
  * Serial Empfang via Event Handler ist schlecht dokumentiert. Hier gibt es ein paar interessante Case:
  * https://devzone.nordicsemi.com/f/nordic-q-a/34391/serial-port-library-receive-interrupt
  * https://devzone.nordicsemi.com/f/nordic-q-a/22320/serial-port-interrupt
  */
 static void serial_event_handler(struct nrf_serial_s const *p_serial, nrf_serial_event_t event) {
+  switch (event) {
+  case NRF_SERIAL_EVENT_TX_DONE:
+    break;
+  case NRF_SERIAL_EVENT_RX_DATA: {
+    start_serial_receive_timer();
+    char c;
+    ret_code_t ret_code;
+    ret_code = nrf_queue_read(p_serial->p_ctx->p_config->p_queues->p_rxq, &c, sizeof(c));
+    //ret_code = nrf_serial_read(&serial_uart, &c, sizeof(c), NULL, 0);
+    APP_ERROR_CHECK(ret_code);
+    NRF_LOG_INFO("Received: %c", c);
+    strcat(barcode_buffer, &c);
+  }  break;
+  case NRF_SERIAL_EVENT_DRV_ERR:
+    break;
+  case NRF_SERIAL_EVENT_FIFO_ERR:
+    break;
+  default:
+    break;
+  }
+
+  /*
   if (event == NRF_SERIAL_EVENT_RX_DATA) {
     char c;
     ret_code_t ret_code;
@@ -636,6 +692,7 @@ static void serial_event_handler(struct nrf_serial_s const *p_serial, nrf_serial
     APP_ERROR_CHECK(ret_code);
     NRF_LOG_INFO("serial_event_handler: %c", c);
   }
+  */
 }
 
 NRF_SERIAL_CONFIG_DEF(serial_config, NRF_SERIAL_MODE_IRQ, &serial_queues, &serial_buffs, serial_event_handler, serial_sleep_handler);
@@ -684,6 +741,7 @@ int main(void) {
   barcode_module_init();
   gpio_init();
   init_serial();
+  create_serial_receive_timer();
   power_management_init();
   ble_stack_init();
   gap_params_init();
