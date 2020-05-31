@@ -47,34 +47,43 @@ extern "C" {
 #include "nrf_gpio.h"
 
 // LEDs definitions for my CUSTOM_BOARD
-#define LEDS_NUMBER    3
+#define LEDS_NUMBER    6
 
-#define LED_1          30
-#define LED_2          31
-#define LED_3          25
+#define LED_1          16
+#define LED_2          17
+#define LED_3          18
+#define LED_4          19
+#define LED_5          30 // build in
+#define LED_6          31 // build in
 
 #define LEDS_ACTIVE_STATE 1
 
 #define LEDS_INV_MASK  LEDS_MASK
 
-#define LEDS_LIST { LED_1, LED_2, LED_3 }
+#define LEDS_LIST { LED_1, LED_2, LED_3, LED_4, LED_5, LED_6}
 
 #define BSP_LED_0      LED_1
 #define BSP_LED_1      LED_2
 #define BSP_LED_2      LED_3
 
-#define BUTTONS_NUMBER 2
+#define BUTTONS_NUMBER 5
 #define BUTTON_PULL NRF_GPIO_PIN_PULLUP
 
-#define BUTTON_1       4
-#define BUTTON_2       13
+#define BUTTON_1       11
+#define BUTTON_2       12
+#define BUTTON_3       13
+#define BUTTON_4       14
+#define BUTTON_5       4  // build in
 
 #define BUTTONS_ACTIVE_STATE 0
 
-#define BUTTONS_LIST { BUTTON_1, BUTTON_2 }
+#define BUTTONS_LIST { BUTTON_1, BUTTON_2, BUTTON_3, BUTTON_4, BUTTON_5 }
 
 #define BSP_BUTTON_0   BUTTON_1
 #define BSP_BUTTON_1   BUTTON_2
+#define BSP_BUTTON_2   BUTTON_3
+#define BSP_BUTTON_3   BUTTON_4
+#define BSP_BUTTON_4   BUTTON_5
 
 #define BUZZER         26
 

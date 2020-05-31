@@ -76,11 +76,9 @@
  *  The address provided below is a place holder.  */
 static const ipv6_addr_t               m_broker_addr =
 {
-    .u8 =
-    {0x20, 0x01, 0x0D, 0xB8,
-     0x00, 0x00, 0x00, 0x00,
-     0x00, 0x00, 0x00, 0x00,
-     0x00, 0x00, 0x00, 0x01}
+    // 2003:e8:272c:500:272a:775e:e3b:b61b
+    .u8 = {0x20, 0x03, 0x00, 0xE8, 0x27, 0x2C, 0x05, 0x00,
+           0x27, 0x2A, 0x77, 0x5E, 0x0E, 0x3B, 0xB6, 0x1B}
 };
 
 #define LED_ONE                             BSP_LED_0_MASK
@@ -119,6 +117,7 @@ static const ipv6_addr_t               m_broker_addr =
 #endif // APP_ENABLE_LOGS
 
 #define APP_MQTT_BROKER_PORT                8883                                                    /**< Port number of MQTT Broker being used. */
+#define APP_MQTT_BROKER_NON_SECURE_PORT     1883                                                    /**< Port number of MQTT Broker being used. */
 #define APP_MQTT_SUBSCRIPTION_PKT_ID        10                                                      /**< Unique identification of subscription, can be any unsigned 16 bit integer value. */
 #define APP_MQTT_SUBSCRIPTION_TOPIC         "led/state"                                             /**< MQTT topic to which this application subscribes. */
 
@@ -280,7 +279,9 @@ static void blink_timeout_handler(iot_timer_time_in_ms_t wall_clock_value)
 #endif // COMMISSIONING_ENABLED
 }
 
+//#define MQTT_SECURE_CONNECTION_ENABLED
 
+#ifdef MQTT_SECURE_CONNECTION_ENABLED
 /**@brief Connect to MQTT broker. */
 static void app_mqtt_connect(void)
 {
@@ -295,10 +296,28 @@ static void app_mqtt_connect(void)
     m_app_mqtt_client.p_user_name          = NULL;
     m_app_mqtt_client.transport_type       = MQTT_TRANSPORT_SECURE;
     m_app_mqtt_client.p_security_settings  = &m_tls_keys;
-
     UNUSED_VARIABLE(mqtt_connect(&m_app_mqtt_client));
 }
+#endif // MQTT_SECURE_CONNECTION_ENABLED
 
+#ifndef MQTT_SECURE_CONNECTION_ENABLED
+/**@brief Connect to MQTT broker. */
+static void app_mqtt_connect(void)
+{
+    mqtt_client_init(&m_app_mqtt_client);
+
+    memcpy(m_app_mqtt_client.broker_addr.u8, m_broker_addr.u8, IPV6_ADDR_SIZE);
+    m_app_mqtt_client.broker_port          = APP_MQTT_BROKER_NON_SECURE_PORT;
+    m_app_mqtt_client.evt_cb               = app_mqtt_evt_handler;
+    m_app_mqtt_client.client_id.p_utf_str  = (uint8_t *)m_client_id;
+    m_app_mqtt_client.client_id.utf_strlen = strlen(m_client_id);
+    m_app_mqtt_client.p_password           = NULL;
+    m_app_mqtt_client.p_user_name          = NULL;
+    m_app_mqtt_client.transport_type       = MQTT_TRANSPORT_NON_SECURE;
+    m_app_mqtt_client.p_security_settings  = NULL;
+    UNUSED_VARIABLE(mqtt_connect(&m_app_mqtt_client));
+}
+#endif // MQTT_SECURE_CONNECTION_ENABLED
 
 /**@brief Subscribe with the broker. */
 static void app_mqtt_subscribe(void)
@@ -377,10 +396,12 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
 
     if (button_action == APP_BUTTON_PUSH)
     {
+        APPL_LOG ("PIN: 0x%04x", pin_no);
         switch (pin_no)
         {
             case BSP_BUTTON_0:
             {
+                APPL_LOG("BSP_BUTTON_0");
                 if (m_connection_state == APP_MQTT_STATE_IDLE)
                 {
                     app_mqtt_connect();
@@ -389,18 +410,22 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
             }
             case BSP_BUTTON_1:
             {
+                APPL_LOG("BSP_BUTTON_1");
                 if (m_connection_state == APP_MQTT_STATE_CONNECTED)
                 {
+                    APPL_LOG("app_mqtt_subscribe");
                     app_mqtt_subscribe();
                 }
                 else if (m_connection_state == APP_MQTT_STATE_SUBSCRIBED)
                 {
+                    APPL_LOG("app_mqtt_unsubscribe");
                     app_mqtt_unsubscribe();
                 }
                 break;
             }
             case BSP_BUTTON_2:
             {
+                APPL_LOG("BSP_BUTTON_2");
                 if ((m_connection_state == APP_MQTT_STATE_CONNECTED) ||
                     (m_connection_state == APP_MQTT_STATE_SUBSCRIBED))
                 {
@@ -409,6 +434,7 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
                 break;
             }
             default:
+                APPL_LOG("default");
                 break;
         }
     }

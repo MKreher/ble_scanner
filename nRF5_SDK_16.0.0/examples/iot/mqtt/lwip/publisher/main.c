@@ -54,7 +54,7 @@
 #include "boards.h"
 #include "nordic_common.h"
 #include "sdk_config.h"
-#include "nrf_sdm.h"
+//#include "nrf_sdm.h"
 #include "app_scheduler.h"
 #include "app_timer.h"
 #include "app_button.h"
@@ -76,14 +76,14 @@
 
 /** Modify m_broker_addr according to your setup.
  *  The address provided below is a place holder.  */
-static const ipv6_addr_t m_broker_addr =
+static const ipv6_addr_t               m_broker_addr =
 {
-    .u8 =
-    {0x20, 0x01, 0x0D, 0xB8,
-     0x00, 0x00, 0x00, 0x00,
-     0x00, 0x00, 0x00, 0x00,
-     0x00, 0x00, 0x00, 0x01}
+    // 2003:e8:272c:500:272a:775e:e3b:b61b
+    .u8 = {0x20, 0x03, 0x00, 0xE8, 0x27, 0x2C, 0x05, 0x00,
+           0x27, 0x2A, 0x77, 0x5E, 0x0E, 0x3B, 0xB6, 0x1B}
+		   
 };
+
 
 #define SCHED_MAX_EVENT_DATA_SIZE           16                                                      /**< Maximum size of scheduler events. */
 #define SCHED_QUEUE_SIZE                    192                                                     /**< Maximum number of events in the scheduler queue. */
@@ -101,6 +101,9 @@ static const ipv6_addr_t m_broker_addr =
 
 #define LWIP_SYS_TICK_MS                    10                                                      /**< Interval for timer used as trigger to send. */
 #define LED_BLINK_INTERVAL_MS               300                                                     /**< LED blinking interval. */
+
+#define SCHED_MAX_EVENT_DATA_SIZE           16                                                      /**< Maximum size of scheduler events. */
+#define SCHED_QUEUE_SIZE                    192                                                     /**< Maximum number of events in the scheduler queue. */
 
 #define DEAD_BEEF                           0xDEADBEEF                                              /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
@@ -121,6 +124,7 @@ static const ipv6_addr_t m_broker_addr =
 #endif // APP_ENABLE_LOGS
 
 #define APP_MQTT_BROKER_PORT                8883                                                    /**< Port number of MQTT Broker being used. */
+#define APP_MQTT_BROKER_NON_SECURE_PORT     1883                                                    /**< Port number of MQTT Broker being used. */
 #define APP_MQTT_PUBLISH_TOPIC              "led/state"                                             /**< MQTT topic to which this application publishes. */
 
 /**@brief Application state with respect to MQTT. */
@@ -298,7 +302,9 @@ static void blink_timeout_handler(iot_timer_time_in_ms_t wall_clock_value)
 #endif // COMMISSIONING_ENABLED
 }
 
+//#define MQTT_SECURE_CONNECTION_ENABLED
 
+#ifdef MQTT_SECURE_CONNECTION_ENABLED
 /**@brief Connect to MQTT broker. */
 static void app_mqtt_connect(void)
 {
@@ -313,10 +319,28 @@ static void app_mqtt_connect(void)
     m_app_mqtt_client.p_user_name          = NULL;
     m_app_mqtt_client.transport_type       = MQTT_TRANSPORT_SECURE;
     m_app_mqtt_client.p_security_settings  = &m_tls_keys;
-
     UNUSED_VARIABLE(mqtt_connect(&m_app_mqtt_client));
 }
+#endif // MQTT_SECURE_CONNECTION_ENABLED
 
+#ifndef MQTT_SECURE_CONNECTION_ENABLED
+/**@brief Connect to MQTT broker. */
+static void app_mqtt_connect(void)
+{
+    mqtt_client_init(&m_app_mqtt_client);
+
+    memcpy(m_app_mqtt_client.broker_addr.u8, m_broker_addr.u8, IPV6_ADDR_SIZE);
+    m_app_mqtt_client.broker_port          = APP_MQTT_BROKER_NON_SECURE_PORT;
+    m_app_mqtt_client.evt_cb               = app_mqtt_evt_handler;
+    m_app_mqtt_client.client_id.p_utf_str  = (uint8_t *)m_client_id;
+    m_app_mqtt_client.client_id.utf_strlen = strlen(m_client_id);
+    m_app_mqtt_client.p_password           = NULL;
+    m_app_mqtt_client.p_user_name          = NULL;
+    m_app_mqtt_client.transport_type       = MQTT_TRANSPORT_NON_SECURE;
+    m_app_mqtt_client.p_security_settings  = NULL;
+    UNUSED_VARIABLE(mqtt_connect(&m_app_mqtt_client));
+}
+#endif // MQTT_SECURE_CONNECTION_ENABLED
 
 /**@brief Publishes LED state to MQTT broker.
  *
@@ -376,7 +400,9 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
             {
                 if (m_connection_state == APP_MQTT_STATE_IDLE)
                 {
+                    APPL_LOG("MQTT connect...");
                     app_mqtt_connect();
+                    APPL_LOG("MQTT connected.");
                 }
                 break;
             }
@@ -384,7 +410,9 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
             {
                 if (m_connection_state == APP_MQTT_STATE_CONNECTED)
                 {
+                    APPL_LOG("MQTT publish...");
                     app_mqtt_publish(!m_led_state);
+                    APPL_LOG("MQTT published.");
                 }
                 break;
             }
@@ -392,7 +420,9 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
             {
                 if (m_connection_state == APP_MQTT_STATE_CONNECTED)
                 {
+                    APPL_LOG("MQTT disconnect...");
                     UNUSED_VARIABLE(mqtt_disconnect(&m_app_mqtt_client));
+                    APPL_LOG("MQTT disconnected.");
                 }
                 break;
             }
@@ -704,8 +734,8 @@ int main(void)
     uint32_t err_code;
 
     // Initialize.
-    log_init();
     scheduler_init();
+    log_init();
     leds_init();
     timers_init();
     iot_timer_init();
@@ -737,10 +767,10 @@ int main(void)
 
     ip_stack_init();
 
+    APPL_LOG("Application started.");
+
     // Start execution.
     connectable_mode_enter();
-
-    APPL_LOG("Application started.");
 
     // Enter main loop.
     for (;;)

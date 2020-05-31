@@ -111,15 +111,15 @@
 
 #define DEAD_BEEF 0xDEADBEEF /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
-BLE_LBS_DEF(m_lbs);       /**< LED Button Service instance. */
-NRF_BLE_GATT_DEF(m_gatt); /**< GATT module instance. */
-NRF_BLE_QWR_DEF(m_qwr);   /**< Context for the Queued Write module.*/
+//BLE_LBS_DEF(m_lbs);       /**< LED Button Service instance. */
+//NRF_BLE_GATT_DEF(m_gatt); /**< GATT module instance. */
+//NRF_BLE_QWR_DEF(m_qwr);   /**< Context for the Queued Write module.*/
 
-static uint16_t m_conn_handle = BLE_CONN_HANDLE_INVALID; /**< Handle of the current connection. */
+//static uint16_t m_conn_handle = BLE_CONN_HANDLE_INVALID; /**< Handle of the current connection. */
 
-static uint8_t m_adv_handle = BLE_GAP_ADV_SET_HANDLE_NOT_SET;           /**< Advertising handle used to identify an advertising set. */
-static uint8_t m_enc_advdata[BLE_GAP_ADV_SET_DATA_SIZE_MAX];            /**< Buffer for storing an encoded advertising set. */
-static uint8_t m_enc_scan_response_data[BLE_GAP_ADV_SET_DATA_SIZE_MAX]; /**< Buffer for storing an encoded scan data. */
+//static uint8_t m_adv_handle = BLE_GAP_ADV_SET_HANDLE_NOT_SET;           /**< Advertising handle used to identify an advertising set. */
+//static uint8_t m_enc_advdata[BLE_GAP_ADV_SET_DATA_SIZE_MAX];            /**< Buffer for storing an encoded advertising set. */
+//static uint8_t m_enc_scan_response_data[BLE_GAP_ADV_SET_DATA_SIZE_MAX]; /**< Buffer for storing an encoded scan data. */
 
 char barcode_buffer[30];
 bool is_serial_timer_active = false;
@@ -134,6 +134,7 @@ static void lfclk_config(void) {
 }
 
 /**@brief Struct that contains pointers to the encoded advertising data. */
+/*
 static ble_gap_adv_data_t m_adv_data =
     {
         .adv_data =
@@ -146,7 +147,7 @@ static ble_gap_adv_data_t m_adv_data =
                 .len = BLE_GAP_ADV_SET_DATA_SIZE_MAX
 
             }};
-
+*/
 /**@brief Function for assert macro callback.
  *
  * @details This function will be called in case of an assert in the SoftDevice.
@@ -185,6 +186,7 @@ static void timers_init(void) {
  * @details This function sets up all the necessary GAP (Generic Access Profile) parameters of the
  *          device including the device name, appearance, and the preferred connection parameters.
  */
+/*
 static void gap_params_init(void) {
   ret_code_t err_code;
   ble_gap_conn_params_t gap_conn_params;
@@ -207,19 +209,21 @@ static void gap_params_init(void) {
   err_code = sd_ble_gap_ppcp_set(&gap_conn_params);
   APP_ERROR_CHECK(err_code);
 }
-
+*/
 /**@brief Function for initializing the GATT module.
  */
+/*
 static void gatt_init(void) {
   ret_code_t err_code = nrf_ble_gatt_init(&m_gatt, NULL);
   APP_ERROR_CHECK(err_code);
 }
-
+*/
 /**@brief Function for initializing the Advertising functionality.
  *
  * @details Encodes the required advertising data and passes it to the stack.
  *          Also builds a structure to be passed to the stack when starting advertising.
  */
+/*
 static void advertising_init(void) {
   ret_code_t err_code;
   ble_advdata_t advdata;
@@ -259,7 +263,7 @@ static void advertising_init(void) {
   err_code = sd_ble_gap_adv_set_configure(&m_adv_handle, &m_adv_data, &adv_params);
   APP_ERROR_CHECK(err_code);
 }
-
+*/
 /**@brief Function for handling Queued Write Module errors.
  *
  * @details A pointer to this function will be passed to each service which may need to inform the
@@ -288,6 +292,7 @@ static void led_write_handler(uint16_t conn_handle, ble_lbs_t *p_lbs, uint8_t le
 
 /**@brief Function for initializing services that will be used by the application.
  */
+/*
 static void services_init(void) {
   ret_code_t err_code;
   ble_lbs_init_t init = {0};
@@ -305,7 +310,7 @@ static void services_init(void) {
   err_code = ble_lbs_init(&m_lbs, &init);
   APP_ERROR_CHECK(err_code);
 }
-
+*(
 /**@brief Function for handling the Connection Parameters Module.
  *
  * @details This function will be called for all events in the Connection Parameters Module that
@@ -317,6 +322,7 @@ static void services_init(void) {
  *
  * @param[in] p_evt  Event received from the Connection Parameters Module.
  */
+/*
 static void on_conn_params_evt(ble_conn_params_evt_t *p_evt) {
   ret_code_t err_code;
 
@@ -325,17 +331,19 @@ static void on_conn_params_evt(ble_conn_params_evt_t *p_evt) {
     APP_ERROR_CHECK(err_code);
   }
 }
-
+*/
 /**@brief Function for handling a Connection Parameters error.
  *
  * @param[in] nrf_error  Error code containing information about what went wrong.
  */
+/*
 static void conn_params_error_handler(uint32_t nrf_error) {
   APP_ERROR_HANDLER(nrf_error);
 }
-
+*/
 /**@brief Function for initializing the Connection Parameters module.
  */
+/*
 static void conn_params_init(void) {
   ret_code_t err_code;
   ble_conn_params_init_t cp_init;
@@ -354,9 +362,10 @@ static void conn_params_init(void) {
   err_code = ble_conn_params_init(&cp_init);
   APP_ERROR_CHECK(err_code);
 }
-
+*/
 /**@brief Function for starting advertising.
  */
+/*
 static void advertising_start(void) {
   ret_code_t err_code;
 
@@ -365,12 +374,13 @@ static void advertising_start(void) {
 
   bsp_board_led_on(bsp_board_pin_to_led_idx(ADVERTISING_LED));
 }
-
+*/
 /**@brief Function for handling BLE events.
  *
  * @param[in]   p_ble_evt   Bluetooth stack event.
  * @param[in]   p_context   Unused.
  */
+/*
 static void ble_evt_handler(ble_evt_t const *p_ble_evt, void *p_context) {
   ret_code_t err_code;
 
@@ -442,11 +452,12 @@ static void ble_evt_handler(ble_evt_t const *p_ble_evt, void *p_context) {
     break;
   }
 }
-
+*/
 /**@brief Function for initializing the BLE stack.
  *
  * @details Initializes the SoftDevice and the BLE event interrupt.
  */
+/*
 static void ble_stack_init(void) {
   ret_code_t err_code;
 
@@ -466,7 +477,7 @@ static void ble_stack_init(void) {
   // Register a handler for BLE events.
   NRF_SDH_BLE_OBSERVER(m_ble_observer, APP_BLE_OBSERVER_PRIO, ble_evt_handler, NULL);
 }
-
+*/
 void startScanByTriggerPin() {
   NRF_LOG_INFO("Start Scanning...");
   /*
@@ -743,17 +754,18 @@ int main(void) {
   init_serial();
   create_serial_receive_timer();
   power_management_init();
+  /*
   ble_stack_init();
   gap_params_init();
   gatt_init();
   services_init();
   advertising_init();
   conn_params_init();
-
-  // Start execution.
-  NRF_LOG_INFO("Blinky example started.");
   advertising_start();
-
+  */
+  // Start execution.
+  NRF_LOG_INFO("TicTac Barcode Scanner started.");
+ 
   // Enter main loop.
   for (;;) {
     __WFE(); // Activate only for Debugging

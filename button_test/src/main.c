@@ -91,14 +91,14 @@ void button_timeout_handler(void *p_context) {
 }
 
 
-void led_on() {
+void led_on(uint8_t led_pin) {
   NRF_LOG_INFO("LED ON");
-  nrf_gpio_pin_write(LED_3, 1);
+  nrf_gpio_pin_write(led_pin, 1);
 }
 
-void led_off() {
+void led_off(uint8_t led_pin) {
   NRF_LOG_INFO("LED OFF");
-  nrf_gpio_pin_write(LED_3, 0);
+  nrf_gpio_pin_write(led_pin, 0);
 }
 
 void buzzer_on() {
@@ -116,16 +116,56 @@ void button_callback(uint8_t pin_no, uint8_t button_action) {
   ret_code_t err_code;
 
   switch (pin_no) {
+  case BUTTON_1:
+    if (button_action == APP_BUTTON_PUSH) {
+      NRF_LOG_INFO("Button #1 push");
+      led_on(LED_1);
+    } else if (button_action == APP_BUTTON_RELEASE) {
+      NRF_LOG_INFO("Button #1 released");
+      led_off(LED_1);
+    }
+    break;
+
   case BUTTON_2:
+    if (button_action == APP_BUTTON_PUSH) {
+      NRF_LOG_INFO("Button #2 push");
+      led_on(LED_2);
+    } else if (button_action == APP_BUTTON_RELEASE) {
+      NRF_LOG_INFO("Button #2 released");
+      led_off(LED_2);
+    }
+    break;
+
+  case BUTTON_3:
+    if (button_action == APP_BUTTON_PUSH) {
+      NRF_LOG_INFO("Button #3 push");
+      led_on(LED_3);
+    } else if (button_action == APP_BUTTON_RELEASE) {
+      NRF_LOG_INFO("Button #3 released");
+      led_off(LED_3);
+    }
+    break;
+
+  case BUTTON_4:
+    if (button_action == APP_BUTTON_PUSH) {
+      NRF_LOG_INFO("Button #4 push");
+      led_on(LED_4);
+    } else if (button_action == APP_BUTTON_RELEASE) {
+      NRF_LOG_INFO("Button #4 released");
+      led_off(LED_4);
+    }
+    break;
+
+  case BUTTON_5:
     if (button_action == APP_BUTTON_PUSH) {
       NRF_LOG_INFO("Button push");
       err_code = app_timer_start(m_button_action, APP_TIMER_TICKS(BUTTON_STATE_POLL_INTERVAL_MS), NULL);
       APP_ERROR_CHECK(err_code);
-      led_on();
+      led_on(LED_1);
       buzzer_on();
     } else if (button_action == APP_BUTTON_RELEASE) {
       NRF_LOG_INFO("Button released");
-      led_off();
+      led_off(LED_1);
       buzzer_off(BUZZER);
     }
     break;
@@ -145,7 +185,12 @@ static void buttons_init() {
   //The array must be static because a pointer to it will be saved in the button handler module.
   static app_button_cfg_t buttons[] =
       {
-          {BUTTON_2, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_callback}};
+          {BUTTON_1, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_callback}
+          ,{BUTTON_2, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_callback}
+          ,{BUTTON_3, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_callback}
+          ,{BUTTON_4, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_callback}
+          //,{BUTTON_5, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_callback}
+      };
 
   err_code = app_button_init(buttons, ARRAY_SIZE(buttons), BUTTON_DETECTION_DELAY);
   APP_ERROR_CHECK(err_code);

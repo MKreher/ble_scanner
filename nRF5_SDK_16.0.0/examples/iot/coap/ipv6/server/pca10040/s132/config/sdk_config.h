@@ -6059,7 +6059,7 @@
 // <e> IOT_BLE_6LOWPAN_CONFIG_LOG_ENABLED - Enables logging in the module.
 //==========================================================
 #ifndef IOT_BLE_6LOWPAN_CONFIG_LOG_ENABLED
-#define IOT_BLE_6LOWPAN_CONFIG_LOG_ENABLED 0
+#define IOT_BLE_6LOWPAN_CONFIG_LOG_ENABLED 1
 #endif
 // <o> IOT_BLE_6LOWPAN_CONFIG_LOG_LEVEL  - Default Severity level
  
@@ -6111,7 +6111,7 @@
  
 
 #ifndef BLE_6LOWPAN_LEGACY_MODE
-#define BLE_6LOWPAN_LEGACY_MODE 1
+#define BLE_6LOWPAN_LEGACY_MODE 0
 #endif
 
 // </h> 
@@ -6159,7 +6159,7 @@
 // <e> IOT_COAP_CONFIG_LOG_ENABLED - Enables logging in the module.
 //==========================================================
 #ifndef IOT_COAP_CONFIG_LOG_ENABLED
-#define IOT_COAP_CONFIG_LOG_ENABLED 0
+#define IOT_COAP_CONFIG_LOG_ENABLED 1
 #endif
 // <o> IOT_COAP_CONFIG_LOG_LEVEL  - Default Severity level
  
@@ -8593,7 +8593,7 @@
  
 
 #ifndef NRF_FPRINTF_FLAG_AUTOMATIC_CR_ON_LF_ENABLED
-#define NRF_FPRINTF_FLAG_AUTOMATIC_CR_ON_LF_ENABLED 1
+#define NRF_FPRINTF_FLAG_AUTOMATIC_CR_ON_LF_ENABLED 0
 #endif
 
 // <q> NRF_FPRINTF_DOUBLE_ENABLED  - Enable IEEE-754 double precision formatting.
@@ -8774,7 +8774,7 @@
 // <i> Log data is buffered and can be processed in idle.
 
 #ifndef NRF_LOG_DEFERRED
-#define NRF_LOG_DEFERRED 1
+#define NRF_LOG_DEFERRED 0
 #endif
 
 // <q> NRF_LOG_FILTERS_ENABLED  - Enable dynamic filtering of logs.

@@ -52,7 +52,7 @@
 // <e> NRF_LWIP_DRIVER_CONFIG_LOG_ENABLED - lwip - lwIP stack for nRF5x
 //==========================================================
 #ifndef NRF_LWIP_DRIVER_CONFIG_LOG_ENABLED
-#define NRF_LWIP_DRIVER_CONFIG_LOG_ENABLED 0
+#define NRF_LWIP_DRIVER_CONFIG_LOG_ENABLED 1
 #endif
 // <o> NRF_LWIP_DRIVER_CONFIG_LOG_LEVEL  - Default Severity level
  
@@ -559,7 +559,7 @@
 // <e> IOT_BLE_IPSP_CONFIG_LOG_ENABLED - Enables logging in the module.
 //==========================================================
 #ifndef IOT_BLE_IPSP_CONFIG_LOG_ENABLED
-#define IOT_BLE_IPSP_CONFIG_LOG_ENABLED 0
+#define IOT_BLE_IPSP_CONFIG_LOG_ENABLED 1
 #endif
 // <o> IOT_BLE_IPSP_CONFIG_LOG_LEVEL  - Default Severity level
  
@@ -6107,11 +6107,11 @@
 // <e> IOT_BLE_6LOWPAN_CONFIG_LOG_ENABLED - Enables logging in the module.
 //==========================================================
 #ifndef IOT_BLE_6LOWPAN_CONFIG_LOG_ENABLED
-#define IOT_BLE_6LOWPAN_CONFIG_LOG_ENABLED 0
+#define IOT_BLE_6LOWPAN_CONFIG_LOG_ENABLED 1
 #endif
 // <o> IOT_BLE_6LOWPAN_CONFIG_LOG_LEVEL  - Default Severity level
  
-// <0=> Off 
+// <0=> Off 			
 // <1=> Error 
 // <2=> Warning 
 // <3=> Info 
@@ -6159,7 +6159,7 @@
  
 
 #ifndef BLE_6LOWPAN_LEGACY_MODE
-#define BLE_6LOWPAN_LEGACY_MODE 1
+#define BLE_6LOWPAN_LEGACY_MODE 0
 #endif
 
 // </h> 
@@ -6500,7 +6500,7 @@
 // <e> MQTT_CONFIG_LOG_ENABLED - Enables logging in the module.
 //==========================================================
 #ifndef MQTT_CONFIG_LOG_ENABLED
-#define MQTT_CONFIG_LOG_ENABLED 0
+#define MQTT_CONFIG_LOG_ENABLED 1
 #endif
 // <o> MQTT_CONFIG_LOG_LEVEL  - Default Severity level
  
@@ -8183,7 +8183,7 @@
  
 
 #ifndef NRF_FPRINTF_FLAG_AUTOMATIC_CR_ON_LF_ENABLED
-#define NRF_FPRINTF_FLAG_AUTOMATIC_CR_ON_LF_ENABLED 1
+#define NRF_FPRINTF_FLAG_AUTOMATIC_CR_ON_LF_ENABLED 0
 #endif
 
 // <q> NRF_FPRINTF_DOUBLE_ENABLED  - Enable IEEE-754 double precision formatting.
@@ -8205,7 +8205,7 @@
 // <e> NRF_LOG_BACKEND_RTT_ENABLED - nrf_log_backend_rtt - Log RTT backend
 //==========================================================
 #ifndef NRF_LOG_BACKEND_RTT_ENABLED
-#define NRF_LOG_BACKEND_RTT_ENABLED 0
+#define NRF_LOG_BACKEND_RTT_ENABLED 1
 #endif
 // <o> NRF_LOG_BACKEND_RTT_TEMP_BUFFER_SIZE - Size of buffer for partially processed strings. 
 // <i> Size of the buffer is a trade-off between RAM usage and processing.
@@ -8364,7 +8364,7 @@
 // <i> Log data is buffered and can be processed in idle.
 
 #ifndef NRF_LOG_DEFERRED
-#define NRF_LOG_DEFERRED 1
+#define NRF_LOG_DEFERRED 0
 #endif
 
 // <q> NRF_LOG_FILTERS_ENABLED  - Enable dynamic filtering of logs.

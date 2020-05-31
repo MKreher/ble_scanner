@@ -1,0 +1,45 @@
+nano /etc/radvd.conf
+
+https://devzone.nordicsemi.com/f/nordic-q-a/7656/iot-sdk-pc-cannot-ping-pca10028
+
+https://devzone.nordicsemi.com/f/nordic-q-a/15422/nrf5-iot-sdk-v0-9-0-tcp-server-example---connection-refused
+
+https://devzone.nordicsemi.com/f/nordic-q-a/9964/iot-sdk-pc-can-ping-but-coap-client-can-t-work-with-pca10028
+
+https://devzone.nordicsemi.com/f/nordic-q-a/44430/ping-problem 
+
+https://devzone.nordicsemi.com/f/nordic-q-a/42462/ping-nrf52-iot-sdk-from-pc
+
+!!!https://visualgdb.com/tutorials/arm/nrf51/6lowpan/!!!
+
+# Set IPv6 forwarding (must be present).
+sudo echo 1 > /proc/sys/net/ipv6/conf/all/forwarding
+# Run radvd daemon.
+sudo service radvd restart
+# Observe if new IPv6 prefix is disseminating over bt0 interface.
+
+sudo echo 2 > /proc/sys/net/ipv6/conf/bt0/accept_ra 
+
+echo 1 > /sys/kernel/debug/bluetooth/6lowpan_enable
+
+hciconfig hci0 reset
+
+hcitool lescan
+
+modprobe bluetooth_6lowpan
+echo "connect 00:BB:47:B7:D8:A8 1" > /sys/kernel/debug/bluetooth/6lowpan_control
+ifconfig bt0 add fd00:a::/64 
+service radvd restart
+ 
+./aiocoap-client coap://[fd00:a::00BB:47FF:FEB7:D8A8]:5683/lights/led3
+
+echo "disconnect 00:BB:47:B7:D8:A8 1" > /sys/kernel/debug/bluetooth/6lowpan_control
+
+
+
+fd00:a::b827:ebff:fe80:def4
+
+0xfd, 0x00, 0x0A, 0x00, 0x00, 0x00, 0x00, 0x00, \
+0xB8, 0x27, 0xEB, 0xFF, 0xFE, 0x80, 0xDE, 0xF4 
+
+./aiocoap-client coap://[127.0.0.1]:5683/lights/led3

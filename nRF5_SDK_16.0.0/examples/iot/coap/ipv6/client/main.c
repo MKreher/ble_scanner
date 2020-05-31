@@ -77,8 +77,9 @@
 
 /** Modify SERVER_IPV6_ADDRESS according to your setup.
  *  The address provided below is a place holder.  */
-#define SERVER_IPV6_ADDRESS             0x20, 0x01, 0x0D, 0xB8, 0x00, 0x00, 0x00, 0x00, \
-                                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01        /**< IPv6 address of the server node. */
+// 2003:e8:270c:c200:5486:6c38:85ba:7072
+#define SERVER_IPV6_ADDRESS             0x20, 0x03, 0x00, 0xE8, 0x27, 0x0C, 0xC2, 0x00, \
+                                        0x54, 0x86, 0x6C, 0x38, 0x85, 0xBA, 0x70, 0x72        /**< IPv6 address of the server node. */
 
 // The CoAP default port number 5683 MUST be supported by a server.
 #define LOCAL_PORT_NUM                  5683                                                  /**< CoAP default port number. */
