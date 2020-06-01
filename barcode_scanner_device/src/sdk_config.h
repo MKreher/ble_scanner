@@ -46,6 +46,65 @@
 #ifdef USE_APP_CONFIG
 #include "app_config.h"
 #endif
+
+// <h> lwIP 
+
+//==========================================================
+// <e> NRF_LWIP_DRIVER_CONFIG_LOG_ENABLED - lwip - lwIP stack for nRF5x
+//==========================================================
+#ifndef NRF_LWIP_DRIVER_CONFIG_LOG_ENABLED
+#define NRF_LWIP_DRIVER_CONFIG_LOG_ENABLED 0
+#endif
+// <o> NRF_LWIP_DRIVER_CONFIG_LOG_LEVEL  - Default Severity level
+ 
+// <0=> Off 
+// <1=> Error 
+// <2=> Warning 
+// <3=> Info 
+// <4=> Debug 
+
+#ifndef NRF_LWIP_DRIVER_CONFIG_LOG_LEVEL
+#define NRF_LWIP_DRIVER_CONFIG_LOG_LEVEL 3
+#endif
+
+// <o> NRF_LWIP_DRIVER_CONFIG_INFO_COLOR  - ANSI escape code prefix.
+ 
+// <0=> Default 
+// <1=> Black 
+// <2=> Red 
+// <3=> Green 
+// <4=> Yellow 
+// <5=> Blue 
+// <6=> Magenta 
+// <7=> Cyan 
+// <8=> White 
+
+#ifndef NRF_LWIP_DRIVER_CONFIG_INFO_COLOR
+#define NRF_LWIP_DRIVER_CONFIG_INFO_COLOR 0
+#endif
+
+// <o> NRF_LWIP_DRIVER_CONFIG_DEBUG_COLOR  - ANSI escape code prefix.
+ 
+// <0=> Default 
+// <1=> Black 
+// <2=> Red 
+// <3=> Green 
+// <4=> Yellow 
+// <5=> Blue 
+// <6=> Magenta 
+// <7=> Cyan 
+// <8=> White 
+
+#ifndef NRF_LWIP_DRIVER_CONFIG_DEBUG_COLOR
+#define NRF_LWIP_DRIVER_CONFIG_DEBUG_COLOR 0
+#endif
+
+// </e>
+
+// </h> 
+
+//==========================================================
+
 // <h> Board Support 
 
 //==========================================================
@@ -56,7 +115,10 @@
 #define BSP_BTN_BLE_ENABLED 1
 #endif
 
+// </e>
+
 // </h> 
+
 //==========================================================
 
 // <h> nRF_BLE 
@@ -146,7 +208,7 @@
 // <i> Enable/disable central-specific Peer Manager functionality.
 
 #ifndef PM_CENTRAL_ENABLED
-#define PM_CENTRAL_ENABLED 0
+#define PM_CENTRAL_ENABLED 1
 #endif
 
 // <q> PM_SERVICE_CHANGED_ENABLED  - Enable/disable the service changed management for GATT server in Peer Manager.
@@ -528,6 +590,69 @@
 #define BLE_TPS_ENABLED 0
 #endif
 
+
+// <h> ble_ipsp - Internet Protocol Support Profile
+
+//==========================================================
+// <q> BLE_IPSP_DISABLE_API_PARAM_CHECK  - Enable or disable API parameter check.
+ 
+
+// <i> API parameter checks are added to ensure right parameters are passed to the module. These checks are useful during development phase but be redundant once application is developed. Disabling this can result in some code saving.
+
+#ifndef BLE_IPSP_DISABLE_API_PARAM_CHECK
+#define BLE_IPSP_DISABLE_API_PARAM_CHECK 0
+#endif
+
+// <e> IOT_BLE_IPSP_CONFIG_LOG_ENABLED - Enables logging in the module.
+//==========================================================
+#ifndef IOT_BLE_IPSP_CONFIG_LOG_ENABLED
+#define IOT_BLE_IPSP_CONFIG_LOG_ENABLED 0
+#endif
+// <o> IOT_BLE_IPSP_CONFIG_LOG_LEVEL  - Default Severity level
+ 
+// <0=> Off 
+// <1=> Error 
+// <2=> Warning 
+// <3=> Info 
+// <4=> Debug 
+
+#ifndef IOT_BLE_IPSP_CONFIG_LOG_LEVEL
+#define IOT_BLE_IPSP_CONFIG_LOG_LEVEL 3
+#endif
+
+// <o> IOT_BLE_IPSP_CONFIG_INFO_COLOR  - ANSI escape code prefix.
+ 
+// <0=> Default 
+// <1=> Black 
+// <2=> Red 
+// <3=> Green 
+// <4=> Yellow 
+// <5=> Blue 
+// <6=> Magenta 
+// <7=> Cyan 
+// <8=> White 
+
+#ifndef IOT_BLE_IPSP_CONFIG_INFO_COLOR
+#define IOT_BLE_IPSP_CONFIG_INFO_COLOR 0
+#endif
+
+// <o> IOT_BLE_IPSP_CONFIG_DEBUG_COLOR  - ANSI escape code prefix.
+ 
+// <0=> Default 
+// <1=> Black 
+// <2=> Red 
+// <3=> Green 
+// <4=> Yellow 
+// <5=> Blue 
+// <6=> Magenta 
+// <7=> Cyan 
+// <8=> White 
+
+#ifndef IOT_BLE_IPSP_CONFIG_DEBUG_COLOR
+#define IOT_BLE_IPSP_CONFIG_DEBUG_COLOR 0
+#endif
+
+// </e>
 // </h> 
 //==========================================================
 
@@ -6007,6 +6132,724 @@
 // </h> 
 //==========================================================
 
+// <h> nRF_IoT 
+
+//==========================================================
+// <h> ble_6lowpan - 6LoWPAN over BLE and Internet Protocol Support Profile library
+
+//==========================================================
+// <q> BLE_6LOWPAN_DISABLE_API_PARAM_CHECK  - Enable or disable API parameter check.
+ 
+
+// <i> API parameter checks are added to ensure right parameters are passed to the module. These checks are useful during development phase but be redundant once application is developed. Disabling this can result in some code saving.
+
+#ifndef BLE_6LOWPAN_DISABLE_API_PARAM_CHECK
+#define BLE_6LOWPAN_DISABLE_API_PARAM_CHECK 0
+#endif
+
+// <e> IOT_BLE_6LOWPAN_CONFIG_LOG_ENABLED - Enables logging in the module.
+//==========================================================
+#ifndef IOT_BLE_6LOWPAN_CONFIG_LOG_ENABLED
+#define IOT_BLE_6LOWPAN_CONFIG_LOG_ENABLED 0
+#endif
+// <o> IOT_BLE_6LOWPAN_CONFIG_LOG_LEVEL  - Default Severity level
+ 
+// <0=> Off 
+// <1=> Error 
+// <2=> Warning 
+// <3=> Info 
+// <4=> Debug 
+
+#ifndef IOT_BLE_6LOWPAN_CONFIG_LOG_LEVEL
+#define IOT_BLE_6LOWPAN_CONFIG_LOG_LEVEL 3
+#endif
+
+// <o> IOT_BLE_6LOWPAN_CONFIG_INFO_COLOR  - ANSI escape code prefix.
+ 
+// <0=> Default 
+// <1=> Black 
+// <2=> Red 
+// <3=> Green 
+// <4=> Yellow 
+// <5=> Blue 
+// <6=> Magenta 
+// <7=> Cyan 
+// <8=> White 
+
+#ifndef IOT_BLE_6LOWPAN_CONFIG_INFO_COLOR
+#define IOT_BLE_6LOWPAN_CONFIG_INFO_COLOR 0
+#endif
+
+// <o> IOT_BLE_6LOWPAN_CONFIG_DEBUG_COLOR  - ANSI escape code prefix.
+ 
+// <0=> Default 
+// <1=> Black 
+// <2=> Red 
+// <3=> Green 
+// <4=> Yellow 
+// <5=> Blue 
+// <6=> Magenta 
+// <7=> Cyan 
+// <8=> White 
+
+#ifndef IOT_BLE_6LOWPAN_CONFIG_DEBUG_COLOR
+#define IOT_BLE_6LOWPAN_CONFIG_DEBUG_COLOR 0
+#endif
+
+// </e>
+
+// <q> BLE_6LOWPAN_LEGACY_MODE  - Enable legacy mode of IID derivation from Bluetooth Device Address and Link Layer address size determination. The legacy mode is not compatible with the RFC7668 sepcification. For the Linux Kernel versions higher or equal to 4.12 this define has to be set to 0, otherwise to 1.
+ 
+
+#ifndef BLE_6LOWPAN_LEGACY_MODE
+#define BLE_6LOWPAN_LEGACY_MODE 0
+#endif
+
+// </h> 
+//==========================================================
+
+// <h> coap_config - Nordic's smartCoAP library - config definitions
+
+//==========================================================
+// <q> COAP_DISABLE_DTLS_API  - Disable CoAPs API
+ 
+
+// <i> 
+
+#ifndef COAP_DISABLE_DTLS_API
+#define COAP_DISABLE_DTLS_API 0
+#endif
+
+// <o> COAP_ACK_RANDOM_FACTOR - Random factor to calculate the initial time-out value for a Confirmable message.  <0-65535> 
+
+
+// <i> COAP_MAX_TRANSMISSION_SPAN / COAP_MAX_RETRANSMIT_COUNT / COAP_ACK_TIMEOUT
+
+#ifndef COAP_ACK_RANDOM_FACTOR
+#define COAP_ACK_RANDOM_FACTOR 1
+#endif
+
+// <o> COAP_ACK_TIMEOUT - Minimum spacing before another retransmission.  <0-65535> 
+
+
+// <i> Max value should not exceed COAP_MAX_TRANSMISSION_SPAN / COAP_MAX_RETRANSMIT_COUNT.
+
+#ifndef COAP_ACK_TIMEOUT
+#define COAP_ACK_TIMEOUT 2
+#endif
+
+// <q> COAP_DISABLE_API_PARAM_CHECK  - Enable or disable API parameter check.
+ 
+
+// <i> API parameter checks are added to ensure right parameters are passed to the module. These checks are useful during development phase but be redundant once application is developed. Disabling this can result in some code saving.
+
+#ifndef COAP_DISABLE_API_PARAM_CHECK
+#define COAP_DISABLE_API_PARAM_CHECK 0
+#endif
+
+// <e> IOT_COAP_CONFIG_LOG_ENABLED - Enables logging in the module.
+//==========================================================
+#ifndef IOT_COAP_CONFIG_LOG_ENABLED
+#define IOT_COAP_CONFIG_LOG_ENABLED 0
+#endif
+// <o> IOT_COAP_CONFIG_LOG_LEVEL  - Default Severity level
+ 
+// <0=> Off 
+// <1=> Error 
+// <2=> Warning 
+// <3=> Info 
+// <4=> Debug 
+
+#ifndef IOT_COAP_CONFIG_LOG_LEVEL
+#define IOT_COAP_CONFIG_LOG_LEVEL 3
+#endif
+
+// <o> IOT_COAP_CONFIG_INFO_COLOR  - ANSI escape code prefix.
+ 
+// <0=> Default 
+// <1=> Black 
+// <2=> Red 
+// <3=> Green 
+// <4=> Yellow 
+// <5=> Blue 
+// <6=> Magenta 
+// <7=> Cyan 
+// <8=> White 
+
+#ifndef IOT_COAP_CONFIG_INFO_COLOR
+#define IOT_COAP_CONFIG_INFO_COLOR 0
+#endif
+
+// <o> IOT_COAP_CONFIG_DEBUG_COLOR  - ANSI escape code prefix.
+ 
+// <0=> Default 
+// <1=> Black 
+// <2=> Red 
+// <3=> Green 
+// <4=> Yellow 
+// <5=> Blue 
+// <6=> Magenta 
+// <7=> Cyan 
+// <8=> White 
+
+#ifndef IOT_COAP_CONFIG_DEBUG_COLOR
+#define IOT_COAP_CONFIG_DEBUG_COLOR 0
+#endif
+
+// </e>
+
+// <q> COAP_ENABLE_OBSERVE_CLIENT  - Enable CoAP observe client role.
+ 
+
+// <i> If enabled, the coap_observe module has to be included. It will enable the module with a table to store observable resources, and provide access to functions to register and unregister observable resources. The observable resources list is used to match incomming notifications to an application callback function.
+
+#ifndef COAP_ENABLE_OBSERVE_CLIENT
+#define COAP_ENABLE_OBSERVE_CLIENT 0
+#endif
+
+// <q> COAP_ENABLE_OBSERVE_SERVER  - Enable CoAP observe server role.
+ 
+
+// <i> If enabled the coap_observe module has to be included. It will enable the module with a table to store observers, and provide access to functions to register and unregister observers. The list can be traversed in order to send notifications to the observers.
+
+#ifndef COAP_ENABLE_OBSERVE_SERVER
+#define COAP_ENABLE_OBSERVE_SERVER 0
+#endif
+
+// <o> COAP_MAX_NUMBER_OF_OPTIONS - The maximum size of a smartCoAP message excluding the mandatory CoAP header.  <1-65535> 
+
+
+#ifndef COAP_MAX_NUMBER_OF_OPTIONS
+#define COAP_MAX_NUMBER_OF_OPTIONS 8
+#endif
+
+// <o> COAP_MAX_RETRANSMIT_COUNT - Maximum number of transmit attempts for a Confirmable messages.  <0-255> 
+
+
+#ifndef COAP_MAX_RETRANSMIT_COUNT
+#define COAP_MAX_RETRANSMIT_COUNT 1
+#endif
+
+// <o> COAP_MAX_TRANSMISSION_SPAN - Maximum time from the first transmission of a Confirmable message to its last retransmission.  <0-65535> 
+
+
+#ifndef COAP_MAX_TRANSMISSION_SPAN
+#define COAP_MAX_TRANSMISSION_SPAN 10
+#endif
+
+// <o> COAP_MESSAGE_DATA_MAX_SIZE - The maximum size of a smartCoAP message excluding the mandatory CoAP header.  <1-65535> 
+
+
+#ifndef COAP_MESSAGE_DATA_MAX_SIZE
+#define COAP_MESSAGE_DATA_MAX_SIZE 256
+#endif
+
+// <o> COAP_MESSAGE_QUEUE_SIZE - Maximum number of smartCoAP messages that can be in transmission at a time.  <1-65535> 
+
+
+// <i> smartCoAP uses the Memory Manager that is also used by the underlying transport protocol. Therefore, if you increase this value, you should also increase the number of buffers. Depending on the COAP_MESSAGE_DATA_MAX_SIZE + 4 byte CoAP header, you must increase either MEMORY_MANAGER_SMALL_BLOCK_COUNT or MEMORY_MANAGER_MEDIUM_BLOCK_COUNT to ensure that there are additional buffers for the CoAP message queue. Which macro must be increased, depends on the size of the buffer that is sufficient for the CoAP message.
+
+#ifndef COAP_MESSAGE_QUEUE_SIZE
+#define COAP_MESSAGE_QUEUE_SIZE 4
+#endif
+
+// <o> COAP_OBSERVE_MAX_NUM_OBSERVABLES - Maximum number of CoAP observable resources that a client can have active at any point of time.  <0-255> 
+
+
+// <i> The maximum number of observable resources to be registered by a client. For each observable resource added, it will increase the memory consumption of one coap_observable_t struct.
+
+#ifndef COAP_OBSERVE_MAX_NUM_OBSERVABLES
+#define COAP_OBSERVE_MAX_NUM_OBSERVABLES 0
+#endif
+
+// <o> COAP_OBSERVE_MAX_NUM_OBSERVERS - Maximum number of CoAP observers that a server can have active at any point of time.  <0-255> 
+
+
+// <i> The maximum number of observers to be registered by a server. For each observer added, it will increase the memory consumption of one coap_observer_t struct.
+
+#ifndef COAP_OBSERVE_MAX_NUM_OBSERVERS
+#define COAP_OBSERVE_MAX_NUM_OBSERVERS 0
+#endif
+
+// <o> COAP_PORT_COUNT - Number of local ports used by CoAP.  <0-UDP6_MAX_SOCKET_COUNT> 
+
+
+// <i> The max number of client/server ports used by the application. One socket will be created for each port.
+
+#ifndef COAP_PORT_COUNT
+#define COAP_PORT_COUNT 1
+#endif
+
+// <o> COAP_RESOURCE_MAX_DEPTH - Maximum number of CoAP resource levels.  <1-255> 
+
+
+// <i> The maximum number of resource depth levels uCoAP will use. The number will be used when adding resource to the resource structure, or when traversing the resources for a matching resource name given in a request. Each level added will increase the stack usage runtime with 4 bytes.
+
+#ifndef COAP_RESOURCE_MAX_DEPTH
+#define COAP_RESOURCE_MAX_DEPTH 5
+#endif
+
+// <o> COAP_RESOURCE_MAX_NAME_LEN - Maximum length of CoAP resource verbose name.  <1-65535> 
+
+
+// <i> The maximum length of resource name that can be supplied from the application.
+
+#ifndef COAP_RESOURCE_MAX_NAME_LEN
+#define COAP_RESOURCE_MAX_NAME_LEN 19
+#endif
+
+// <o> COAP_VERSION - CoAP version number.  <0-3> 
+
+
+// <i> The version of CoAP which all CoAP messages will be populated with.
+
+#ifndef COAP_VERSION
+#define COAP_VERSION 1
+#endif
+
+// </h> 
+//==========================================================
+
+// <h> iot_context_manager - Context Manager
+
+//==========================================================
+// <q> IOT_CONTEXT_MANAGER_DISABLE_API_PARAM_CHECK  - Enable or disable API parameter check.
+ 
+
+// <i> API parameter checks are added to ensure right parameters are passed to the module. These checks are useful during development phase but be redundant once application is developed. Disabling this can result in some code saving.
+
+#ifndef IOT_CONTEXT_MANAGER_DISABLE_API_PARAM_CHECK
+#define IOT_CONTEXT_MANAGER_DISABLE_API_PARAM_CHECK 0
+#endif
+
+// <e> IOT_CONTEXT_MANAGER_CONFIG_LOG_ENABLED - Enables logging in the module.
+//==========================================================
+#ifndef IOT_CONTEXT_MANAGER_CONFIG_LOG_ENABLED
+#define IOT_CONTEXT_MANAGER_CONFIG_LOG_ENABLED 0
+#endif
+// <o> IOT_CONTEXT_MANAGER_CONFIG_LOG_LEVEL  - Default Severity level
+ 
+// <0=> Off 
+// <1=> Error 
+// <2=> Warning 
+// <3=> Info 
+// <4=> Debug 
+
+#ifndef IOT_CONTEXT_MANAGER_CONFIG_LOG_LEVEL
+#define IOT_CONTEXT_MANAGER_CONFIG_LOG_LEVEL 3
+#endif
+
+// <o> IOT_CONTEXT_MANAGER_CONFIG_INFO_COLOR  - ANSI escape code prefix.
+ 
+// <0=> Default 
+// <1=> Black 
+// <2=> Red 
+// <3=> Green 
+// <4=> Yellow 
+// <5=> Blue 
+// <6=> Magenta 
+// <7=> Cyan 
+// <8=> White 
+
+#ifndef IOT_CONTEXT_MANAGER_CONFIG_INFO_COLOR
+#define IOT_CONTEXT_MANAGER_CONFIG_INFO_COLOR 0
+#endif
+
+// <o> IOT_CONTEXT_MANAGER_CONFIG_DEBUG_COLOR  - ANSI escape code prefix.
+ 
+// <0=> Default 
+// <1=> Black 
+// <2=> Red 
+// <3=> Green 
+// <4=> Yellow 
+// <5=> Blue 
+// <6=> Magenta 
+// <7=> Cyan 
+// <8=> White 
+
+#ifndef IOT_CONTEXT_MANAGER_CONFIG_DEBUG_COLOR
+#define IOT_CONTEXT_MANAGER_CONFIG_DEBUG_COLOR 0
+#endif
+
+// </e>
+
+// <o> IOT_CONTEXT_MANAGER_MAX_CONTEXTS - Maximum number of supported context identifiers.  <1-16> 
+
+
+// <i> Maximum value of 16 is preferable to correct decompression.
+
+#ifndef IOT_CONTEXT_MANAGER_MAX_CONTEXTS
+#define IOT_CONTEXT_MANAGER_MAX_CONTEXTS 16
+#endif
+
+// <o> IOT_CONTEXT_MANAGER_MAX_TABLES - Maximum number of supported context's table.  <1-255> 
+
+
+// <i> If value is equal to BLE_IPSP_MAX_CHANNELS then all interface will have its own table which is preferable. This value should be less or equal to BLE_IPSP_MAX_CHANNELS.
+
+#ifndef IOT_CONTEXT_MANAGER_MAX_TABLES
+#define IOT_CONTEXT_MANAGER_MAX_TABLES 1
+#endif
+
+// </h> 
+//==========================================================
+
+// <h> iot_timer - IoT Timer
+
+//==========================================================
+// <q> IOT_TIMER_DISABLE_API_PARAM_CHECK  - Disables API parameter checks in the module.
+ 
+
+// <i> API parameter checks are added to ensure right parameters are passed to the module. These checks are useful during development phase but be redundant once application is developed. Disabling this can result in some code saving.
+
+#ifndef IOT_TIMER_DISABLE_API_PARAM_CHECK
+#define IOT_TIMER_DISABLE_API_PARAM_CHECK 0
+#endif
+
+// <o> IOT_TIMER_RESOLUTION_IN_MS - Wall clock resolution in milliseconds.  <1-4294967295> 
+
+
+// <i> The wall clock of the IoT Timer module has to be updated from an external source at regular intervals. This define needs to be set to the interval between updates.
+
+#ifndef IOT_TIMER_RESOLUTION_IN_MS
+#define IOT_TIMER_RESOLUTION_IN_MS 100
+#endif
+
+// </h> 
+//==========================================================
+
+// <h> ipv6_medium - IPv6 Medium
+
+//==========================================================
+// <e> IPV6_MEDIUM_CONFIG_LOG_ENABLED - Enables logging in the module.
+//==========================================================
+#ifndef IPV6_MEDIUM_CONFIG_LOG_ENABLED
+#define IPV6_MEDIUM_CONFIG_LOG_ENABLED 0
+#endif
+// <o> IPV6_MEDIUM_CONFIG_LOG_LEVEL  - Default Severity level
+ 
+// <0=> Off 
+// <1=> Error 
+// <2=> Warning 
+// <3=> Info 
+// <4=> Debug 
+
+#ifndef IPV6_MEDIUM_CONFIG_LOG_LEVEL
+#define IPV6_MEDIUM_CONFIG_LOG_LEVEL 3
+#endif
+
+// <o> IPV6_MEDIUM_CONFIG_INFO_COLOR  - ANSI escape code prefix.
+ 
+// <0=> Default 
+// <1=> Black 
+// <2=> Red 
+// <3=> Green 
+// <4=> Yellow 
+// <5=> Blue 
+// <6=> Magenta 
+// <7=> Cyan 
+// <8=> White 
+
+#ifndef IPV6_MEDIUM_CONFIG_INFO_COLOR
+#define IPV6_MEDIUM_CONFIG_INFO_COLOR 0
+#endif
+
+// <o> IPV6_MEDIUM_CONFIG_DEBUG_COLOR  - ANSI escape code prefix.
+ 
+// <0=> Default 
+// <1=> Black 
+// <2=> Red 
+// <3=> Green 
+// <4=> Yellow 
+// <5=> Blue 
+// <6=> Magenta 
+// <7=> Cyan 
+// <8=> White 
+
+#ifndef IPV6_MEDIUM_CONFIG_DEBUG_COLOR
+#define IPV6_MEDIUM_CONFIG_DEBUG_COLOR 0
+#endif
+
+// </e>
+
+// <o> APP_ADV_ADV_INTERVAL - The advertising interval. This value can vary between 100ms to 10.24s.  <32-16384> 
+
+
+// <i> Minimum 0x0020, maximum 0x4000, unit UNIT_0_625_MS.
+
+#ifndef APP_ADV_ADV_INTERVAL
+#define APP_ADV_ADV_INTERVAL 532
+#endif
+
+// <o> APP_ADV_DURATION - Time for which the device must be advertising in non-connectable mode (duration in 10 ms units). 0 advertises indefinitely.  <0-16383> 
+
+
+#ifndef APP_ADV_DURATION
+#define APP_ADV_DURATION 0
+#endif
+
+// <o> COMPANY_IDENTIFIER  - Company identifier for Nordic Semiconductor ASA as per www.bluetooth.org.
+ 
+// <89=> 89 
+
+#ifndef COMPANY_IDENTIFIER
+#define COMPANY_IDENTIFIER 89
+#endif
+
+// <o> CONFIG_MODE_ADV_ADV_INTERVAL - If COMMISSIONING_ENABLED is defined: The advertising interval in Configuration mode. This value can vary between 100ms to 10.24s.  <32-16384> 
+
+
+// <i> Minimum 0x0020, maximum 0x4000, unit UNIT_0_625_MS.
+
+#ifndef CONFIG_MODE_ADV_ADV_INTERVAL
+#define CONFIG_MODE_ADV_ADV_INTERVAL 532
+#endif
+
+// <o> CONFIG_MODE_ADV_TIMEOUT - If COMMISSIONING_ENABLED is defined: Time for which the device must be advertising in non-connectable mode (in seconds) in Configuration mode. 0 disables timeout.  <0-16383> 
+
+
+#ifndef CONFIG_MODE_ADV_TIMEOUT
+#define CONFIG_MODE_ADV_TIMEOUT 0
+#endif
+
+// <o> CONFIG_MODE_CONN_SUP_TIMEOUT - If COMMISSIONING_ENABLED is defined: Connection Supervision Timeout in 10 ms units in Configuration mode, see BLE_GAP_CP_LIMITS. 
+// <i> Minimum BLE_GAP_CP_CONN_SUP_TIMEOUT_MIN, maximum BLE_GAP_CP_CONN_SUP_TIMEOUT_MAX, unit UNIT_10_MS.
+
+#ifndef CONFIG_MODE_CONN_SUP_TIMEOUT
+#define CONFIG_MODE_CONN_SUP_TIMEOUT 43
+#endif
+
+// <s> CONFIG_MODE_DEVICE_NAME - If COMMISSIONING_ENABLED is defined: Device name used in BLE undirected advertisement in Configuration mode.
+#ifndef CONFIG_MODE_DEVICE_NAME
+#define CONFIG_MODE_DEVICE_NAME "Node_Cfg"
+#endif
+
+// <o> CONFIG_MODE_MAX_CONN_INTERVAL - If COMMISSIONING_ENABLED is defined: Maximum Connection Interval in 1.25 ms units in Configuration mode, see BLE_GAP_CP_LIMITS. 
+// <i> Minimum BLE_GAP_CP_MAX_CONN_INTVL_MIN, maximum BLE_GAP_CP_MAX_CONN_INTVL_MAX, unit UNIT_1_25_MS.
+
+#ifndef CONFIG_MODE_MAX_CONN_INTERVAL
+#define CONFIG_MODE_MAX_CONN_INTERVAL 24
+#endif
+
+// <o> CONFIG_MODE_MIN_CONN_INTERVAL - If COMMISSIONING_ENABLED is defined: Minimum Connection Interval in 1.25 ms units in Configuration mode, see BLE_GAP_CP_LIMITS. 
+// <i> Minimum BLE_GAP_CP_MIN_CONN_INTVL_MIN, maximum BLE_GAP_CP_MIN_CONN_INTVL_MAX, unit UNIT_1_25_MS
+
+#ifndef CONFIG_MODE_MIN_CONN_INTERVAL
+#define CONFIG_MODE_MIN_CONN_INTERVAL 6
+#endif
+
+// <o> CONFIG_MODE_SLAVE_LATENCY - If COMMISSIONING_ENABLED is defined: Slave Latency in number of connection events in Configuration mode, see BLE_GAP_CP_LIMITS. 
+// <i> Minimum 0, maximum BLE_GAP_CP_SLAVE_LATENCY_MAX.
+
+#ifndef CONFIG_MODE_SLAVE_LATENCY
+#define CONFIG_MODE_SLAVE_LATENCY 6
+#endif
+
+// <o> CONN_SUP_TIMEOUT - Connection Supervision Timeout in 10 ms units, see BLE_GAP_CP_LIMITS. 
+// <i> Minimum BLE_GAP_CP_CONN_SUP_TIMEOUT_MIN, maximum BLE_GAP_CP_CONN_SUP_TIMEOUT_MAX, unit UNIT_10_MS
+
+#ifndef CONN_SUP_TIMEOUT
+#define CONN_SUP_TIMEOUT 43
+#endif
+
+// <s> DEVICE_NAME - Device name used in BLE undirected advertisement if COMMISSIONING_ENABLED is not defined.
+#ifndef DEVICE_NAME
+#define DEVICE_NAME "CoAP_CLNT"
+#endif
+
+// <q> IS_SRVC_CHANGED_CHARACT_PRESENT  - Include the Service Changed characteristic in the Attribute Table.
+ 
+
+#ifndef IS_SRVC_CHANGED_CHARACT_PRESENT
+#define IS_SRVC_CHANGED_CHARACT_PRESENT 0
+#endif
+
+// <o> JOINING_MODE_ADV_ADV_INTERVAL - If COMMISSIONING_ENABLED is defined: The advertising interval in Joining mode. This value can vary between 100ms to 10.24s.  <32-16384> 
+
+
+// <i> Minimum 0x0020, maximum 0x4000, unit UNIT_0_625_MS.
+
+#ifndef JOINING_MODE_ADV_ADV_INTERVAL
+#define JOINING_MODE_ADV_ADV_INTERVAL 532
+#endif
+
+// <o> JOINING_MODE_ADV_TIMEOUT - If COMMISSIONING_ENABLED is defined: Time for which the device must be advertising in non-connectable mode (in seconds) in Joining mode. 0 disables timeout.  <0-16383> 
+
+
+#ifndef JOINING_MODE_ADV_TIMEOUT
+#define JOINING_MODE_ADV_TIMEOUT 0
+#endif
+
+// <o> JOINING_MODE_CONN_SUP_TIMEOUT - If COMMISSIONING_ENABLED is defined: Connection Supervision Timeout in 10 ms units in Joining mode, see BLE_GAP_CP_LIMITS. 
+// <i> Minimum BLE_GAP_CP_CONN_SUP_TIMEOUT_MIN, maximum BLE_GAP_CP_CONN_SUP_TIMEOUT_MAX, unit UNIT_10_MS.
+
+#ifndef JOINING_MODE_CONN_SUP_TIMEOUT
+#define JOINING_MODE_CONN_SUP_TIMEOUT 43
+#endif
+
+// <o> JOINING_MODE_MAX_CONN_INTERVAL - If COMMISSIONING_ENABLED is defined: Maximum Connection Interval in 1.25 ms units in Joining mode, see BLE_GAP_CP_LIMITS. 
+// <i> Minimum BLE_GAP_CP_MAX_CONN_INTVL_MIN, maximum BLE_GAP_CP_MAX_CONN_INTVL_MAX, unit UNIT_1_25_MS.
+
+#ifndef JOINING_MODE_MAX_CONN_INTERVAL
+#define JOINING_MODE_MAX_CONN_INTERVAL 24
+#endif
+
+// <o> JOINING_MODE_MIN_CONN_INTERVAL - If COMMISSIONING_ENABLED is defined: Minimum Connection Interval in 1.25 ms units in Joining mode, see BLE_GAP_CP_LIMITS. 
+// <i> Minimum BLE_GAP_CP_MIN_CONN_INTVL_MIN, maximum BLE_GAP_CP_MIN_CONN_INTVL_MAX, unit UNIT_1_25_MS.
+
+#ifndef JOINING_MODE_MIN_CONN_INTERVAL
+#define JOINING_MODE_MIN_CONN_INTERVAL 6
+#endif
+
+// <o> JOINING_MODE_SLAVE_LATENCY - If COMMISSIONING_ENABLED is defined: Slave Latency in number of connection events in Joining mode, see BLE_GAP_CP_LIMITS. 
+// <i> Minimum 0, maximum BLE_GAP_CP_SLAVE_LATENCY_MAX.
+
+#ifndef JOINING_MODE_SLAVE_LATENCY
+#define JOINING_MODE_SLAVE_LATENCY 6
+#endif
+
+// <o> MAX_CONN_INTERVAL - Maximum Connection Interval in 1.25 ms units, see BLE_GAP_CP_LIMITS. 
+// <i> Minimum BLE_GAP_CP_MAX_CONN_INTVL_MIN, maximum BLE_GAP_CP_MAX_CONN_INTVL_MAX, unit UNIT_1_25_MS.
+
+#ifndef MAX_CONN_INTERVAL
+#define MAX_CONN_INTERVAL 24
+#endif
+
+// <o> MIN_CONN_INTERVAL - Minimum Connection Interval in 1.25 ms units, see BLE_GAP_CP_LIMITS. 
+// <i> Minimum BLE_GAP_CP_MIN_CONN_INTVL_MIN, maximum BLE_GAP_CP_MIN_CONN_INTVL_MAX, unit UNIT_1_25_MS.
+
+#ifndef MIN_CONN_INTERVAL
+#define MIN_CONN_INTERVAL 6
+#endif
+
+// <o> SLAVE_LATENCY - Slave Latency in number of connection events, see BLE_GAP_CP_LIMITS. 
+// <i> Minimum 0, maximum BLE_GAP_CP_SLAVE_LATENCY_MAX.
+
+#ifndef SLAVE_LATENCY
+#define SLAVE_LATENCY 6
+#endif
+
+// <q> BLE_IPV6_MEDIUM_ENABLED  - Enabling BLE IPv6 module
+ 
+
+#ifndef BLE_IPV6_MEDIUM_ENABLED
+#define BLE_IPV6_MEDIUM_ENABLED 1
+#endif
+
+// </h> 
+//==========================================================
+
+// </h> 
+//==========================================================
+
+// <h> nRF_IoT_Commissioning 
+
+//==========================================================
+// <e> COMMISSIONING_CONFIG_LOG_ENABLED - commissioning - IoT Commissioning module
+//==========================================================
+#ifndef COMMISSIONING_CONFIG_LOG_ENABLED
+#define COMMISSIONING_CONFIG_LOG_ENABLED 0
+#endif
+// <o> COMMISSIONING_CONFIG_LOG_LEVEL  - Default Severity level
+ 
+// <0=> Off 
+// <1=> Error 
+// <2=> Warning 
+// <3=> Info 
+// <4=> Debug 
+
+#ifndef COMMISSIONING_CONFIG_LOG_LEVEL
+#define COMMISSIONING_CONFIG_LOG_LEVEL 3
+#endif
+
+// <o> COMMISSIONING_CONFIG_INFO_COLOR  - ANSI escape code prefix.
+ 
+// <0=> Default 
+// <1=> Black 
+// <2=> Red 
+// <3=> Green 
+// <4=> Yellow 
+// <5=> Blue 
+// <6=> Magenta 
+// <7=> Cyan 
+// <8=> White 
+
+#ifndef COMMISSIONING_CONFIG_INFO_COLOR
+#define COMMISSIONING_CONFIG_INFO_COLOR 0
+#endif
+
+// <o> COMMISSIONING_CONFIG_DEBUG_COLOR  - ANSI escape code prefix.
+ 
+// <0=> Default 
+// <1=> Black 
+// <2=> Red 
+// <3=> Green 
+// <4=> Yellow 
+// <5=> Blue 
+// <6=> Magenta 
+// <7=> Cyan 
+// <8=> White 
+
+#ifndef COMMISSIONING_CONFIG_DEBUG_COLOR
+#define COMMISSIONING_CONFIG_DEBUG_COLOR 0
+#endif
+
+// </e>
+
+// <e> NCFGS_CONFIG_LOG_ENABLED - ble_ncfgs - BLE Node Configuration Service
+//==========================================================
+#ifndef NCFGS_CONFIG_LOG_ENABLED
+#define NCFGS_CONFIG_LOG_ENABLED 0
+#endif
+// <o> NCFGS_CONFIG_LOG_LEVEL  - Default Severity level
+ 
+// <0=> Off 
+// <1=> Error 
+// <2=> Warning 
+// <3=> Info 
+// <4=> Debug 
+
+#ifndef NCFGS_CONFIG_LOG_LEVEL
+#define NCFGS_CONFIG_LOG_LEVEL 3
+#endif
+
+// <o> NCFGS_CONFIG_INFO_COLOR  - ANSI escape code prefix.
+ 
+// <0=> Default 
+// <1=> Black 
+// <2=> Red 
+// <3=> Green 
+// <4=> Yellow 
+// <5=> Blue 
+// <6=> Magenta 
+// <7=> Cyan 
+// <8=> White 
+
+#ifndef NCFGS_CONFIG_INFO_COLOR
+#define NCFGS_CONFIG_INFO_COLOR 0
+#endif
+
+// <o> NCFGS_CONFIG_DEBUG_COLOR  - ANSI escape code prefix.
+ 
+// <0=> Default 
+// <1=> Black 
+// <2=> Red 
+// <3=> Green 
+// <4=> Yellow 
+// <5=> Blue 
+// <6=> Magenta 
+// <7=> Cyan 
+// <8=> White 
+
+#ifndef NCFGS_CONFIG_DEBUG_COLOR
+#define NCFGS_CONFIG_DEBUG_COLOR 0
+#endif
+
+// </e>
+
+// </h> 
+//==========================================================
+
 // <h> nRF_Libraries 
 
 //==========================================================
@@ -6139,7 +6982,7 @@
  
 
 #ifndef APP_TIMER_CONFIG_USE_SCHEDULER
-#define APP_TIMER_CONFIG_USE_SCHEDULER 0
+#define APP_TIMER_CONFIG_USE_SCHEDULER 1
 #endif
 
 // <q> APP_TIMER_KEEPS_RTC_ACTIVE  - Enable RTC always on
@@ -6523,7 +7366,7 @@
  
 
 #ifndef CRC16_ENABLED
-#define CRC16_ENABLED 0
+#define CRC16_ENABLED 1
 #endif
 
 // <q> CRC32_ENABLED  - crc32 - CRC32 calculation routines
@@ -6774,27 +7617,27 @@
 // <e> MEM_MANAGER_ENABLED - mem_manager - Dynamic memory allocator
 //==========================================================
 #ifndef MEM_MANAGER_ENABLED
-#define MEM_MANAGER_ENABLED 0
+#define MEM_MANAGER_ENABLED 1
 #endif
 // <o> MEMORY_MANAGER_SMALL_BLOCK_COUNT - Size of each memory blocks identified as 'small' block.  <0-255> 
 
 
 #ifndef MEMORY_MANAGER_SMALL_BLOCK_COUNT
-#define MEMORY_MANAGER_SMALL_BLOCK_COUNT 1
+#define MEMORY_MANAGER_SMALL_BLOCK_COUNT 8
 #endif
 
 // <o> MEMORY_MANAGER_SMALL_BLOCK_SIZE -  Size of each memory blocks identified as 'small' block. 
 // <i>  Size of each memory blocks identified as 'small' block. Memory block are recommended to be word-sized.
 
 #ifndef MEMORY_MANAGER_SMALL_BLOCK_SIZE
-#define MEMORY_MANAGER_SMALL_BLOCK_SIZE 32
+#define MEMORY_MANAGER_SMALL_BLOCK_SIZE 64
 #endif
 
 // <o> MEMORY_MANAGER_MEDIUM_BLOCK_COUNT - Size of each memory blocks identified as 'medium' block.  <0-255> 
 
 
 #ifndef MEMORY_MANAGER_MEDIUM_BLOCK_COUNT
-#define MEMORY_MANAGER_MEDIUM_BLOCK_COUNT 0
+#define MEMORY_MANAGER_MEDIUM_BLOCK_COUNT 8
 #endif
 
 // <o> MEMORY_MANAGER_MEDIUM_BLOCK_SIZE -  Size of each memory blocks identified as 'medium' block. 
@@ -6808,14 +7651,14 @@
 
 
 #ifndef MEMORY_MANAGER_LARGE_BLOCK_COUNT
-#define MEMORY_MANAGER_LARGE_BLOCK_COUNT 0
+#define MEMORY_MANAGER_LARGE_BLOCK_COUNT 2
 #endif
 
 // <o> MEMORY_MANAGER_LARGE_BLOCK_SIZE -  Size of each memory blocks identified as 'large' block. 
 // <i>  Size of each memory blocks identified as 'large' block. Memory block are recommended to be word-sized.
 
 #ifndef MEMORY_MANAGER_LARGE_BLOCK_SIZE
-#define MEMORY_MANAGER_LARGE_BLOCK_SIZE 256
+#define MEMORY_MANAGER_LARGE_BLOCK_SIZE 1280
 #endif
 
 // <o> MEMORY_MANAGER_XLARGE_BLOCK_COUNT - Size of each memory blocks identified as 'extra large' block.  <0-255> 
@@ -7563,7 +8406,7 @@
 // <e> NRF_LOG_BACKEND_UART_ENABLED - nrf_log_backend_uart - Log UART backend
 //==========================================================
 #ifndef NRF_LOG_BACKEND_UART_ENABLED
-#define NRF_LOG_BACKEND_UART_ENABLED 0
+#define NRF_LOG_BACKEND_UART_ENABLED 1
 #endif
 // <o> NRF_LOG_BACKEND_UART_TX_PIN - UART TX pin 
 #ifndef NRF_LOG_BACKEND_UART_TX_PIN
@@ -11801,7 +12644,7 @@
 // <2=> NRF_SDH_DISPATCH_MODEL_POLLING 
 
 #ifndef NRF_SDH_DISPATCH_MODEL
-#define NRF_SDH_DISPATCH_MODEL 0
+#define NRF_SDH_DISPATCH_MODEL 1
 #endif
 
 // </h> 

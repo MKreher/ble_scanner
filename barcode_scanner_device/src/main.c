@@ -46,6 +46,7 @@
 #include "app_button.h"
 #include "app_error.h"
 #include "app_timer.h"
+#include "app_scheduler.h"
 #include "ble.h"
 #include "ble_advdata.h"
 #include "ble_conn_params.h"
@@ -71,6 +72,8 @@
 #include "nrf_serial.h"
 #include <stdint.h>
 #include <string.h>
+
+#include "coap_service.h"
 
 #define ADVERTISING_LED LED_1 /**< Is on when device is advertising. */
 #define CONNECTED_LED LED_2   /**< Is on when device has connected. */
@@ -110,6 +113,21 @@
 #define BUTTON_DETECTION_DELAY APP_TIMER_TICKS(50) /**< Delay from a GPIOTE event until a button is reported as pushed (in number of timer ticks). */
 
 #define DEAD_BEEF 0xDEADBEEF /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
+
+#define SCHED_MAX_EVENT_DATA_SIZE       16                                                    /**< Maximum size of scheduler events. */
+#define SCHED_QUEUE_SIZE                192                                                   /**< Maximum number of events in the scheduler queue. */
+
+#define APP_ENABLE_LOGS                 1                                                     /**< Enable logs in the application. */
+
+#if (APP_ENABLE_LOGS == 1)
+#define APPL_LOG  NRF_LOG_INFO
+#define APPL_DUMP NRF_LOG_RAW_HEXDUMP_INFO
+#define APPL_ADDR IPV6_ADDRESS_LOG
+#else // APP_ENABLE_LOGS
+#define APPL_LOG(...)
+#define APPL_DUMP(...)
+#define APPL_ADDR(...)
+#endif // APP_ENABLE_LOGS
 
 //BLE_LBS_DEF(m_lbs);       /**< LED Button Service instance. */
 //NRF_BLE_GATT_DEF(m_gatt); /**< GATT module instance. */
@@ -727,6 +745,13 @@ static void idle_state_handle(void) {
   }
 }
 
+/**@brief Function for the Event Scheduler initialization.
+ */
+static void scheduler_init(void)
+{
+    APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
+}
+
 // BARCODE MODULE STUFF >>>>>>>>>>>>>>
 
 static void barcode_module_init() {
@@ -743,10 +768,13 @@ static void barcode_module_init() {
 /**@brief Function for application main entry.
  */
 int main(void) {
+  uint32_t err_code;
+
   // Initialize.
   lfclk_config();
   log_init();
   leds_init();
+  scheduler_init();
   timers_init();
   buttons_init();
   barcode_module_init();
@@ -754,21 +782,22 @@ int main(void) {
   init_serial();
   create_serial_receive_timer();
   power_management_init();
-  /*
-  ble_stack_init();
-  gap_params_init();
-  gatt_init();
-  services_init();
-  advertising_init();
-  conn_params_init();
-  advertising_start();
-  */
+  init_coap();
+  
   // Start execution.
   NRF_LOG_INFO("TicTac Barcode Scanner started.");
- 
+
   // Enter main loop.
   for (;;) {
-    __WFE(); // Activate only for Debugging
+    app_sched_execute();
+
+    if (NRF_LOG_PROCESS() == false)
+    {
+      // Sleep waiting for an application event.
+      err_code = sd_app_evt_wait();
+      APP_ERROR_CHECK(err_code);
+    }
+    //__WFE(); // Activate only for Debugging
     //idle_state_handle();  // Active if not Debugging
   }
 }
