@@ -11,6 +11,12 @@ void init_coap();
  *
  * @param[in]   barcode        The barcode value.
  */
-static void coap_send_barcode(char *barcode);
+void coap_send_barcode(char *barcode);
+
+/**@brief Function for sending barcode via MQTT.
+ *
+ * @param[in]   barcode        The barcode value.
+ */
+void mqtt_send_barcode(char *barcode);
 
 #endif // COAP_SERVICE_H__

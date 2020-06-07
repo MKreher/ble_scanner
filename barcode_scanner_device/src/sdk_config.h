@@ -53,7 +53,7 @@
 // <e> NRF_LWIP_DRIVER_CONFIG_LOG_ENABLED - lwip - lwIP stack for nRF5x
 //==========================================================
 #ifndef NRF_LWIP_DRIVER_CONFIG_LOG_ENABLED
-#define NRF_LWIP_DRIVER_CONFIG_LOG_ENABLED 0
+#define NRF_LWIP_DRIVER_CONFIG_LOG_ENABLED 1
 #endif
 // <o> NRF_LWIP_DRIVER_CONFIG_LOG_LEVEL  - Default Severity level
  
@@ -606,7 +606,7 @@
 // <e> IOT_BLE_IPSP_CONFIG_LOG_ENABLED - Enables logging in the module.
 //==========================================================
 #ifndef IOT_BLE_IPSP_CONFIG_LOG_ENABLED
-#define IOT_BLE_IPSP_CONFIG_LOG_ENABLED 0
+#define IOT_BLE_IPSP_CONFIG_LOG_ENABLED 1
 #endif
 // <o> IOT_BLE_IPSP_CONFIG_LOG_LEVEL  - Default Severity level
  
@@ -3182,7 +3182,7 @@
 // <e> NRFX_RNG_ENABLED - nrfx_rng - RNG peripheral driver
 //==========================================================
 #ifndef NRFX_RNG_ENABLED
-#define NRFX_RNG_ENABLED 0
+#define NRFX_RNG_ENABLED 1
 #endif
 // <q> NRFX_RNG_CONFIG_ERROR_CORRECTION  - Error correction
  
@@ -5303,7 +5303,7 @@
 // <e> RNG_ENABLED - nrf_drv_rng - RNG peripheral driver - legacy layer
 //==========================================================
 #ifndef RNG_ENABLED
-#define RNG_ENABLED 0
+#define RNG_ENABLED 1
 #endif
 // <q> RNG_CONFIG_ERROR_CORRECTION  - Error correction
  
@@ -6150,7 +6150,7 @@
 // <e> IOT_BLE_6LOWPAN_CONFIG_LOG_ENABLED - Enables logging in the module.
 //==========================================================
 #ifndef IOT_BLE_6LOWPAN_CONFIG_LOG_ENABLED
-#define IOT_BLE_6LOWPAN_CONFIG_LOG_ENABLED 0
+#define IOT_BLE_6LOWPAN_CONFIG_LOG_ENABLED 1
 #endif
 // <o> IOT_BLE_6LOWPAN_CONFIG_LOG_LEVEL  - Default Severity level
  
@@ -6512,7 +6512,7 @@
 // <i> The wall clock of the IoT Timer module has to be updated from an external source at regular intervals. This define needs to be set to the interval between updates.
 
 #ifndef IOT_TIMER_RESOLUTION_IN_MS
-#define IOT_TIMER_RESOLUTION_IN_MS 100
+#define IOT_TIMER_RESOLUTION_IN_MS 10
 #endif
 
 // </h> 
@@ -6621,7 +6621,7 @@
 
 // <s> CONFIG_MODE_DEVICE_NAME - If COMMISSIONING_ENABLED is defined: Device name used in BLE undirected advertisement in Configuration mode.
 #ifndef CONFIG_MODE_DEVICE_NAME
-#define CONFIG_MODE_DEVICE_NAME "Node_Cfg"
+#define CONFIG_MODE_DEVICE_NAME "TicTac_Scanner"
 #endif
 
 // <o> CONFIG_MODE_MAX_CONN_INTERVAL - If COMMISSIONING_ENABLED is defined: Maximum Connection Interval in 1.25 ms units in Configuration mode, see BLE_GAP_CP_LIMITS. 
@@ -6654,7 +6654,7 @@
 
 // <s> DEVICE_NAME - Device name used in BLE undirected advertisement if COMMISSIONING_ENABLED is not defined.
 #ifndef DEVICE_NAME
-#define DEVICE_NAME "CoAP_CLNT"
+#define DEVICE_NAME "TicTac_Scanner"
 #endif
 
 // <q> IS_SRVC_CHANGED_CHARACT_PRESENT  - Include the Service Changed characteristic in the Attribute Table.
@@ -6737,7 +6737,85 @@
 #endif
 
 // </h> 
+
+
 //==========================================================
+
+// <h> mqtt_config - MQTT Config Definitions
+
+//==========================================================
+// <e> MQTT_CONFIG_LOG_ENABLED - Enables logging in the module.
+//==========================================================
+#ifndef MQTT_CONFIG_LOG_ENABLED
+#define MQTT_CONFIG_LOG_ENABLED 1
+#endif
+// <o> MQTT_CONFIG_LOG_LEVEL  - Default Severity level
+ 
+// <0=> Off 
+// <1=> Error 
+// <2=> Warning 
+// <3=> Info 
+// <4=> Debug 
+
+#ifndef MQTT_CONFIG_LOG_LEVEL
+#define MQTT_CONFIG_LOG_LEVEL 3
+#endif
+
+// <o> MQTT_CONFIG_INFO_COLOR  - ANSI escape code prefix.
+ 
+// <0=> Default 
+// <1=> Black 
+// <2=> Red 
+// <3=> Green 
+// <4=> Yellow 
+// <5=> Blue 
+// <6=> Magenta 
+// <7=> Cyan 
+// <8=> White 
+
+#ifndef MQTT_CONFIG_INFO_COLOR
+#define MQTT_CONFIG_INFO_COLOR 0
+#endif
+
+// <o> MQTT_CONFIG_DEBUG_COLOR  - ANSI escape code prefix.
+ 
+// <0=> Default 
+// <1=> Black 
+// <2=> Red 
+// <3=> Green 
+// <4=> Yellow 
+// <5=> Blue 
+// <6=> Magenta 
+// <7=> Cyan 
+// <8=> White 
+
+#ifndef MQTT_CONFIG_DEBUG_COLOR
+#define MQTT_CONFIG_DEBUG_COLOR 0
+#endif
+
+// </e>
+
+// <o> MQTT_MAX_CLIENTS - Maximum number of clients that can be managed by the module.  <1-255> 
+
+
+#ifndef MQTT_MAX_CLIENTS
+#define MQTT_MAX_CLIENTS 1
+#endif
+
+// <o> MQTT_KEEPALIVE - Keep alive time for MQTT (in seconds). Sending of Ping Requests to keep the connection alive are governed by this value. A keep alive value of zero (0) has the effect of turning off the keep alive mechanism.  <0-65535> 
+
+
+#ifndef MQTT_KEEPALIVE
+#define MQTT_KEEPALIVE 60
+#endif
+
+// <o> MQTT_MAX_PACKET_LENGTH - Maximum MQTT packet size that can be sent (including the fixed and variable header).  <5-268435460> 
+
+
+#ifndef MQTT_MAX_PACKET_LENGTH
+#define MQTT_MAX_PACKET_LENGTH 128
+#endif
+
 
 // </h> 
 //==========================================================
@@ -6853,15 +6931,19 @@
 // <h> nRF_Libraries 
 
 //==========================================================
+// <q> APP_FIFO_ENABLED  - app_fifo - Software FIFO implementation
+
+#ifndef APP_FIFO_ENABLED
+#define APP_FIFO_ENABLED 1
+#endif
+
 // <q> APP_GPIOTE_ENABLED  - app_gpiote - GPIOTE events dispatcher
- 
 
 #ifndef APP_GPIOTE_ENABLED
 #define APP_GPIOTE_ENABLED 0
 #endif
 
 // <q> APP_PWM_ENABLED  - app_pwm - PWM functionality
- 
 
 #ifndef APP_PWM_ENABLED
 #define APP_PWM_ENABLED 0
@@ -8406,7 +8488,7 @@
 // <e> NRF_LOG_BACKEND_UART_ENABLED - nrf_log_backend_uart - Log UART backend
 //==========================================================
 #ifndef NRF_LOG_BACKEND_UART_ENABLED
-#define NRF_LOG_BACKEND_UART_ENABLED 1
+#define NRF_LOG_BACKEND_UART_ENABLED 0
 #endif
 // <o> NRF_LOG_BACKEND_UART_TX_PIN - UART TX pin 
 #ifndef NRF_LOG_BACKEND_UART_TX_PIN
@@ -12838,6 +12920,63 @@
 // </h> 
 //==========================================================
 
+
+// </e>
+
+// </h> 
+//==========================================================
+
+// <h> nRF_TLS 
+
+//==========================================================
+// <e> TLS_CONFIG_LOG_ENABLED - nrf_tls - TLS library
+//==========================================================
+#ifndef TLS_CONFIG_LOG_ENABLED
+#define TLS_CONFIG_LOG_ENABLED 0
+#endif
+// <o> TLS_CONFIG_LOG_LEVEL  - Default Severity level
+ 
+// <0=> Off 
+// <1=> Error 
+// <2=> Warning 
+// <3=> Info 
+// <4=> Debug 
+
+#ifndef TLS_CONFIG_LOG_LEVEL
+#define TLS_CONFIG_LOG_LEVEL 3
+#endif
+
+// <o> TLS_CONFIG_INFO_COLOR  - ANSI escape code prefix.
+ 
+// <0=> Default 
+// <1=> Black 
+// <2=> Red 
+// <3=> Green 
+// <4=> Yellow 
+// <5=> Blue 
+// <6=> Magenta 
+// <7=> Cyan 
+// <8=> White 
+
+#ifndef TLS_CONFIG_INFO_COLOR
+#define TLS_CONFIG_INFO_COLOR 0
+#endif
+
+// <o> TLS_CONFIG_DEBUG_COLOR  - ANSI escape code prefix.
+ 
+// <0=> Default 
+// <1=> Black 
+// <2=> Red 
+// <3=> Green 
+// <4=> Yellow 
+// <5=> Blue 
+// <6=> Magenta 
+// <7=> Cyan 
+// <8=> White 
+
+#ifndef TLS_CONFIG_DEBUG_COLOR
+#define TLS_CONFIG_DEBUG_COLOR 0
+#endif
 
 // </e>
 

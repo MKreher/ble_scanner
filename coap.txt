@@ -27,19 +27,37 @@ hciconfig hci0 reset
 hcitool lescan
 
 modprobe bluetooth_6lowpan
-echo "connect 00:BB:47:B7:D8:A8 1" > /sys/kernel/debug/bluetooth/6lowpan_control
-ifconfig bt0 add fd00:a::/64 
+echo "connect 00:74:A4:16:35:35 1" > /sys/kernel/debug/bluetooth/6lowpan_control
+ifconfig -a bt0 add 2001:db8::1/64
 service radvd restart
  
 ./aiocoap-client coap://[fd00:a::00BB:47FF:FEB7:D8A8]:5683/lights/led3
 
-echo "disconnect 00:BB:47:B7:D8:A8 1" > /sys/kernel/debug/bluetooth/6lowpan_control
+echo "disconnect 00:74:A4:16:35:35 1" > /sys/kernel/debug/bluetooth/6lowpan_control
 
 
+coap://[fd00:a::00BB:47FF:FEB7:D8A8]:5683/sensors/thermometer
 
-fd00:a::b827:ebff:fe80:def4
 
-0xfd, 0x00, 0x0A, 0x00, 0x00, 0x00, 0x00, 0x00, \
-0xB8, 0x27, 0xEB, 0xFF, 0xFE, 0x80, 0xDE, 0xF4 
+echo "connect 00:74:A4:16:35:35 2" > /sys/kernel/debug/bluetooth/6lowpan_control
+
 
 ./aiocoap-client coap://[127.0.0.1]:5683/lights/led3
+
+
+echo "connect 00:74:A4:16:35:35 1" > /sys/kernel/debug/bluetooth/6lowpan_control
+
+
+ 00:AA:BB:CC:DD:EE and the used global prefix to be 2004::/64.
+-Therefore the global IPv6 address of the server will be 2004::00AA:BBFF:FECC:DDEE.
+
+00:74:A4:16:35:35
+fd00:a::0074:A4FF:FE16:3535
+
+
+modprobe bluetooth_6lowpan
+echo "connect 00:85:68:18:5C:A3 1" > /sys/kernel/debug/bluetooth/6lowpan_control
+ifconfig -a bt0 add 2001:db8::1/64
+service radvd restart
+
+2001:db8::0085:68FF:FE18:5CA3

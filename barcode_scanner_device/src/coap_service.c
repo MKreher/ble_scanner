@@ -17,6 +17,7 @@
 #include "lwip/ip6_addr.h"
 #include "lwip/netif.h"
 #include "lwip/timers.h"
+#include "mqtt.h"
 #include "nrf_platform_port.h"
 #include "app_util_platform.h"
 #include "iot_timer.h"
@@ -28,9 +29,14 @@
 
 /** Modify SERVER_IPV6_ADDRESS according to your setup.
  *  The address provided below is a place holder.  */
-//  2003:e8:2709:ea00:7323:9c9a:e224:6650
-#define SERVER_IPV6_ADDRESS             0x20, 0x03, 0x00, 0xE8, 0x27, 0x09, 0xEA, 0x00, \
-                                        0x73, 0x23, 0x9C, 0x9A, 0xE2, 0x24, 0x66, 0x50        /**< IPv6 address of the server node. */
+//  2003:e8:271c:3200:aef5:5f7f:78d2:3a51
+#define SERVER_IPV6_ADDRESS             0x20, 0x03, 0x00, 0xE8, 0x27, 0x1C, 0x32, 0x00, \
+                                        0xAE, 0xF5, 0x5F, 0x7F, 0x78, 0xD2, 0x3A, 0x51        /**< IPv6 address of the server node. */
+
+static const ipv6_addr_t               m_broker_addr =
+{
+    .u8 = {SERVER_IPV6_ADDRESS}   
+};
 
 // The CoAP default port number 5683 MUST be supported by a server.
 #define LOCAL_PORT_NUM                  5683                                                  /**< CoAP default port number. */
@@ -60,6 +66,16 @@
 #define APPL_ADDR(...)
 #endif // APP_ENABLE_LOGS
 
+#define APP_MQTT_BROKER_PORT                8883                                                    /**< Port number of MQTT Broker being used. */
+#define APP_MQTT_BROKER_NON_SECURE_PORT     1883                                                    /**< Port number of MQTT Broker being used. */
+#define APP_MQTT_PUBLISH_TOPIC              "blescanner/barcode"                                       /**< MQTT topic to which this application publishes. */
+
+/**@brief Application state with respect to MQTT. */
+typedef enum
+{
+    APP_MQTT_STATE_IDLE,                                                                            /**< Indicates no MQTT connection exists. */
+    APP_MQTT_STATE_CONNECTED                                                                        /**< Indicates MQTT connection is established. */
+} app_mqtt_state_t;
 
 typedef enum
 {
@@ -67,6 +83,7 @@ typedef enum
     CONNECTABLE_MODE,
     IPV6_IF_DOWN,
     IPV6_IF_UP,
+    CONNECTED_TO_BROKER
 } ipv6_state_t;
 
 APP_TIMER_DEF(m_iot_timer_tick_src_id);                                                      /**< System Timer used to service CoAP and LWIP periodically. */
@@ -80,10 +97,78 @@ static const char                  m_uri_part_barcode[]    = "barcode";
 static int                         m_temperature        = 21;
 static uint16_t                    m_global_token_count = 0x0102;
 
+static mqtt_client_t                        m_app_mqtt_client;                                      /**< MQTT Client instance reference provided by the MQTT module. */
+static const char                           m_client_id[] = "nrfPublisher";                         /**< Unique MQTT client identifier. */
+static app_mqtt_state_t                     m_connection_state = APP_MQTT_STATE_IDLE;               /**< MQTT Connection state. */
+static bool                                 m_do_ind_err = false;
+static uint8_t                              m_ind_err_count = 0;
+static uint16_t                             m_message_counter = 1;                                  /**< Message counter used to generated message ids for MQTT messages. */
+
+
+static const uint8_t identity[] = {0x43, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79};
+static const uint8_t shared_secret[] = {0x73, 0x65, 0x63, 0x72, 0x65, 0x74, 0x50, 0x53, 0x4b};
+
+static nrf_tls_preshared_key_t m_preshared_key = {
+    .p_identity     = &identity[0],
+    .p_secret_key   = &shared_secret[0],
+    .identity_len   = 15,
+    .secret_key_len = 9
+};
+
+static nrf_tls_key_settings_t m_tls_keys = {
+    .p_psk = &m_preshared_key
+};
+
+
 #ifdef COMMISSIONING_ENABLED
 static bool                        m_power_off_on_failure = false;
 static bool                        m_identity_mode_active;
 #endif // COMMISSIONING_ENABLED
+
+
+/**@brief Forward declarations. */
+void app_mqtt_evt_handler(mqtt_client_t * const p_client, const mqtt_evt_t * p_evt);
+
+
+//#define MQTT_SECURE_CONNECTION_ENABLED
+
+#ifdef MQTT_SECURE_CONNECTION_ENABLED
+/**@brief Connect to MQTT broker. */
+static void app_mqtt_connect(void)
+{
+    mqtt_client_init(&m_app_mqtt_client);
+
+    memcpy(m_app_mqtt_client.broker_addr.u8, m_broker_addr.u8, IPV6_ADDR_SIZE);
+    m_app_mqtt_client.broker_port          = APP_MQTT_BROKER_PORT;
+    m_app_mqtt_client.evt_cb               = app_mqtt_evt_handler;
+    m_app_mqtt_client.client_id.p_utf_str  = (uint8_t *)m_client_id;
+    m_app_mqtt_client.client_id.utf_strlen = strlen(m_client_id);
+    m_app_mqtt_client.p_password           = NULL;
+    m_app_mqtt_client.p_user_name          = NULL;
+    m_app_mqtt_client.transport_type       = MQTT_TRANSPORT_SECURE;
+    m_app_mqtt_client.p_security_settings  = &m_tls_keys;
+    UNUSED_VARIABLE(mqtt_connect(&m_app_mqtt_client));
+}
+#endif // MQTT_SECURE_CONNECTION_ENABLED
+
+#ifndef MQTT_SECURE_CONNECTION_ENABLED
+/**@brief Connect to MQTT broker. */
+static void app_mqtt_connect(void)
+{
+    mqtt_client_init(&m_app_mqtt_client);
+
+    memcpy(m_app_mqtt_client.broker_addr.u8, m_broker_addr.u8, IPV6_ADDR_SIZE);
+    m_app_mqtt_client.broker_port          = APP_MQTT_BROKER_NON_SECURE_PORT;
+    m_app_mqtt_client.evt_cb               = app_mqtt_evt_handler;
+    m_app_mqtt_client.client_id.p_utf_str  = (uint8_t *)m_client_id;
+    m_app_mqtt_client.client_id.utf_strlen = strlen(m_client_id);
+    m_app_mqtt_client.p_password           = NULL;
+    m_app_mqtt_client.p_user_name          = NULL;
+    m_app_mqtt_client.transport_type       = MQTT_TRANSPORT_NON_SECURE;
+    m_app_mqtt_client.p_security_settings  = NULL;
+    UNUSED_VARIABLE(mqtt_connect(&m_app_mqtt_client));
+}
+#endif // MQTT_SECURE_CONNECTION_ENABLED
 
 
 /**@brief Function for handling the timer used to trigger TCP actions.
@@ -94,7 +179,11 @@ static bool                        m_identity_mode_active;
  */
 static void app_lwip_time_tick(iot_timer_time_in_ms_t wall_clock_value)
 {
+    UNUSED_VARIABLE(wall_clock_value);
+
     sys_check_timeouts();
+
+    UNUSED_VARIABLE(mqtt_live());
 }
 
 /**@brief Function for catering CoAP module with periodic time ticks.
@@ -125,7 +214,7 @@ static void timers_init(void)
     uint32_t err_code;
 
     // Initialize timer module.
-    APP_ERROR_CHECK(app_timer_init());
+    //APP_ERROR_CHECK(app_timer_init());
 
     // Create a sys timer.
     err_code = app_timer_create(&m_iot_timer_tick_src_id,
@@ -155,9 +244,9 @@ static void coap_response_handler(uint32_t status, void * p_arg, coap_message_t 
  *
  * @param[in]   barcode        The barcode value.
  */
-static void coap_send_barcode(char *barcode)
+void coap_send_barcode(char *barcode)
 {
-    APPL_LOG("coap_send_barcod()....");
+    APPL_LOG("coap_send_barcode()....");
     uint32_t err_code;
 
 #ifdef COMMISSIONING_ENABLED
@@ -171,6 +260,7 @@ static void coap_send_barcode(char *barcode)
 
     if (m_is_interface_up == false)
     {
+        APPL_LOG("IPv6 interface not up and running. CoAP request can not be send.");
         return;
     }
 
@@ -205,7 +295,8 @@ static void coap_send_barcode(char *barcode)
     err_code = coap_message_opt_str_add(p_request, COAP_OPT_URI_PATH, (uint8_t *)m_uri_part_barcode, strlen(m_uri_part_barcode));
     APP_ERROR_CHECK(err_code);
 
-    err_code = coap_message_payload_set(p_request, barcode, sizeof(barcode));
+    //uint8_t payload[] = {COMMAND_TOGGLE};
+    err_code = coap_message_payload_set(p_request, (void *) barcode, strlen(barcode));
     APP_ERROR_CHECK(err_code);
 
     uint32_t handle;
@@ -217,7 +308,7 @@ static void coap_send_barcode(char *barcode)
     err_code = coap_message_delete(p_request);
     APP_ERROR_CHECK(err_code);
 
-    APPL_LOG("coap_send_barcod().");
+    APPL_LOG("coap_send_barcode().");
 }
 
 void well_known_core_callback(coap_resource_t * p_resource, coap_message_t * p_request)
@@ -519,6 +610,108 @@ static void iot_timer_init(void)
     APP_ERROR_CHECK(err_code);
 }
 
+void app_mqtt_evt_handler(mqtt_client_t * const p_client, const mqtt_evt_t * p_evt)
+{
+    switch (p_evt->id)
+    {
+        case MQTT_EVT_CONNACK:
+        {
+            APPL_LOG (">> MQTT_EVT_CONNACK, result %08lx", p_evt->result);
+            if (p_evt->result == NRF_SUCCESS)
+            {
+                m_connection_state = APP_MQTT_STATE_CONNECTED;
+                m_ipv6_state = CONNECTED_TO_BROKER;
+            }
+            else
+            {
+                m_connection_state = APP_MQTT_STATE_IDLE;
+                m_ipv6_state = IPV6_IF_UP;
+            }
+            break;
+        }
+        case MQTT_EVT_PUBACK:
+        {
+            APPL_LOG (">> MQTT_EVT_PUBACK");
+            break;
+        }
+        case MQTT_EVT_DISCONNECT:
+        {
+            APPL_LOG (">> MQTT_EVT_DISCONNECT");
+            m_connection_state = APP_MQTT_STATE_IDLE;
+            m_ipv6_state = IPV6_IF_UP;
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+
+/**@brief Function for sending barcode via MQTT.
+ *
+ * @param[in]   barcode        The barcode value.
+ */
+void mqtt_send_barcode(char *barcode)
+{
+    APPL_LOG("mqtt_send_barcode()....");
+
+#ifdef COMMISSIONING_ENABLED
+    if ((button_action == APP_BUTTON_PUSH) && (pin_no == ERASE_BUTTON_PIN_NO))
+    {
+        APPL_LOG("Erasing all commissioning settings from persistent storage...");
+        commissioning_settings_clear();
+        return;
+    }
+#endif // COMMISSIONING_ENABLED
+
+    if (m_connection_state != APP_MQTT_STATE_CONNECTED)
+    {
+        APPL_LOG("MQTT not connected. Connecting....");
+
+        app_mqtt_connect();
+
+        sys_check_timeouts();
+
+        if (m_connection_state == APP_MQTT_STATE_CONNECTED)
+        {
+            APPL_LOG("MQTT successfuly connected.");
+        } else {
+            APPL_LOG("MQTT failed to connect.");
+            return;
+        }
+    }
+
+    // Set topic to be published.
+    const char * topic_str = APP_MQTT_PUBLISH_TOPIC;
+
+    mqtt_publish_param_t param;
+
+    param.message.topic.qos              = MQTT_QoS_1_ATLEAST_ONCE;
+    param.message.topic.topic.p_utf_str  = (uint8_t *)topic_str;
+    param.message.topic.topic.utf_strlen = strlen(topic_str);
+    param.message.payload.p_bin_str      = (uint8_t *)barcode,
+    param.message.payload.bin_strlen     = strlen(barcode);
+    param.message_id                     = m_message_counter;
+    param.dup_flag                       = 0;
+    param.retain_flag                    = 0;
+
+    uint32_t err_code = mqtt_publish(&m_app_mqtt_client, &param);
+    APPL_LOG("mqtt_publish result 0x%08lx", err_code);
+
+    if (err_code == NRF_SUCCESS)
+    {
+        APPL_LOG("MQTT publish successfuly.");
+        // Avoid ever sending invalid message id 0.
+        m_message_counter+= 2;
+    }
+    else
+    {
+        APPL_LOG("MQTT publish failed. Error code: 0x%08lx.", err_code);
+        m_do_ind_err = true;
+    }
+
+    APPL_LOG("mqtt_send_barcode().");
+}
 
 /**@brief Function for starting connectable mode.
  */
@@ -605,8 +798,6 @@ void commissioning_power_off_cb(bool power_off_on_failure)
  */
 int init_coap(void)
 {
-    APPL_LOG("init_coap()...");
-
     uint32_t err_code;
 
     timers_init();

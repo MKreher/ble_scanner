@@ -552,6 +552,24 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action) {
   }
 }
 
+static void button_event_handler_MOCK(uint8_t pin_no, uint8_t button_action) {
+  NRF_LOG_INFO("button_event_handler_MOCK() called.");
+  
+  ret_code_t err_code;
+
+  switch (pin_no) {
+  case LEDBUTTON_BUTTON:
+    if (button_action == APP_BUTTON_PUSH) {
+      coap_send_barcode("4711-0815");
+      mqtt_send_barcode("4711-0815");
+    }
+    break;
+  default:
+    APP_ERROR_HANDLER(pin_no);
+    break;
+  }
+}
+
 /**@brief Function for initializing the button handler module.
  */
 static void buttons_init(void) {
@@ -560,7 +578,9 @@ static void buttons_init(void) {
   //The array must be static because a pointer to it will be saved in the button handler module.
   static app_button_cfg_t buttons[] =
       {
-          {LEDBUTTON_BUTTON, false, BUTTON_PULL, button_event_handler}};
+          //{LEDBUTTON_BUTTON, false, BUTTON_PULL, button_event_handler}
+          {LEDBUTTON_BUTTON, false, BUTTON_PULL, button_event_handler_MOCK}
+      };
 
   err_code = app_button_init(buttons, ARRAY_SIZE(buttons), BUTTON_DETECTION_DELAY);
   APP_ERROR_CHECK(err_code);
