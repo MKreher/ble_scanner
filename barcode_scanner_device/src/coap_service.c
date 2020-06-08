@@ -29,9 +29,9 @@
 
 /** Modify SERVER_IPV6_ADDRESS according to your setup.
  *  The address provided below is a place holder.  */
-//  2003:e8:271c:3200:aef5:5f7f:78d2:3a51
-#define SERVER_IPV6_ADDRESS             0x20, 0x03, 0x00, 0xE8, 0x27, 0x1C, 0x32, 0x00, \
-                                        0xAE, 0xF5, 0x5F, 0x7F, 0x78, 0xD2, 0x3A, 0x51        /**< IPv6 address of the server node. */
+//  2003:e8:2712:0:1a13:bea1:da:901f
+#define SERVER_IPV6_ADDRESS             0x20, 0x03, 0x00, 0xE8, 0x27, 0x12, 0x00, 0x00, \
+                                        0x1A, 0x13, 0xBE, 0xA1, 0x00, 0xDA, 0x90, 0x1F        /**< IPv6 address of the server node. */
 
 static const ipv6_addr_t               m_broker_addr =
 {

@@ -698,7 +698,7 @@ int main(void)
 {
     bool erase_bonds;
 
-    // Initialize.
+     // Initialize.
     uart_init();
     log_init();
     timers_init();
