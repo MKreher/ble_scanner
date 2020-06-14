@@ -1,5 +1,5 @@
-#ifndef BLE_SCANNER_H__
-#define BLE_SCANNER_H__
+#ifndef COAP_SERVICE_H__
+#define COAP_SERVICE_H__
 
 #include <stdbool.h>
 #include <stdint.h>

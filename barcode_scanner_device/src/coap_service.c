@@ -8,7 +8,6 @@
 #include "nordic_common.h"
 #include "sdk_config.h"
 #include "nrf_sdm.h"
-#include "app_scheduler.h"
 #include "app_timer.h"
 #include "app_button.h"
 #include "lwip/init.h"
@@ -29,9 +28,9 @@
 
 /** Modify SERVER_IPV6_ADDRESS according to your setup.
  *  The address provided below is a place holder.  */
-//  2003:e8:2712:0:1a13:bea1:da:901f
-#define SERVER_IPV6_ADDRESS             0x20, 0x03, 0x00, 0xE8, 0x27, 0x12, 0x00, 0x00, \
-                                        0x1A, 0x13, 0xBE, 0xA1, 0x00, 0xDA, 0x90, 0x1F        /**< IPv6 address of the server node. */
+//  2003:e8:270c:4700:8a7b:c6a8:ad1a:cea8
+#define SERVER_IPV6_ADDRESS             0x20, 0x03, 0x00, 0xE8, 0x27, 0x0C, 0x47, 0x00, \
+                                        0x8A, 0x7B, 0xC6, 0xA8, 0xAD, 0x1A, 0xCE, 0xA8        /**< IPv6 address of the server node. */
 
 static const ipv6_addr_t               m_broker_addr =
 {
@@ -97,12 +96,12 @@ static const char                  m_uri_part_barcode[]    = "barcode";
 static int                         m_temperature        = 21;
 static uint16_t                    m_global_token_count = 0x0102;
 
-static mqtt_client_t                        m_app_mqtt_client;                                      /**< MQTT Client instance reference provided by the MQTT module. */
-static const char                           m_client_id[] = "nrfPublisher";                         /**< Unique MQTT client identifier. */
-static app_mqtt_state_t                     m_connection_state = APP_MQTT_STATE_IDLE;               /**< MQTT Connection state. */
-static bool                                 m_do_ind_err = false;
-static uint8_t                              m_ind_err_count = 0;
-static uint16_t                             m_message_counter = 1;                                  /**< Message counter used to generated message ids for MQTT messages. */
+static mqtt_client_t               m_app_mqtt_client;                                      /**< MQTT Client instance reference provided by the MQTT module. */
+static const char                  m_client_id[] = "nrfPublisher";                         /**< Unique MQTT client identifier. */
+static app_mqtt_state_t            m_connection_state = APP_MQTT_STATE_IDLE;               /**< MQTT Connection state. */
+static bool                        m_do_ind_err = false;
+static uint8_t                     m_ind_err_count = 0;
+static uint16_t                    m_message_counter = 1;                                  /**< Message counter used to generated message ids for MQTT messages. */
 
 
 static const uint8_t identity[] = {0x43, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79};
@@ -556,8 +555,6 @@ void nrf_driver_interface_down(iot_interface_t const * p_interface)
  */
 static void ip_stack_init(void)
 {
-    APPL_LOG("ip_stack_init()....");
-
     uint32_t err_code;
     err_code = ipv6_medium_eui64_get(m_ipv6_medium.ipv6_medium_instance_id,
                                      &eui64_local_iid);
@@ -573,8 +570,6 @@ static void ip_stack_init(void)
 
     //Initialize lwip stack.
     lwip_init();
-
-    APPL_LOG("ip_stack_init().");
 }
 
 
@@ -829,6 +824,8 @@ int init_coap(void)
 
     ip_stack_init();
 
+    APPL_LOG("IPv6 stack started.");
+   
     coap_port_t local_port_list[COAP_PORT_COUNT] =
     {
         {.port_number = LOCAL_PORT_NUM}
@@ -842,10 +839,10 @@ int init_coap(void)
 
     coap_endpoints_init();
 
+    APPL_LOG("COAP initalized.");
+
     // Start execution
     connectable_mode_enter();
-
-    APPL_LOG("CoAP stack started.");
 }
 
 /**
