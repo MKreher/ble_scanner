@@ -236,8 +236,8 @@ static void button_event_handler_MOCK(uint8_t pin_no, uint8_t button_action) {
   switch (pin_no) {
   case LEDBUTTON_BUTTON:
     if (button_action == APP_BUTTON_PUSH) {
-      //coap_send_barcode("4711-0815");
-      //mqtt_send_barcode("4711-0815");
+      coap_send_barcode("4711-0815");
+      mqtt_send_barcode("4711-0815");
     }
     break;
   default:
@@ -467,7 +467,7 @@ int main(void) {
   uint32_t err_code;
 
   // Initialize.
-  lfclk_config();
+  //lfclk_config();
   log_init();
   leds_init();
   scheduler_init();
@@ -478,8 +478,8 @@ int main(void) {
   init_serial();
   create_serial_receive_timer();
   power_management_init();
-  //init_coap();
   init_ble_hid();
+  //init_coap();
   
 
   
@@ -496,8 +496,8 @@ int main(void) {
       err_code = sd_app_evt_wait();
       APP_ERROR_CHECK(err_code);
     }
-    //__WFE(); // Activate only for Debugging
-    //idle_state_handle();  // Active if not Debugging
+    //__WFE();
+    idle_state_handle();
   }
 }
 
