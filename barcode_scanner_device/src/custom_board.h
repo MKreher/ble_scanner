@@ -48,15 +48,14 @@ extern "C"
 #include "nrf_gpio.h"
 
 // LEDs
-#define LEDS_NUMBER 5
-#define LED_BOARD_1 30
-#define LED_BOARD_2 31
-#define LED_1 2
-#define LED_2 3
-#define LED_3 29
-#define LEDS_ACTIVE_STATE 1
+#define LEDS_NUMBER 4
+#define LED_1 13
+#define LED_2 14
+#define LED_3 36
+#define LED_4 16
+#define LEDS_ACTIVE_STATE 0
 #define LEDS_INV_MASK LEDS_MASK
-#define LEDS_LIST {LED_BOARD_1, LED_BOARD_2, LED_1, LED_2, LED_3}
+#define LEDS_LIST {LED_1, LED_2, LED_3, LED_4}
 
 // Button
 #define BUTTONS_NUMBER 1

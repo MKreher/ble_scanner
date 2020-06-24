@@ -66,35 +66,28 @@
 #include <stdint.h>
 #include <string.h>
 
-//#include "coap_service.h"
+//#include "coap_service.h" TODO: implement multi protocoll / protocol switch between BLE and 6LoWPAN
 #include "ble_service.h"
 
 #define ADVERTISING_LED LED_1 /**< Is on when device is advertising. */
-#define CONNECTED_LED LED_2   /**< Is on when device has connected. */
-#define LEDBUTTON_LED LED_3   /**< LED to be toggled with the help of the LED Button Service. */
+#define CONNECTED_LED   LED_2   /**< Is on when device has connected. */
+#define LEDBUTTON_LED   LED_3   /**< LED to be toggled with the help of the LED Button Service. */
+#define FEEDBACK_OK_LED LED_4   /**< Feedback LED */
 
 #define LEDBUTTON_BUTTON BUTTON_1 /**< Button that will trigger the notification event with the LED Button Service */
 
 #define UART_PIN_DISCONNECTED 0xFFFFFFFF
 
 // define pins to barcode module
-#define BCM_TRIGGER 14                /**< Pin #12 at barcode scanner module (Driving this pin low causes the scan engine to start a scan and decode session).*/
-#define BCM_WAKEUP 15                 /**< Pin #11 at barcode scanner module (When the scan engine is in low power mode, pulsing this pin low for 200 nsec awakens the scan engine). */
-#define BCM_LED 16                    /**< Pin #10 at barcode scanner module. */
-#define BCM_BUZZER 17                 /**< Pin #09 at barcode scanner module. */
+#define BCM_TRIGGER 17                /**< Pin #12 at barcode scanner module (Driving this pin low causes the scan engine to start a scan and decode session).*/
+#define BCM_WAKEUP 18                 /**< Pin #11 at barcode scanner module (When the scan engine is in low power mode, pulsing this pin low for 200 nsec awakens the scan engine). */
+#define BCM_LED 19                    /**< Pin #10 at barcode scanner module. */
+#define BCM_BUZZER 20                 /**< Pin #09 at barcode scanner module. */
 #define BCM_TX TX_PIN_NUMBER          /**< RX-Pin #4 at barcode scanner module. */
 #define BCM_RX RX_PIN_NUMBER          /**< TX-Pin #5 at barcode scanner module. */
 #define CTS_PIN UART_PIN_DISCONNECTED /**< Not connected. */
 #define RTS_PIN UART_PIN_DISCONNECTED /**< Not connected. */
 
-//#define APP_BLE_OBSERVER_PRIO 3 /**< Application's BLE observer priority. You shouldn't need to modify this value. */
-//#define APP_BLE_CONN_CFG_TAG 1  /**< A tag identifying the SoftDevice BLE configuration. */
-
-//#define APP_ADV_INTERVAL 64                                    /**< The advertising interval (in units of 0.625 ms; this value corresponds to 40 ms). */
-
-//#define FIRST_CONN_PARAMS_UPDATE_DELAY APP_TIMER_TICKS(20000) /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (15 seconds). */
-//#define NEXT_CONN_PARAMS_UPDATE_DELAY APP_TIMER_TICKS(5000)   /**< Time between each call to sd_ble_gap_conn_param_update after the first call (5 seconds). */
-//#define MAX_CONN_PARAMS_UPDATE_COUNT 3                        /**< Number of attempts before giving up the connection parameter negotiation. */
 
 #define BUTTON_DETECTION_DELAY APP_TIMER_TICKS(50) /**< Delay from a GPIOTE event until a button is reported as pushed (in number of timer ticks). */
 
@@ -174,13 +167,6 @@ static void nrf_qwr_error_handler(uint32_t nrf_error) {
 
 void startScanByTriggerPin() {
   NRF_LOG_INFO("Start Scanning...");
-  /*
-  nrf_gpio_pin_write(BCM_WAKEUP, 1);
-  nrf_delay_ms(10);
-  nrf_gpio_pin_write(BCM_WAKEUP, 0);
-  nrf_delay_us(250);
-  nrf_gpio_pin_write(BCM_WAKEUP, 1);
-  */
   nrf_gpio_pin_write(BCM_TRIGGER, 1);
   nrf_delay_ms(10);
   nrf_gpio_pin_write(BCM_TRIGGER, 0);
@@ -191,53 +177,17 @@ void stopScanByTriggerPin() {
   nrf_gpio_pin_write(BCM_TRIGGER, 1);
 }
 
-/**@brief Function for handling events from the button handler module.
- *
- * @param[in] pin_no        The pin that the event applies to.
- * @param[in] button_action The button action (press/release).
- */
 static void button_event_handler(uint8_t pin_no, uint8_t button_action) {
-  //NRF_LOG_INFO("button_event_handler()");
-  ret_code_t err_code;
-
-  switch (pin_no) {
-  case LEDBUTTON_BUTTON:
-    if (button_action == APP_BUTTON_PUSH) {
-      //NRF_LOG_INFO("Button push");
-      startScanByTriggerPin();
-    } else if (button_action == APP_BUTTON_RELEASE) {
-      //NRF_LOG_INFO("Button released");
-      stopScanByTriggerPin();
-    }
-    /*
-            NRF_LOG_INFO("Send button state change.");
-            err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, button_action);
-            if (err_code != NRF_SUCCESS &&
-                err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
-                err_code != NRF_ERROR_INVALID_STATE &&
-                err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-            {
-                APP_ERROR_CHECK(err_code);
-            }
-            */
-    break;
-
-  default:
-    APP_ERROR_HANDLER(pin_no);
-    break;
-  }
-}
-
-static void button_event_handler_MOCK(uint8_t pin_no, uint8_t button_action) {
-  NRF_LOG_INFO("button_event_handler_MOCK() called.");
+  //NRF_LOG_INFO("button_event_handler called.");
   
   ret_code_t err_code;
 
   switch (pin_no) {
   case LEDBUTTON_BUTTON:
     if (button_action == APP_BUTTON_PUSH) {
-      coap_send_barcode("4711-0815");
-      mqtt_send_barcode("4711-0815");
+      //coap_send_barcode("4711-0815");
+      //mqtt_send_barcode("4711-0815");
+      NRF_LOG_INFO("Date will be send... (MOCKED)");
     }
     break;
   default:
@@ -254,8 +204,7 @@ static void buttons_init(void) {
   //The array must be static because a pointer to it will be saved in the button handler module.
   static app_button_cfg_t buttons[] =
       {
-          //{LEDBUTTON_BUTTON, false, BUTTON_PULL, button_event_handler}
-          {LEDBUTTON_BUTTON, false, BUTTON_PULL, button_event_handler_MOCK}
+          {LEDBUTTON_BUTTON, false, BUTTON_PULL, button_event_handler}
       };
 
   err_code = app_button_init(buttons, ARRAY_SIZE(buttons), BUTTON_DETECTION_DELAY);
@@ -289,10 +238,10 @@ void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action) {
 
   if (nrf_gpio_pin_read(BCM_LED) > 0) {
     NRF_LOG_INFO("Feedback-LED ON");
-    bsp_board_led_on(bsp_board_pin_to_led_idx(LED_BOARD_2));
+    bsp_board_led_on(bsp_board_pin_to_led_idx(FEEDBACK_OK_LED));
   } else {
     NRF_LOG_INFO("Feedback-LED OFF");
-    bsp_board_led_off(bsp_board_pin_to_led_idx(LED_BOARD_2));
+    bsp_board_led_off(bsp_board_pin_to_led_idx(FEEDBACK_OK_LED));
   }
 
   //nrf_drv_gpiote_out_toggle(PIN_OUT);
@@ -303,16 +252,6 @@ void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action) {
  */
 static void gpio_init(void) {
   ret_code_t err_code;
-
-  // Initialization of GPIOTE is allready done by app_button library
-  //err_code = nrf_drv_gpiote_init();
-  //APP_ERROR_CHECK(err_code);
-
-  /*
-    nrf_drv_gpiote_out_config_t out_config = GPIOTE_CONFIG_OUT_SIMPLE(false);
-    err_code = nrf_drv_gpiote_out_init(PIN_OUT, &out_config);
-    APP_ERROR_CHECK(err_code);
-    */
 
   nrf_drv_gpiote_in_config_t in_config = NRFX_GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
   in_config.pull = NRF_GPIO_PIN_PULLUP;
@@ -408,16 +347,6 @@ static void serial_event_handler(struct nrf_serial_s const *p_serial, nrf_serial
   default:
     break;
   }
-
-  /*
-  if (event == NRF_SERIAL_EVENT_RX_DATA) {
-    char c;
-    ret_code_t ret_code;
-    ret_code = nrf_serial_read(&serial_uart, &c, sizeof(c), NULL, 500);
-    APP_ERROR_CHECK(ret_code);
-    NRF_LOG_INFO("serial_event_handler: %c", c);
-  }
-  */
 }
 
 NRF_SERIAL_CONFIG_DEF(serial_config, NRF_SERIAL_MODE_IRQ, &serial_queues, &serial_buffs, serial_event_handler, serial_sleep_handler);
@@ -448,7 +377,6 @@ static void scheduler_init(void)
     APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
 }
 
-// BARCODE MODULE STUFF >>>>>>>>>>>>>>
 
 static void barcode_module_init() {
   nrf_gpio_cfg_output(BCM_TRIGGER);
@@ -459,8 +387,6 @@ static void barcode_module_init() {
   nrf_gpio_cfg_input(BCM_BUZZER, NRF_GPIO_PIN_NOPULL);
 }
 
-// <<<<<<<<<<<<<< BARCODE MODULE STUFF
-
 /**@brief Function for application main entry.
  */
 int main(void) {
@@ -468,6 +394,9 @@ int main(void) {
 
   // Initialize.
   //lfclk_config();
+
+  uint32_t pin = 0;
+
   log_init();
   leds_init();
   scheduler_init();
@@ -481,10 +410,8 @@ int main(void) {
   init_ble_hid();
   //init_coap();
   
-
-  
   // Start execution.
-  NRF_LOG_INFO("TicTac Barcode Scanner started.");
+  NRF_LOG_INFO("Device started.");
 
   // Enter main loop.
   for (;;) {

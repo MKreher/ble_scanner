@@ -6621,7 +6621,7 @@
 
 // <s> CONFIG_MODE_DEVICE_NAME - If COMMISSIONING_ENABLED is defined: Device name used in BLE undirected advertisement in Configuration mode.
 #ifndef CONFIG_MODE_DEVICE_NAME
-#define CONFIG_MODE_DEVICE_NAME "TicTac_Scanner"
+#define CONFIG_MODE_DEVICE_NAME "MyDevice"
 #endif
 
 // <o> CONFIG_MODE_MAX_CONN_INTERVAL - If COMMISSIONING_ENABLED is defined: Maximum Connection Interval in 1.25 ms units in Configuration mode, see BLE_GAP_CP_LIMITS. 
@@ -6654,7 +6654,7 @@
 
 // <s> DEVICE_NAME - Device name used in BLE undirected advertisement if COMMISSIONING_ENABLED is not defined.
 #ifndef DEVICE_NAME
-#define DEVICE_NAME "TicTac_Scanner"
+#define DEVICE_NAME "MyDevice"
 #endif
 
 // <q> IS_SRVC_CHANGED_CHARACT_PRESENT  - Include the Service Changed characteristic in the Attribute Table.
