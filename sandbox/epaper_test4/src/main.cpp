@@ -40,7 +40,8 @@ Epd epd;
  */
 static void display_init(void) {
   uint32_t err_code;
-  err_code = epd.Init(lut_full_update);
+  //err_code = epd.Init(lut_full_update);
+  err_code = epd.HDirInit(lut_full_update);
   APP_ERROR_CHECK(err_code);
   
   NRF_LOG_INFO("e-Paper init successfully");
@@ -56,6 +57,8 @@ static void display(void) {
    *  i.e. the next action of SetFrameMemory will set the other memory area
    *  therefore you have to clear the frame memory twice.
    */
+  epd.Clear();
+
   epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
   epd.DisplayFrame();
   epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black

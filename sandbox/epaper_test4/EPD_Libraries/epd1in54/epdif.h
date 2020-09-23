@@ -30,14 +30,14 @@
 
 #include "sdk_common.h"
 
-#define SPI_MOSI_PIN    31
-#define SPI_CLK_PIN     30
-#define SPI_CS_PIN      29
-#define DC_PIN          28
-#define RST_PIN         4
-#define BUSY_PIN        3
+#define EPD_SPI_MOSI_PIN    31
+#define EPD_SPI_CLK_PIN     30
+#define EPD_SPI_CS_PIN      29
+#define EPD_DC_PIN          28
+#define EPD_RST_PIN         4
+#define EPD_BUSY_PIN        3
 
-#define SPI_INSTANCE    0
+#define EPD_SPI_INSTANCE    0
 
 class EpdIf {
 public:

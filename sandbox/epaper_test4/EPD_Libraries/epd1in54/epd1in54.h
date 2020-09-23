@@ -66,11 +66,13 @@ public:
 
     Epd();
     ~Epd();
+    int  HDirInit(const unsigned char* lut);
     int  Init(const unsigned char* lut);
     void SendCommand(uint8_t command);
     void SendData(uint8_t data);
     void WaitUntilIdle(void);
     void Reset(void);
+    void Clear(void);
     void SetFrameMemory(
         const unsigned char* image_buffer,
         int x,

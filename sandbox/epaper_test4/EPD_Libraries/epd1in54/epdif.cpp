@@ -33,7 +33,7 @@
 
 #include "epdif.h"
 
-static const nrf_drv_spi_t spi = NRF_DRV_SPI_INSTANCE(SPI_INSTANCE);
+static const nrf_drv_spi_t spi = NRF_DRV_SPI_INSTANCE(EPD_SPI_INSTANCE);
 
 #define LOW  0
 #define HIGH 1
@@ -57,23 +57,23 @@ void EpdIf::DelayMs(unsigned int delaytime) {
 }
 
 void EpdIf::SpiTransfer(const uint8_t* data) {
-    DigitalWrite(SPI_CS_PIN, LOW);
+    DigitalWrite(EPD_SPI_CS_PIN, LOW);
     APP_ERROR_CHECK(nrf_drv_spi_transfer(&spi, data, sizeof(data), NULL, 0));
-    DigitalWrite(SPI_CS_PIN, HIGH);
+    DigitalWrite(EPD_SPI_CS_PIN, HIGH);
 }
 
 int EpdIf::IfInit(void) {
-    nrf_gpio_cfg_output(SPI_CS_PIN);
-    nrf_gpio_cfg_output(RST_PIN);
-    nrf_gpio_cfg_output(BUSY_PIN);
-    nrf_gpio_cfg_input(BUSY_PIN, NRF_GPIO_PIN_NOPULL);
+    nrf_gpio_cfg_output(EPD_SPI_CS_PIN);
+    nrf_gpio_cfg_output(EPD_RST_PIN);
+    nrf_gpio_cfg_output(EPD_DC_PIN);
+    nrf_gpio_cfg_input(EPD_BUSY_PIN, NRF_GPIO_PIN_NOPULL);
     
     nrf_drv_spi_config_t spi_config =
     {
-        spi_config.sck_pin        = SPI_CLK_PIN,
-        spi_config.mosi_pin       = SPI_MOSI_PIN,
+        spi_config.sck_pin        = EPD_SPI_CLK_PIN,
+        spi_config.mosi_pin       = EPD_SPI_MOSI_PIN,
         spi_config.miso_pin       = NRF_DRV_SPI_PIN_NOT_USED,
-        spi_config.ss_pin         = SPI_CS_PIN,
+        spi_config.ss_pin         = EPD_SPI_CS_PIN,
         spi_config.irq_priority   = APP_IRQ_PRIORITY_LOWEST,
         spi_config.orc            = 0xFF,
         spi_config.frequency      = NRF_DRV_SPI_FREQ_8M,

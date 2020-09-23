@@ -35,13 +35,65 @@ Epd::~Epd() {
 };
 
 Epd::Epd() {
-    reset_pin = RST_PIN;
-    dc_pin = DC_PIN;
-    cs_pin = SPI_CS_PIN;
-    busy_pin = BUSY_PIN;
+    reset_pin = EPD_RST_PIN;
+    dc_pin = EPD_DC_PIN;
+    cs_pin = EPD_SPI_CS_PIN;
+    busy_pin = EPD_BUSY_PIN;
     width = EPD_WIDTH;
     height = EPD_HEIGHT;
 };
+
+int Epd::HDirInit(const unsigned char* lut) {
+    /* this calls the peripheral hardware interface, see epdif */
+    if (IfInit() != 0) {
+        return -1;
+    }
+    /* EPD hardware init start */
+    //this->lut = lut;
+    Reset();
+
+    WaitUntilIdle();
+    SendCommand(0x12);  //SWRESET
+    WaitUntilIdle();
+
+    SendCommand(0x01); //Driver output control
+    SendData(0xC7);
+    SendData(0x00);
+    SendData(0x01);
+
+    SendCommand(0x11); //data entry mode
+    SendData(0x01);
+
+    SendCommand(0x44); //set Ram-X address start/end position
+    SendData(0x00);
+    SendData(0x18);    //0x0C-->(18+1)*8=200
+
+    SendCommand(0x45); //set Ram-Y address start/end position
+    SendData(0xC7);   //0xC7-->(199+1)=200
+    SendData(0x00);
+    SendData(0x00);
+    SendData(0x00);
+
+    SendCommand(0x3C); //BorderWavefrom
+    SendData(0x01);
+
+    SendCommand(0x18);
+    SendData(0x80);
+
+    SendCommand(0x22); // //Load Temperature and waveform setting.
+    SendData(0XB1);
+    SendCommand(0x20);
+
+    SendCommand(0x4E);   // set RAM x address count to 0;
+    SendData(0x00);
+    SendCommand(0x4F);   // set RAM y address count to 0X199;
+    SendData(0xC7);
+    SendData(0x00);
+    WaitUntilIdle();
+    //SetLut(this->lut);
+    /* EPD hardware init end */
+    return 0;
+}
 
 int Epd::Init(const unsigned char* lut) {
     /* this calls the peripheral hardware interface, see epdif */
@@ -51,6 +103,7 @@ int Epd::Init(const unsigned char* lut) {
     /* EPD hardware init start */
     this->lut = lut;
     Reset();
+
     SendCommand(DRIVER_OUTPUT_CONTROL);
     SendData((EPD_HEIGHT - 1) & 0xFF);
     SendData(((EPD_HEIGHT - 1) >> 8) & 0xFF);
@@ -76,7 +129,7 @@ int Epd::Init(const unsigned char* lut) {
  *  @brief: basic function for sending commands
  */
 void Epd::SendCommand(uint8_t command) {
-    DigitalWrite(DC_PIN, LOW);
+    DigitalWrite(dc_pin, LOW);
     SpiTransfer(&command);
 }
 
@@ -94,7 +147,8 @@ void Epd::SendData(uint8_t data) {
 void Epd::WaitUntilIdle(void) {
     while(DigitalRead(busy_pin) == HIGH) {      //LOW: idle, HIGH: busy
         DelayMs(100);
-    }      
+    }
+    DelayMs(200);
 }
 
 /**
@@ -103,10 +157,31 @@ void Epd::WaitUntilIdle(void) {
  *          see Epd::Sleep();
  */
 void Epd::Reset(void) {
-    DigitalWrite(reset_pin, LOW);                //module reset    
-    DelayMs(200);
     DigitalWrite(reset_pin, HIGH);
-    DelayMs(200);    
+    DelayMs(200);
+    DigitalWrite(reset_pin, LOW);                //module reset
+    DelayMs(20);
+    DigitalWrite(reset_pin, HIGH);
+    DelayMs(200);
+}
+
+void Epd::Clear(void)
+{
+    int w, h;
+    w = (EPD_WIDTH % 8 == 0)? (EPD_WIDTH / 8 ): (EPD_WIDTH / 8 + 1);
+    h = EPD_HEIGHT;
+    SendCommand(0x24);
+    for (int j = 0; j < h; j++) {
+        for (int i = 0; i < w; i++) {
+          SendData(0xff);
+        }
+    }
+
+    //DISPLAY REFRESH
+    SendCommand(0x22);
+    SendData(0xF7);
+    SendCommand(0x20);
+    WaitUntilIdle();
 }
 
 /**
@@ -257,8 +332,11 @@ void Epd::SetMemoryPointer(int x, int y) {
  *          You can use Epd::Init() to awaken
  */
 void Epd::Sleep() {
-    SendCommand(DEEP_SLEEP_MODE);
-    WaitUntilIdle();
+    SendCommand(0x10); //enter deep sleep
+    SendData(0x01);
+    DelayMs(200);
+
+    DigitalWrite(reset_pin, LOW);
 }
 
 const unsigned char lut_full_update[] =
