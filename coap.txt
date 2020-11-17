@@ -1,3 +1,6 @@
+Statische feste IP Adresse
+https://www.elektronik-kompendium.de/sites/raspberry-pi/1912171.htm
+
 nano /etc/radvd.conf
 
 https://devzone.nordicsemi.com/f/nordic-q-a/7656/iot-sdk-pc-cannot-ping-pca10028
@@ -11,6 +14,8 @@ https://devzone.nordicsemi.com/f/nordic-q-a/44430/ping-problem
 https://devzone.nordicsemi.com/f/nordic-q-a/42462/ping-nrf52-iot-sdk-from-pc
 
 !!!https://visualgdb.com/tutorials/arm/nrf51/6lowpan/!!!
+
+!!!https://developer.aliyun.com/mirror/npm/package/coap!!!
 
 # Set IPv6 forwarding (must be present).
 sudo echo 1 > /proc/sys/net/ipv6/conf/all/forwarding
