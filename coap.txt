@@ -26,8 +26,10 @@ hciconfig hci0 reset
 
 hcitool lescan
 
+00:85:68:18:5C:A3
+
 modprobe bluetooth_6lowpan
-echo "connect 00:74:A4:16:35:35 1" > /sys/kernel/debug/bluetooth/6lowpan_control
+echo "connect 00:85:68:18:5C:A3 1" > /sys/kernel/debug/bluetooth/6lowpan_control
 ifconfig -a bt0 add 2001:db8::1/64
 service radvd restart
  
@@ -59,5 +61,4 @@ modprobe bluetooth_6lowpan
 echo "connect 00:85:68:18:5C:A3 1" > /sys/kernel/debug/bluetooth/6lowpan_control
 ifconfig -a bt0 add 2001:db8::1/64
 service radvd restart
-
-2001:db8::0085:68FF:FE18:5CA3
+ping6 2001:db8::0085:68FF:FE18:5CA3
