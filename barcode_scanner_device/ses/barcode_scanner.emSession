@@ -59,15 +59,8 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="789" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/main.c" selected="0" top="771" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="279" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/coap_service.c" selected="1" top="263" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="30" y="90" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/custom_board.h" selected="0" top="78" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="12949" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/sdk_config.h" selected="0" top="12911" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="17" y="131" useTextEdit="1" openedFrom="C:/Work/ble_scanner/barcode_scanner_device/src/coap_service.c" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/iot/mqtt/mqtt.h" selected="0" top="106" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="22" y="19" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/coap_service.h" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="99" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/libraries/util/app_error_weak.c" selected="0" top="81" codecName=""/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="511" useTextEdit="1" openedFrom="C:/Work/ble_scanner/barcode_scanner_device/src/coap_service.c" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/iot/coap/coap_message.c" selected="0" top="492" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="80" useTextEdit="1" openedFrom="C:/Work/ble_scanner/barcode_scanner_device/src/coap_service.c" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/iot/coap/coap_codes.h" selected="0" top="72" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="789" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/main.c" selected="1" top="781" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="41" y="488" useTextEdit="1" openedFrom="C:/Work/ble_scanner/barcode_scanner_device/src/main.c" useBinaryEdit="0" left="0" path="../src/coap_service.c" selected="0" top="80" codecName="Default"/>
  </Files>
  <ARMCrossStudioWindow activeProject="barcode_scanner" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="C:/Work/ble_scanner/barcode_scanner_device/src" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>
