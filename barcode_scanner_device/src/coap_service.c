@@ -29,7 +29,7 @@
 
 /** Modify SERVER_IPV6_ADDRESS according to your setup.
  *  The address provided below is a place holder.  */
-//  2003:e8:271c:3200:aef5:5f7f:78d2:3a51
+//  2003:e8:274a:a00:c3ac:3fe7:e732:f182
 #define SERVER_IPV6_ADDRESS             0x20, 0x03, 0x00, 0xE8, 0x27, 0x1C, 0x32, 0x00, \
                                         0xAE, 0xF5, 0x5F, 0x7F, 0x78, 0xD2, 0x3A, 0x51        /**< IPv6 address of the server node. */
 
@@ -94,7 +94,7 @@ static uint8_t                     m_well_known_core[100];
 static ipv6_state_t                m_ipv6_state      = INACTIVE;                             /**< IPv6 state. */
 static const char                  m_uri_part_blescanner[]  = "blescanner";
 static const char                  m_uri_part_barcode[]    = "barcode";
-static int                         m_temperature        = 21;
+static int                         m_temperature        = 39;
 static uint16_t                    m_global_token_count = 0x0102;
 
 static mqtt_client_t                        m_app_mqtt_client;                                      /**< MQTT Client instance reference provided by the MQTT module. */

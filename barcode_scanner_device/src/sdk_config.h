@@ -47,6 +47,88 @@
 #include "app_config.h"
 #endif
 
+
+// Waveshare ePaper Display
+#ifndef WSEPD_DC_PIN
+#define WSEPD_DC_PIN        28
+#endif
+
+#ifndef WSEPD_RST_PIN
+#define WSEPD_RST_PIN       4
+#endif
+
+#ifndef WSEPD_BUSY_PIN
+#define WSEPD_BUSY_PIN      3
+#endif
+
+#ifndef WSEPD_WIDTH
+#define WSEPD_WIDTH     200
+#endif
+
+#ifndef WSEPD_HEIGHT
+#define WSEPD_HEIGHT     200
+#endif
+
+#ifndef WSEPD_SPI_INSTANCE
+#define WSEPD_SPI_INSTANCE  0
+#endif
+
+// <h> Application
+
+//==========================================================
+// <h> SPI_CONFIGURATION - Spi configuration
+
+//==========================================================
+
+// Display Pin Mapping
+//DIN (MOSI)   => P0.31
+//MISO         => P0.27 // not connected to hardware
+//CLK (SLCK)   => P0.30
+//CS  (SS)     => P0.29
+//DC           => P0.28
+//RST          => P0.4
+//BUSY         => P0.3
+
+// <o> SPI_MOSI_PIN  - Pin number
+#ifndef SPI_MOSI_PIN
+#define SPI_MOSI_PIN 31
+#endif
+
+// <o> SPI_MISO_PIN  - Pin number
+#ifndef SPI_MISO_PIN
+#define SPI_MISO_PIN NRF_DRV_SPI_PIN_NOT_USED
+#endif
+
+// <o> SPI_SCK_PIN  - Pin number
+#ifndef SPI_SCK_PIN
+#define SPI_SCK_PIN 30
+#endif
+
+// <o> SPI_SS_PIN  - Pin number
+#ifndef SPI_SS_PIN
+#define SPI_SS_PIN 29
+#endif
+
+// <o> SPI_IRQ_PRIORITY  - Interrupt priority
+
+
+// <i> Priorities 0,2 (nRF51) and 0,1,4,5 (nRF52) are reserved for SoftDevice
+// <0=> 0 (highest)
+// <1=> 1
+// <2=> 2
+// <3=> 3
+// <4=> 4
+// <5=> 5
+// <6=> 6
+// <7=> 7
+
+#ifndef SPI_IRQ_PRIORITY
+#define SPI_IRQ_PRIORITY 6
+#endif
+
+// </h>
+//==========================================================
+
 // <h> lwIP 
 
 //==========================================================
@@ -3722,13 +3804,13 @@
 // <e> NRFX_SPI_ENABLED - nrfx_spi - SPI peripheral driver
 //==========================================================
 #ifndef NRFX_SPI_ENABLED
-#define NRFX_SPI_ENABLED 0
+#define NRFX_SPI_ENABLED 1
 #endif
 // <q> NRFX_SPI0_ENABLED  - Enable SPI0 instance
  
 
 #ifndef NRFX_SPI0_ENABLED
-#define NRFX_SPI0_ENABLED 0
+#define NRFX_SPI0_ENABLED 1
 #endif
 
 // <q> NRFX_SPI1_ENABLED  - Enable SPI1 instance
@@ -5554,7 +5636,7 @@
 // <e> SPI_ENABLED - nrf_drv_spi - SPI/SPIM peripheral driver - legacy layer
 //==========================================================
 #ifndef SPI_ENABLED
-#define SPI_ENABLED 0
+#define SPI_ENABLED 1
 #endif
 // <o> SPI_DEFAULT_CONFIG_IRQ_PRIORITY  - Interrupt priority
  
@@ -5586,7 +5668,7 @@
 // <e> SPI0_ENABLED - Enable SPI0 instance
 //==========================================================
 #ifndef SPI0_ENABLED
-#define SPI0_ENABLED 0
+#define SPI0_ENABLED 1
 #endif
 // <q> SPI0_USE_EASY_DMA  - Use EasyDMA
  
@@ -8050,7 +8132,7 @@
  
 
 #ifndef NRF_GFX_ENABLED
-#define NRF_GFX_ENABLED 0
+#define NRF_GFX_ENABLED 1
 #endif
 
 // <q> NRF_MEMOBJ_ENABLED  - nrf_memobj - Linked memory allocator module
@@ -8289,7 +8371,7 @@
  
 
 #ifndef BUTTON_HIGH_ACCURACY_ENABLED
-#define BUTTON_HIGH_ACCURACY_ENABLED 0
+#define BUTTON_HIGH_ACCURACY_ENABLED 1
 #endif
 
 // </h> 

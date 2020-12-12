@@ -18,7 +18,10 @@ sudo echo 1 > /proc/sys/net/ipv6/conf/all/forwarding
 sudo service radvd restart
 # Observe if new IPv6 prefix is disseminating over bt0 interface.
 
-sudo echo 2 > /proc/sys/net/ipv6/conf/bt0/accept_ra 
+
+sudo sud
+
+echo 2 > /proc/sys/net/ipv6/conf/bt0/accept_ra 
 
 echo 1 > /sys/kernel/debug/bluetooth/6lowpan_enable
 
@@ -56,9 +59,10 @@ echo "connect 00:74:A4:16:35:35 1" > /sys/kernel/debug/bluetooth/6lowpan_control
 00:74:A4:16:35:35
 fd00:a::0074:A4FF:FE16:3535
 
+2001:db8::00D0:52FF:FE09:9ED8
 
 modprobe bluetooth_6lowpan
-echo "connect 00:85:68:18:5C:A3 1" > /sys/kernel/debug/bluetooth/6lowpan_control
+echo "connect 00:D0:52:09:9E:D8 1" > /sys/kernel/debug/bluetooth/6lowpan_control
 ifconfig -a bt0 add 2001:db8::1/64
 service radvd restart
-ping6 2001:db8::0085:68FF:FE18:5CA3
+ping6 2001:db8::00D0:52FF:FE09:9ED8

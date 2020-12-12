@@ -47,6 +47,8 @@
 #include "app_error.h"
 #include "app_timer.h"
 #include "app_scheduler.h"
+#include "app_util_platform.h"
+/*
 #include "ble.h"
 #include "ble_advdata.h"
 #include "ble_conn_params.h"
@@ -54,6 +56,7 @@
 #include "ble_hci.h"
 #include "ble_lbs.h"
 #include "ble_srv_common.h"
+*/
 #include "boards.h"
 #include "nordic_common.h"
 #include "nrf.h"
@@ -75,47 +78,55 @@
 
 #include "coap_service.h"
 
-#define ADVERTISING_LED LED_1 /**< Is on when device is advertising. */
-#define CONNECTED_LED LED_2   /**< Is on when device has connected. */
-#define LEDBUTTON_LED LED_3   /**< LED to be toggled with the help of the LED Button Service. */
+// Waveshare ePaper
+#include "nrf_gfx.h"
+#include "waveshare_epd.h"
+#include "ImageData.h"
 
-#define LEDBUTTON_BUTTON BUTTON_1 /**< Button that will trigger the notification event with the LED Button Service */
+static uint8_t disptxt_buffer[16] = "Hello World";
+static uint8_t epaper_pending;
+static const nrf_lcd_t * p_lcd = &nrf_lcd_wsepd154;
+extern const nrf_gfx_font_desc_t orkney_24ptFontInfo;
+static const nrf_gfx_font_desc_t * p_font = &orkney_24ptFontInfo;
+
+#define ADVERTISING_LED LED_1 /**< Is on when device is advertising. */
+#define CONNECTED_LED   LED_2   /**< Is on when device has connected. */
+#define LEDBUTTON_LED   LED_3   /**< LED to be toggled with the help of the LED Button Service. */
+#define FEEDBACK_LED    LED_4   /**< LED indicates a successfull scanning. */
 
 #define UART_PIN_DISCONNECTED 0xFFFFFFFF
 
 // define pins to barcode module
-#define BCM_TRIGGER 14                /**< Pin #12 at barcode scanner module (Driving this pin low causes the scan engine to start a scan and decode session).*/
-#define BCM_WAKEUP 15                 /**< Pin #11 at barcode scanner module (When the scan engine is in low power mode, pulsing this pin low for 200 nsec awakens the scan engine). */
-#define BCM_LED 16                    /**< Pin #10 at barcode scanner module. */
-#define BCM_BUZZER 17                 /**< Pin #09 at barcode scanner module. */
+#define BCM_TRIGGER 17                /**< Pin #12 at barcode scanner module (Driving this pin low causes the scan engine to start a scan and decode session).*/
+#define BCM_WAKEUP 18                 /**< Pin #11 at barcode scanner module (When the scan engine is in low power mode, pulsing this pin low for 200 nsec awakens the scan engine). */
+#define BCM_LED 19                    /**< Pin #10 at barcode scanner module. */
+#define BCM_BUZZER 20                 /**< Pin #09 at barcode scanner module. */
 #define BCM_TX TX_PIN_NUMBER          /**< RX-Pin #4 at barcode scanner module. */
 #define BCM_RX RX_PIN_NUMBER          /**< TX-Pin #5 at barcode scanner module. */
 #define CTS_PIN UART_PIN_DISCONNECTED /**< Not connected. */
 #define RTS_PIN UART_PIN_DISCONNECTED /**< Not connected. */
 
-#define DEVICE_NAME "Nordic_Blinky" /**< Name of device. Will be included in the advertising data. */
+//#define APP_BLE_OBSERVER_PRIO 3 /**< Application's BLE observer priority. You shouldn't need to modify this value. */
+//#define APP_BLE_CONN_CFG_TAG 1  /**< A tag identifying the SoftDevice BLE configuration. */
 
-#define APP_BLE_OBSERVER_PRIO 3 /**< Application's BLE observer priority. You shouldn't need to modify this value. */
-#define APP_BLE_CONN_CFG_TAG 1  /**< A tag identifying the SoftDevice BLE configuration. */
+//#define APP_ADV_INTERVAL 64                                    /**< The advertising interval (in units of 0.625 ms; this value corresponds to 40 ms). */
+//#define APP_ADV_DURATION BLE_GAP_ADV_TIMEOUT_GENERAL_UNLIMITED /**< The advertising time-out (in units of seconds). When set to 0, we will never time out. */
 
-#define APP_ADV_INTERVAL 64                                    /**< The advertising interval (in units of 0.625 ms; this value corresponds to 40 ms). */
-#define APP_ADV_DURATION BLE_GAP_ADV_TIMEOUT_GENERAL_UNLIMITED /**< The advertising time-out (in units of seconds). When set to 0, we will never time out. */
+//#define MIN_CONN_INTERVAL MSEC_TO_UNITS(100, UNIT_1_25_MS) /**< Minimum acceptable connection interval (0.5 seconds). */
+//#define MAX_CONN_INTERVAL MSEC_TO_UNITS(200, UNIT_1_25_MS) /**< Maximum acceptable connection interval (1 second). */
+//#define SLAVE_LATENCY 0                                    /**< Slave latency. */
+//#define CONN_SUP_TIMEOUT MSEC_TO_UNITS(4000, UNIT_10_MS)   /**< Connection supervisory time-out (4 seconds). */
 
-#define MIN_CONN_INTERVAL MSEC_TO_UNITS(100, UNIT_1_25_MS) /**< Minimum acceptable connection interval (0.5 seconds). */
-#define MAX_CONN_INTERVAL MSEC_TO_UNITS(200, UNIT_1_25_MS) /**< Maximum acceptable connection interval (1 second). */
-#define SLAVE_LATENCY 0                                    /**< Slave latency. */
-#define CONN_SUP_TIMEOUT MSEC_TO_UNITS(4000, UNIT_10_MS)   /**< Connection supervisory time-out (4 seconds). */
-
-#define FIRST_CONN_PARAMS_UPDATE_DELAY APP_TIMER_TICKS(20000) /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (15 seconds). */
-#define NEXT_CONN_PARAMS_UPDATE_DELAY APP_TIMER_TICKS(5000)   /**< Time between each call to sd_ble_gap_conn_param_update after the first call (5 seconds). */
-#define MAX_CONN_PARAMS_UPDATE_COUNT 3                        /**< Number of attempts before giving up the connection parameter negotiation. */
+//#define FIRST_CONN_PARAMS_UPDATE_DELAY APP_TIMER_TICKS(20000) /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (15 seconds). */
+//#define NEXT_CONN_PARAMS_UPDATE_DELAY APP_TIMER_TICKS(5000)   /**< Time between each call to sd_ble_gap_conn_param_update after the first call (5 seconds). */
+//#define MAX_CONN_PARAMS_UPDATE_COUNT 3                        /**< Number of attempts before giving up the connection parameter negotiation. */
 
 #define BUTTON_DETECTION_DELAY APP_TIMER_TICKS(50) /**< Delay from a GPIOTE event until a button is reported as pushed (in number of timer ticks). */
 
 #define DEAD_BEEF 0xDEADBEEF /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
 #define SCHED_MAX_EVENT_DATA_SIZE       16                                                    /**< Maximum size of scheduler events. */
-#define SCHED_QUEUE_SIZE                192                                                   /**< Maximum number of events in the scheduler queue. */
+#define SCHED_QUEUE_SIZE                196                                                   /**< Maximum number of events in the scheduler queue. */
 
 #define APP_ENABLE_LOGS                 1                                                     /**< Enable logs in the application. */
 
@@ -298,6 +309,7 @@ static void nrf_qwr_error_handler(uint32_t nrf_error) {
  * @param[in] p_lbs     Instance of LED Button Service to which the write applies.
  * @param[in] led_state Written/desired state of the LED.
  */
+/*
 static void led_write_handler(uint16_t conn_handle, ble_lbs_t *p_lbs, uint8_t led_state) {
   if (led_state) {
     bsp_board_led_on(bsp_board_pin_to_led_idx(LEDBUTTON_LED));
@@ -307,6 +319,7 @@ static void led_write_handler(uint16_t conn_handle, ble_lbs_t *p_lbs, uint8_t le
     NRF_LOG_INFO("Received LED OFF!");
   }
 }
+*/
 
 /**@brief Function for initializing services that will be used by the application.
  */
@@ -496,6 +509,62 @@ static void ble_stack_init(void) {
   NRF_SDH_BLE_OBSERVER(m_ble_observer, APP_BLE_OBSERVER_PRIO, ble_evt_handler, NULL);
 }
 */
+
+static void epaper_demo_clear(void)
+{
+    NRF_LOG_INFO("Display clear.");
+    APP_ERROR_CHECK(nrf_gfx_init(p_lcd));
+    nrf_gfx_screen_fill(p_lcd, 0xff);
+    //nrf_gfx_display(p_lcd);
+
+    nrf_gfx_rotation_set(p_lcd, NRF_LCD_ROTATE_90);
+    wsepd154_draw_monobmp((const uint8_t *)gImage_1in54);
+    nrf_gfx_display(p_lcd);
+
+    //nrf_gfx_uninit(p_lcd);
+}
+
+static void epaper_demo_text(void)
+{
+    NRF_LOG_INFO("Display text.");
+    //APP_ERROR_CHECK(nrf_gfx_init(p_lcd));
+    nrf_gfx_rotation_set(p_lcd, NRF_LCD_ROTATE_180);
+    nrf_gfx_point_t text_start = NRF_GFX_POINT(15, 70);
+    nrf_gfx_screen_fill(p_lcd, 0xff);
+    APP_ERROR_CHECK(nrf_gfx_print(p_lcd, &text_start, 0x00, (const char *)disptxt_buffer, p_font, true));
+    nrf_gfx_display(p_lcd);
+    //nrf_gfx_uninit(p_lcd);
+}
+
+/**@brief Draws geometric objects and text on epaper display
+ *
+ * @details Translation of Waveshare epaper demo code to run on nRF52
+ */
+static void epaper_demo_draw(void)
+{
+    NRF_LOG_INFO("Display draw.");
+    //APP_ERROR_CHECK(nrf_gfx_init(p_lcd));
+    nrf_gfx_rotation_set(p_lcd, NRF_LCD_ROTATE_180);
+    nrf_gfx_point_t text_start = NRF_GFX_POINT(15, 70);
+    nrf_gfx_screen_fill(p_lcd, 0xff);
+    APP_ERROR_CHECK(nrf_gfx_print(p_lcd, &text_start, 0x00, "MY_APP", p_font, true));
+    nrf_gfx_circle_t circ_1 = NRF_GFX_CIRCLE(25, 25, 10);
+    nrf_gfx_circle_draw(p_lcd, &circ_1, 0x00, false);
+    circ_1.x = 125;
+    nrf_gfx_circle_draw(p_lcd, &circ_1, 0x00, true);
+    nrf_gfx_display(p_lcd);
+    //nrf_gfx_uninit(p_lcd);
+}
+
+static void epaper_demo_imarray(void)
+{
+    NRF_LOG_INFO("Display image.");
+    //APP_ERROR_CHECK(nrf_gfx_init(p_lcd));
+    wsepd154_draw_monobmp((const uint8_t *)gImage_1in54);
+    nrf_gfx_display(p_lcd);
+    //nrf_gfx_uninit(p_lcd);
+}
+
 void startScanByTriggerPin() {
   NRF_LOG_INFO("Start Scanning...");
   /*
@@ -525,29 +594,47 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action) {
   ret_code_t err_code;
 
   switch (pin_no) {
-  case LEDBUTTON_BUTTON:
+  case BUTTON_1:
     if (button_action == APP_BUTTON_PUSH) {
-      //NRF_LOG_INFO("Button push");
-      startScanByTriggerPin();
+      NRF_LOG_INFO("Button_1 push");
+      //startScanByTriggerPin();
     } else if (button_action == APP_BUTTON_RELEASE) {
-      //NRF_LOG_INFO("Button released");
-      stopScanByTriggerPin();
+      NRF_LOG_INFO("Button_1 released");
+      //stopScanByTriggerPin();
+      epaper_demo_text();
     }
     /*
-            NRF_LOG_INFO("Send button state change.");
-            err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, button_action);
-            if (err_code != NRF_SUCCESS &&
-                err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
-                err_code != NRF_ERROR_INVALID_STATE &&
-                err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-            {
-                APP_ERROR_CHECK(err_code);
-            }
-            */
+      NRF_LOG_INFO("Send button state change.");
+      err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, button_action);
+      if (err_code != NRF_SUCCESS &&
+          err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
+          err_code != NRF_ERROR_INVALID_STATE &&
+          err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+      {
+          APP_ERROR_CHECK(err_code);
+      }
+    */
     break;
-
+  case BUTTON_2:
+    if (button_action == APP_BUTTON_RELEASE) {
+      NRF_LOG_INFO("Button_2 released");
+      epaper_demo_draw();
+    }
+    break;
+  case BUTTON_3:
+    if (button_action == APP_BUTTON_RELEASE) {
+      NRF_LOG_INFO("Button_3 released");
+      epaper_demo_imarray();
+    }
+    break;
+  case BUTTON_4:
+    if (button_action == APP_BUTTON_RELEASE) {
+      NRF_LOG_INFO("Button_4 released");
+    }
+    break;
   default:
-    APP_ERROR_HANDLER(pin_no);
+    //APP_ERROR_HANDLER(pin_no);
+    NRF_LOG_INFO("Unsupported button: pin=%d", pin_no);
     break;
   }
 }
@@ -558,7 +645,7 @@ static void button_event_handler_MOCK(uint8_t pin_no, uint8_t button_action) {
   ret_code_t err_code;
 
   switch (pin_no) {
-  case LEDBUTTON_BUTTON:
+  case BUTTON_1:
     if (button_action == APP_BUTTON_PUSH) {
       coap_send_barcode("4711-0815");
       mqtt_send_barcode("4711-0815");
@@ -572,14 +659,18 @@ static void button_event_handler_MOCK(uint8_t pin_no, uint8_t button_action) {
 
 /**@brief Function for initializing the button handler module.
  */
-static void buttons_init(void) {
-  ret_code_t err_code;
+static void buttons_init() {
+  NRF_LOG_INFO("buttons_init()");
+
+  uint32_t err_code;
 
   //The array must be static because a pointer to it will be saved in the button handler module.
   static app_button_cfg_t buttons[] =
       {
-          //{LEDBUTTON_BUTTON, false, BUTTON_PULL, button_event_handler}
-          {LEDBUTTON_BUTTON, false, BUTTON_PULL, button_event_handler_MOCK}
+          {BUTTON_1, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_event_handler}
+         ,{BUTTON_2, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_event_handler}
+         ,{BUTTON_3, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_event_handler}
+         ,{BUTTON_4, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_event_handler}
       };
 
   err_code = app_button_init(buttons, ARRAY_SIZE(buttons), BUTTON_DETECTION_DELAY);
@@ -588,6 +679,7 @@ static void buttons_init(void) {
   err_code = app_button_enable();
   APP_ERROR_CHECK(err_code);
 }
+
 
 static void log_init(void) {
   ret_code_t err_code = NRF_LOG_INIT(NULL);
@@ -607,16 +699,16 @@ static void power_management_init(void) {
 /**
  * Pin change handler
  */
-void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action) {
+static void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action) {
   //NRF_LOG_INFO("in_pin_handler(): pin=%s, action=%s", pin, action);
   NRF_LOG_INFO("in_pin_handler(): pin=%d", pin);
-
+  
   if (nrf_gpio_pin_read(BCM_LED) > 0) {
     NRF_LOG_INFO("Feedback-LED ON");
-    bsp_board_led_on(bsp_board_pin_to_led_idx(LED_BOARD_2));
+    bsp_board_led_on(bsp_board_pin_to_led_idx(FEEDBACK_LED));
   } else {
     NRF_LOG_INFO("Feedback-LED OFF");
-    bsp_board_led_off(bsp_board_pin_to_led_idx(LED_BOARD_2));
+    bsp_board_led_off(bsp_board_pin_to_led_idx(FEEDBACK_LED));
   }
 
   //nrf_drv_gpiote_out_toggle(PIN_OUT);
@@ -785,6 +877,13 @@ static void barcode_module_init() {
 
 // <<<<<<<<<<<<<< BARCODE MODULE STUFF
 
+static void display_init()
+{
+  NRF_LOG_INFO("display_init()");
+  epaper_demo_clear();
+}
+
+
 /**@brief Function for application main entry.
  */
 int main(void) {
@@ -803,6 +902,7 @@ int main(void) {
   create_serial_receive_timer();
   power_management_init();
   init_coap();
+  display_init();
   
   // Start execution.
   NRF_LOG_INFO("TicTac Barcode Scanner started.");
@@ -816,9 +916,9 @@ int main(void) {
       // Sleep waiting for an application event.
       err_code = sd_app_evt_wait();
       APP_ERROR_CHECK(err_code);
+
+      //app_sched_execute();
     }
-    //__WFE(); // Activate only for Debugging
-    //idle_state_handle();  // Active if not Debugging
   }
 }
 
