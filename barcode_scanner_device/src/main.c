@@ -97,14 +97,14 @@ static const nrf_gfx_font_desc_t * p_font = &orkney_24ptFontInfo;
 #define UART_PIN_DISCONNECTED 0xFFFFFFFF
 
 // define pins to barcode module
-#define BCM_TRIGGER 17                /**< Pin #12 at barcode scanner module (Driving this pin low causes the scan engine to start a scan and decode session).*/
-#define BCM_WAKEUP 18                 /**< Pin #11 at barcode scanner module (When the scan engine is in low power mode, pulsing this pin low for 200 nsec awakens the scan engine). */
-#define BCM_LED 19                    /**< Pin #10 at barcode scanner module. */
-#define BCM_BUZZER 20                 /**< Pin #09 at barcode scanner module. */
-#define BCM_TX TX_PIN_NUMBER          /**< RX-Pin #4 at barcode scanner module. */
-#define BCM_RX RX_PIN_NUMBER          /**< TX-Pin #5 at barcode scanner module. */
-#define CTS_PIN UART_PIN_DISCONNECTED /**< Not connected. */
-#define RTS_PIN UART_PIN_DISCONNECTED /**< Not connected. */
+#define BCM_TRIGGER 47                 /** P1.14 on board, Pin #12 at barcode scanner module (Driving this pin low causes the scan engine to start a scan and decode session).*/
+#define BCM_WAKEUP  46                 /** P1.15 on board, Pin #11 at barcode scanner module (When the scan engine is in low power mode, pulsing this pin low for 200 nsec awakens the scan engine). */
+#define BCM_LED     45                 /** P1.13 on board, Pin #10 at barcode scanner module. */
+#define BCM_BUZZER  44                 /** P1.12 on board, Pin #09 at barcode scanner module. */
+#define BCM_TX TX_PIN_NUMBER           /** RX-Pin #4 at barcode scanner module. */
+#define BCM_RX RX_PIN_NUMBER           /** TX-Pin #5 at barcode scanner module. */
+#define CTS_PIN UART_PIN_DISCONNECTED  /** Not connected. */
+#define RTS_PIN UART_PIN_DISCONNECTED  /** Not connected. */
 
 //#define APP_BLE_OBSERVER_PRIO 3 /**< Application's BLE observer priority. You shouldn't need to modify this value. */
 //#define APP_BLE_CONN_CFG_TAG 1  /**< A tag identifying the SoftDevice BLE configuration. */
@@ -566,21 +566,18 @@ static void epaper_demo_imarray(void)
 }
 
 void startScanByTriggerPin() {
-  NRF_LOG_INFO("Start Scanning...");
-  /*
+  //NRF_LOG_INFO("Start Scanning...");
+
   nrf_gpio_pin_write(BCM_WAKEUP, 1);
-  nrf_delay_ms(10);
-  nrf_gpio_pin_write(BCM_WAKEUP, 0);
-  nrf_delay_us(250);
-  nrf_gpio_pin_write(BCM_WAKEUP, 1);
-  */
   nrf_gpio_pin_write(BCM_TRIGGER, 1);
-  nrf_delay_ms(10);
+  nrf_delay_ms(1);
+  nrf_gpio_pin_write(BCM_WAKEUP, 0);
   nrf_gpio_pin_write(BCM_TRIGGER, 0);
 }
 
 void stopScanByTriggerPin() {
-  NRF_LOG_INFO("Stop Scanning.");
+  //NRF_LOG_INFO("Stop Scanning.");
+  nrf_gpio_pin_write(BCM_WAKEUP, 1);
   nrf_gpio_pin_write(BCM_TRIGGER, 1);
 }
 
@@ -596,12 +593,12 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action) {
   switch (pin_no) {
   case BUTTON_1:
     if (button_action == APP_BUTTON_PUSH) {
-      NRF_LOG_INFO("Button_1 push");
-      //startScanByTriggerPin();
+      //NRF_LOG_INFO("Button_1 push");
+      startScanByTriggerPin();
     } else if (button_action == APP_BUTTON_RELEASE) {
-      NRF_LOG_INFO("Button_1 released");
-      //stopScanByTriggerPin();
-      epaper_demo_text();
+      //NRF_LOG_INFO("Button_1 released");
+      stopScanByTriggerPin();
+      //epaper_demo_text();
     }
     /*
       NRF_LOG_INFO("Send button state change.");
@@ -700,14 +697,17 @@ static void power_management_init(void) {
  * Pin change handler
  */
 static void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action) {
-  //NRF_LOG_INFO("in_pin_handler(): pin=%s, action=%s", pin, action);
-  NRF_LOG_INFO("in_pin_handler(): pin=%d", pin);
+  //NRF_LOG_INFO("in_pin_handler(): pin=%d", pin);
   
+  if (pin != BCM_LED) {
+    return;
+  }
+
   if (nrf_gpio_pin_read(BCM_LED) > 0) {
-    NRF_LOG_INFO("Feedback-LED ON");
+    //NRF_LOG_INFO("Feedback-LED ON");
     bsp_board_led_on(bsp_board_pin_to_led_idx(FEEDBACK_LED));
   } else {
-    NRF_LOG_INFO("Feedback-LED OFF");
+    //NRF_LOG_INFO("Feedback-LED OFF");
     bsp_board_led_off(bsp_board_pin_to_led_idx(FEEDBACK_LED));
   }
 
@@ -728,7 +728,7 @@ static void gpio_init(void) {
     nrf_drv_gpiote_out_config_t out_config = GPIOTE_CONFIG_OUT_SIMPLE(false);
     err_code = nrf_drv_gpiote_out_init(PIN_OUT, &out_config);
     APP_ERROR_CHECK(err_code);
-    */
+  */
 
   nrf_drv_gpiote_in_config_t in_config = NRFX_GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
   in_config.pull = NRF_GPIO_PIN_PULLUP;
@@ -776,7 +776,7 @@ static void start_serial_receive_timer(void) {
 }
 
 static void serial_sleep_handler(void) {
-  NRF_LOG_INFO("serial_sleep_handler()");
+  //NRF_LOG_INFO("serial_sleep_handler()");
   __WFE();
   __SEV();
   __WFE();
@@ -806,22 +806,27 @@ NRF_SERIAL_UART_DEF(serial_uart, 0);
 static void serial_event_handler(struct nrf_serial_s const *p_serial, nrf_serial_event_t event) {
   switch (event) {
   case NRF_SERIAL_EVENT_TX_DONE:
+    //NRF_LOG_INFO("serial_event_handler(): NRF_SERIAL_EVENT_TX_DONE");
     break;
-  case NRF_SERIAL_EVENT_RX_DATA: {
+  case NRF_SERIAL_EVENT_RX_DATA:
+    //NRF_LOG_INFO("serial_event_handler(): NRF_SERIAL_EVENT_RX_DATA");
     start_serial_receive_timer();
     char c;
     ret_code_t ret_code;
     ret_code = nrf_queue_read(p_serial->p_ctx->p_config->p_queues->p_rxq, &c, sizeof(c));
     //ret_code = nrf_serial_read(&serial_uart, &c, sizeof(c), NULL, 0);
     APP_ERROR_CHECK(ret_code);
-    NRF_LOG_INFO("Received: %c", c);
+    //NRF_LOG_INFO("Received: %c", c);
     strcat(barcode_buffer, &c);
-  }  break;
+    break;
   case NRF_SERIAL_EVENT_DRV_ERR:
+    //NRF_LOG_INFO("serial_event_handler(): NRF_SERIAL_EVENT_DRV_ERR");
     break;
   case NRF_SERIAL_EVENT_FIFO_ERR:
+    //NRF_LOG_INFO("serial_event_handler(): NRF_SERIAL_EVENT_FIFO_ERR");
     break;
   default:
+    //NRF_LOG_INFO("serial_event_handler(): default");
     break;
   }
 
@@ -867,10 +872,29 @@ static void scheduler_init(void)
 // BARCODE MODULE STUFF >>>>>>>>>>>>>>
 
 static void barcode_module_init() {
+  
+  /*
+  nrf_gpio_cfg(
+        BCM_TRIGGER,
+        NRF_GPIO_PIN_DIR_OUTPUT,
+        NRF_GPIO_PIN_INPUT_DISCONNECT,
+        NRF_GPIO_PIN_NOPULL,
+        NRF_GPIO_PIN_S0S1,
+        GPIO_PIN_CNF_SENSE_Disabled);
+  nrf_gpio_cfg(
+        BCM_WAKEUP,
+        NRF_GPIO_PIN_DIR_OUTPUT,
+        NRF_GPIO_PIN_INPUT_DISCONNECT,
+        NRF_GPIO_PIN_NOPULL,
+        NRF_GPIO_PIN_S0S1,
+        GPIO_PIN_CNF_SENSE_Disabled);
+  */
   nrf_gpio_cfg_output(BCM_TRIGGER);
-  nrf_gpio_pin_write(BCM_TRIGGER, 0);
+  nrf_gpio_pin_write(BCM_TRIGGER, 1);
+
   nrf_gpio_cfg_output(BCM_WAKEUP);
-  nrf_gpio_pin_write(BCM_WAKEUP, 0);
+  nrf_gpio_pin_write(BCM_WAKEUP, 1);
+
   nrf_gpio_cfg_input(BCM_LED, NRF_GPIO_PIN_NOPULL);
   nrf_gpio_cfg_input(BCM_BUZZER, NRF_GPIO_PIN_NOPULL);
 }
