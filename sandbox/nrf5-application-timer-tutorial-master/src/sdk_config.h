@@ -73,11 +73,15 @@
 #define WSEPD_SPI_INSTANCE  0
 #endif
 
-// <h> Application
+
 
 #ifndef APP_TIMER_V2_RTC1_ENABLED
 #define APP_TIMER_V2_RTC1_ENABLED 1
 #endif
+
+
+
+// <h> Application
 
 //==========================================================
 // <h> SPI_CONFIGURATION - Spi configuration
@@ -10148,7 +10152,7 @@
 // <4=> Debug 
 
 #ifndef APP_TIMER_CONFIG_LOG_LEVEL
-#define APP_TIMER_CONFIG_LOG_LEVEL 3
+#define APP_TIMER_CONFIG_LOG_LEVEL 4
 #endif
 
 // <o> APP_TIMER_CONFIG_INITIAL_LOG_LEVEL  - Initial severity level if dynamic filtering is enabled.
@@ -10164,7 +10168,7 @@
 // <4=> Debug 
 
 #ifndef APP_TIMER_CONFIG_INITIAL_LOG_LEVEL
-#define APP_TIMER_CONFIG_INITIAL_LOG_LEVEL 3
+#define APP_TIMER_CONFIG_INITIAL_LOG_LEVEL 4
 #endif
 
 // <o> APP_TIMER_CONFIG_INFO_COLOR  - ANSI escape code prefix.

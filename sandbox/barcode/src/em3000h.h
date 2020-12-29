@@ -1,7 +1,11 @@
-#define CMD_ACK_OPCODE  0x<D0;
-#define CMD_NACK_OPCODE 0xD1;
+#define CMD_ACK_OPCODE 0xD0
+char CMD_ACK_RESPONSE_MESSAGE[] = { 0x04, 0xD0, 0x00, 0x00, 0xFF, 0x2C }; // Response ACK-Message from scan engine
+#define CMD_NACK_OPCODE 0xD1
+char CMD_NACK_RESEND_RESPONSE_MESSAGE[] = { 0x04, 0xD1, 0x00, 0x01, 0xFF, 0x25 }; // Response NACK-Message (RESEND) from scan engine
+char CMD_NACK_BAD_CONTEXT_RESPONSE_MESSAGE[] = { 0x04, 0xD1, 0x00, 0x02, 0xFF, 0x24 };  // Response NACK-Message (BAD_CONTEXT) from scan engine
+char CMD_NACK_DENIED_RESPONSE_MESSAGE[] = { 0x04, 0xD1, 0x00, 0x06, 0xFF, 0x20 }; // Response NACK-Message (DENIED) from scan engine
 
-// comannds from host to the scan engine
+// commands from host to the scan engine
 char CMD_ACK[] = { 0x04, 0xD0, 0x04, 0x00, 0xFF, 0x28 };
 char CMD_NACK_RESEND[] = { 0x05, 0xD1, 0x04, 0x00, 0x01, 0xFF, 0x25 };
 char CMD_NACK_BAD_CONTEXT[] = { 0x05, 0xD1, 0x04, 0x00, 0x02, 0xFF, 0x24 };

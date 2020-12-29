@@ -45,14 +45,12 @@
 
 #include "app_button.h"
 #include "app_error.h"
-#include "app_timer.h"
 #include "app_scheduler.h"
+#include "app_timer.h"
 #include "app_util_platform.h"
-
 #include "boards.h"
 #include "nordic_common.h"
 #include "nrf.h"
-#include "nrf_delay.h"
 #include "nrf_drv_clock.h"
 #include "nrf_drv_gpiote.h"
 #include "nrf_gpio.h"
@@ -66,34 +64,34 @@
 
 #include "em3000h.h"
 
-#define ADVERTISING_LED LED_1 /**< Is on when device is advertising. */
-#define CONNECTED_LED   LED_2   /**< Is on when device has connected. */
-#define LEDBUTTON_LED   LED_3   /**< LED to be toggled with the help of the LED Button Service. */
-#define FEEDBACK_LED    LED_4   /**< LED indicates a successfull scanning. */
+#define ADVERTISING_LED LED_1 // Is on when device is advertising
+#define CONNECTED_LED   LED_2 // Is on when device has connected
+#define LEDBUTTON_LED   LED_3 // LED to be toggled with the help of the LED Button Service
+#define FEEDBACK_LED    LED_4 // LED indicates a successfull scanning
 
 #define UART_PIN_DISCONNECTED 0xFFFFFFFF
 
 // define pins to barcode module
-#define BCM_TRIGGER 47                 /** P1.14 on board, Pin #12 at barcode scanner module (Driving this pin low causes the scan engine to start a scan and decode session).*/
-#define BCM_WAKEUP  46                 /** P1.15 on board, Pin #11 at barcode scanner module (When the scan engine is in low power mode, pulsing this pin low for 200 nsec awakens the scan engine). */
-#define BCM_LED     45                 /** P1.13 on board, Pin #10 at barcode scanner module. */
-#define BCM_BUZZER  44                 /** P1.12 on board, Pin #09 at barcode scanner module. */
-#define BCM_TX TX_PIN_NUMBER           /** RX-Pin #4 at barcode scanner module. */
-#define BCM_RX RX_PIN_NUMBER           /** TX-Pin #5 at barcode scanner module. */
-#define CTS_PIN UART_PIN_DISCONNECTED  /** Not connected. */
-#define RTS_PIN UART_PIN_DISCONNECTED  /** Not connected. */
+#define BCM_TRIGGER 47                    // P1.14 on board, Pin #12 at barcode scanner module
+#define BCM_WAKEUP  46                    // P1.15 on board, Pin #11 at barcode scanner module
+#define BCM_LED     45                    // P1.13 on board, Pin #10 at barcode scanner module
+#define BCM_BUZZER  44                    // P1.12 on board, Pin #09 at barcode scanner module
+#define BCM_TX      TX_PIN_NUMBER         // RX-Pin #4 at barcode scanner module
+#define BCM_RX      RX_PIN_NUMBER         // TX-Pin #5 at barcode scanner module
+#define CTS_PIN     UART_PIN_DISCONNECTED // Not connected
+#define RTS_PIN     UART_PIN_DISCONNECTED // Not connected
 
-#define BUTTON_DETECTION_DELAY APP_TIMER_TICKS(50) /**< Delay from a GPIOTE event until a button is reported as pushed (in number of timer ticks). */
+#define BUTTON_DETECTION_DELAY APP_TIMER_TICKS(50) // Delay from a GPIOTE event until a button is reported as pushed (in number of timer ticks)
 
-#define DEAD_BEEF 0xDEADBEEF /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
+#define DEAD_BEEF 0xDEADBEEF // Value used as error code on stack dump, can be used to identify stack location on stack unwind
 
-#define SCHED_MAX_EVENT_DATA_SIZE       16                                                    /**< Maximum size of scheduler events. */
-#define SCHED_QUEUE_SIZE                196                                                   /**< Maximum number of events in the scheduler queue. */
+#define SCHED_MAX_EVENT_DATA_SIZE 16 // Maximum size of scheduler events
+#define SCHED_QUEUE_SIZE 196         // Maximum number of events in the scheduler queue
 
-#define APP_ENABLE_LOGS                 1                                                     /**< Enable logs in the application. */
+#define APP_ENABLE_LOGS 1 // Enable logs in the application
 
 #if (APP_ENABLE_LOGS == 1)
-#define APPL_LOG  NRF_LOG_INFO
+#define APPL_LOG NRF_LOG_INFO
 #define APPL_DUMP NRF_LOG_RAW_HEXDUMP_INFO
 #define APPL_ADDR IPV6_ADDRESS_LOG
 #else // APP_ENABLE_LOGS
@@ -102,37 +100,60 @@
 #define APPL_ADDR(...)
 #endif // APP_ENABLE_LOGS
 
-char scan_engine_inbound_message[30];
-char scan_engine_inbound_message_temp[30];
-bool is_receiving_data_from_scan_engine = false;
+
+typedef enum
+{
+    IDLE,
+    AWAITING_BARCODE,
+    AWAITING_ACK_MESSAGE,
+    AWAITING_PARAM_DATA,
+} scan_engine_communication_state_t;
+
+
+static scan_engine_communication_state_t m_scan_engine_comm_state;
+
+static char m_scan_engine_inbound_message[16];
+static char m_scan_engine_inbound_message_temp[16];
+static char m_scan_engine_inbound_barcode[16];
+static char m_scan_engine_inbound_message_hex[16];
+
+static bool m_is_receiving_data_from_scan_engine = false;
+static uint16_t m_number_of_bytes_transfered = 0;
+
+static bool m_is_non_blocking_delay_wait = false;
 
 #define SERIAL_MAX_WRITE_TIMEOUT NRF_SERIAL_MAX_TIMEOUT
 
 
-NRF_SERIAL_DRV_UART_CONFIG_DEF(m_uart0_drv_config,
-    BCM_RX, BCM_TX, RTS_PIN, CTS_PIN,
-    NRF_UART_HWFC_DISABLED, NRF_UART_PARITY_EXCLUDED,
-    NRF_UART_BAUDRATE_9600,
-    UART_DEFAULT_CONFIG_IRQ_PRIORITY);
+NRF_SERIAL_DRV_UART_CONFIG_DEF(m_uart0_drv_config, BCM_RX, BCM_TX, RTS_PIN, CTS_PIN,
+                               NRF_UART_HWFC_DISABLED, NRF_UART_PARITY_EXCLUDED, NRF_UART_BAUDRATE_9600,
+                               UART_DEFAULT_CONFIG_IRQ_PRIORITY);
 
 #define SERIAL_FIFO_TX_SIZE 32
 #define SERIAL_FIFO_RX_SIZE 32
-NRF_SERIAL_QUEUES_DEF(serial_queues, SERIAL_FIFO_TX_SIZE, SERIAL_FIFO_RX_SIZE);
+NRF_SERIAL_QUEUES_DEF(m_serial_queues, SERIAL_FIFO_TX_SIZE, SERIAL_FIFO_RX_SIZE);
 
 #define SERIAL_BUFF_TX_SIZE 1
 #define SERIAL_BUFF_RX_SIZE 1
-NRF_SERIAL_BUFFERS_DEF(serial_buffs, SERIAL_BUFF_TX_SIZE, SERIAL_BUFF_RX_SIZE);
+NRF_SERIAL_BUFFERS_DEF(m_serial_buffs, SERIAL_BUFF_TX_SIZE, SERIAL_BUFF_RX_SIZE);
 
-NRF_SERIAL_UART_DEF(serial_uart, 0);
+NRF_SERIAL_UART_DEF(m_serial_uart, 0);
+
+APP_TIMER_DEF(m_non_blocking_delay_timer_id);
+APP_TIMER_DEF(m_serial_receive_timer_id);
 
 /**@brief Function for initializing low-frequency clock.
  */
-static void lfclk_config(void) {
-  ret_code_t err_code = nrf_drv_clock_init();
-  APP_ERROR_CHECK(err_code);
+static void lfclk_init(void)
+{
+    //NRF_LOG_INFO("lfclk_config()");
 
-  nrf_drv_clock_lfclk_request(NULL);
+    ret_code_t err_code = nrf_drv_clock_init();
+    APP_ERROR_CHECK(err_code);
+
+    nrf_drv_clock_lfclk_request(NULL);
 }
+
 
 /**@brief Function for assert macro callback.
  *
@@ -145,45 +166,13 @@ static void lfclk_config(void) {
  * @param[in] line_num    Line number of the failing ASSERT call.
  * @param[in] p_file_name File name of the failing ASSERT call.
  */
-void assert_nrf_callback(uint16_t line_num, const uint8_t *p_file_name) {
-  app_error_handler(DEAD_BEEF, line_num, p_file_name);
+void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
+{
+    NRF_LOG_INFO("assert_nrf_callback()");
+
+    app_error_handler(DEAD_BEEF, line_num, p_file_name);
 }
 
-
-/**@brief Function for handling the idle state (main loop).
- *
- * @details If there is no pending log operation, then sleep until next the next event occurs.
- */
-static void idle_state_handle(void) {
-  if (NRF_LOG_PROCESS() == false) {
-    //nrf_pwr_mgmt_run();
-    app_sched_execute();
-
-    // Wait for an event.
-    __WFE();
-    // Clear the event register.
-    __SEV();
-    __WFE();
-  }
-}
-
-/**@brief Function for the LEDs initialization.
- *
- * @details Initializes all LEDs used by the application.
- */
-static void leds_init(void) {
-  bsp_board_init(BSP_INIT_LEDS);
-}
-
-/**@brief Function for the Timer initialization.
- *
- * @details Initializes the timer module.
- */
-static void timers_init(void) {
-  // Initialize timer module, making it use the scheduler
-  ret_code_t err_code = app_timer_init();
-  APP_ERROR_CHECK(err_code);
-}
 
 /**@brief Function for handling Queued Write Module errors.
  *
@@ -192,371 +181,13 @@ static void timers_init(void) {
  *
  * @param[in]   nrf_error   Error code containing information about what went wrong.
  */
-static void nrf_qwr_error_handler(uint32_t nrf_error) {
-  APP_ERROR_HANDLER(nrf_error);
+static void nrf_qwr_error_handler(uint32_t nrf_error)
+{
+    NRF_LOG_INFO("nrf_qwr_error_handler()");
+
+    APP_ERROR_HANDLER(nrf_error);
 }
 
-bool em2000h_send_command(const char *command, size_t size, bool wait_for_ack) {
-
-  // clear scan engine inbound messag
-  memset(scan_engine_inbound_message, 0, sizeof(scan_engine_inbound_message));
-
-  /*
-  char c;
-  ret_code_t ret_code = nrf_serial_read(&serial_uart, &c, sizeof(c), NULL, 0);
-  APP_ERROR_CHECK(ret_code);
-  NRF_LOG_INFO("Received: %d (0%x)", c);
-  strcat(scan_engine_inbound_message, &c);
-
-
-  while (is_receiving_data_from_scan_engine == true) {
-    NRF_LOG_INFO("em2000h_send_command(): waiting for is_receiving_data_from_scan_engine is becoming false...");
-    app_sched_execute();
-  }
-  */
-  
-  ret_code_t ret = nrf_serial_write(&serial_uart,
-                                    command,
-                                    size,
-                                    NULL,
-                                    SERIAL_MAX_WRITE_TIMEOUT);
-  APP_ERROR_CHECK(ret);
-  
-  if (wait_for_ack) {
-    while (scan_engine_inbound_message == 0) {
-      NRF_LOG_INFO("Waiting for scan engine ACK message...");
-      // wait for scan engine inbound message
-      app_sched_execute();
-      // Wait for an event.
-      __WFE();
-      // Clear the event register.
-      __SEV();
-      __WFE();
-    }
-
-    NRF_LOG_INFO("Received scan engine inbound message: %X", scan_engine_inbound_message);
-
-    return false;
-
-  } else {
-
-    nrf_delay_ms(50);
-    
-    return true;
-
-  }
-
-  return false;
-
-  /*
-  if ack message erwartet:
-  while (millis() < timeout)
-  {
-    if (_serial->available())
-    {
-      while (_serial->available())
-      {
-        byte incoming = _serial->read();
-        if (incoming == DE2120_COMMAND_ACK)
-          return (true);
-        else if (incoming == DE2120_COMMAND_NACK)
-          return (false);
-      }
-    }
-    delay(1);
-  }
-  */
-
-  //nrf_serial_flush(&serial_uart, 0);
-}
-
-
-static void barcode_module_init() {
-  NRF_LOG_INFO("barcode_module_init()");
-
-  nrf_gpio_cfg_output(BCM_TRIGGER);
-  nrf_gpio_pin_write(BCM_TRIGGER, 1);
-
-  nrf_gpio_cfg_output(BCM_WAKEUP);
-  nrf_gpio_pin_write(BCM_WAKEUP, 1);
-
-  nrf_gpio_cfg_input(BCM_LED, NRF_GPIO_PIN_NOPULL);
-  nrf_gpio_cfg_input(BCM_BUZZER, NRF_GPIO_PIN_NOPULL);
-  
-
-  bool send_ret = false;
-
-  NRF_LOG_INFO("Send command CMD_PARAM_SET_SOFTWARE_HANDSHAKING_ENABLE");
-  send_ret = em2000h_send_command(CMD_PARAM_SET_SOFTWARE_HANDSHAKING_ENABLE, 9, false);
-  if (!send_ret) {
-    NRF_LOG_ERROR("Sending command CMD_PARAM_SET_SOFTWARE_HANDSHAKING_ENABLE failed.");
-  }
-  //nrf_delay_ms(50);
-  NRF_LOG_INFO("Send command CMD_PARAM_SET_POWER_MODE_LOW");
-  send_ret = em2000h_send_command(CMD_PARAM_SET_POWER_MODE_LOW, 9, false);
-  if (!send_ret) {
-    NRF_LOG_ERROR("Sending command CMD_PARAM_SET_POWER_MODE_LOW failed.");
-  }
-  //nrf_delay_ms(50);
-  NRF_LOG_INFO("Send command CMD_PARAM_SET_TRIGGER_MODE_HOST");
-  send_ret = em2000h_send_command(CMD_PARAM_SET_TRIGGER_MODE_HOST, 9, false);
-  if (!send_ret) {
-    NRF_LOG_ERROR("Sending command CMD_PARAM_SET_TRIGGER_MODE_HOST failed.");
-  }
-  //nrf_delay_ms(50);
-  NRF_LOG_INFO("Send command CMD_SCAN_ENABLE");
-  send_ret = em2000h_send_command(CMD_SCAN_ENABLE, 6, false);
-  if (!send_ret) {
-    NRF_LOG_ERROR("Sending command CMD_SCAN_ENABLE failed.");
-  }
-}
-
-
-/**@brief Function for handling events from the button handler module.
- *
- * @param[in] pin_no        The pin that the event applies to.
- * @param[in] button_action The button action (press/release).
- */
-static void button_event_handler(uint8_t pin_no, uint8_t button_action) {
-  //NRF_LOG_INFO("button_event_handler()");
-  ret_code_t err_code;
-
-  switch (pin_no) {
-  case BUTTON_1:
-    if (button_action == APP_BUTTON_PUSH) {
-      //NRF_LOG_INFO("Button_1 push");
-      em2000h_send_command(CMD_WAKEUP, 1, false);
-      em2000h_send_command(CMD_START_DECODE, 6, false);
-    } else if (button_action == APP_BUTTON_RELEASE) {
-      //NRF_LOG_INFO("Button_1 released");
-      em2000h_send_command(CMD_STOP_DECODE, 6, false);
-      //em2000h_send_command(CMD_SLEEP, 6);
-    }
-    /*
-      NRF_LOG_INFO("Send button state change.");
-      err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, button_action);
-      if (err_code != NRF_SUCCESS &&
-          err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
-          err_code != NRF_ERROR_INVALID_STATE &&
-          err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-      {
-          APP_ERROR_CHECK(err_code);
-      }
-    */
-    break;
-  case BUTTON_2:
-    if (button_action == APP_BUTTON_RELEASE) {
-      NRF_LOG_INFO("Button_2 released");
-      barcode_module_init();
-    }
-    break;
-  case BUTTON_3:
-    if (button_action == APP_BUTTON_RELEASE) {
-      NRF_LOG_INFO("Button_3 released");
-    }
-    break;
-  case BUTTON_4:
-    if (button_action == APP_BUTTON_RELEASE) {
-      NRF_LOG_INFO("Button_4 released");
-      // reset scan engine
-      nrf_gpio_pin_write(BCM_WAKEUP, 1);
-      nrf_delay_ms(1);
-      nrf_gpio_pin_write(BCM_WAKEUP, 0);
-      nrf_delay_ms(200);
-      nrf_gpio_pin_write(BCM_WAKEUP, 1);
-      //em2000h_send_command(CMD_RESET, 6);
-    }
-    break;
-  default:
-    //APP_ERROR_HANDLER(pin_no);
-    NRF_LOG_INFO("Unsupported button: pin=%d", pin_no);
-    break;
-  }
-}
-
-/**@brief Function for initializing the button handler module.
- */
-static void buttons_init() {
-  NRF_LOG_INFO("buttons_init()");
-
-  uint32_t err_code;
-
-  //The array must be static because a pointer to it will be saved in the button handler module.
-  static app_button_cfg_t buttons[] =
-      {
-          {BUTTON_1, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_event_handler}
-         ,{BUTTON_2, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_event_handler}
-         ,{BUTTON_3, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_event_handler}
-         ,{BUTTON_4, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_event_handler}
-      };
-
-  err_code = app_button_init(buttons, ARRAY_SIZE(buttons), BUTTON_DETECTION_DELAY);
-  APP_ERROR_CHECK(err_code);
-
-  err_code = app_button_enable();
-  APP_ERROR_CHECK(err_code);
-}
-
-
-static void log_init(void) {
-  ret_code_t err_code = NRF_LOG_INIT(NULL);
-  APP_ERROR_CHECK(err_code);
-
-  NRF_LOG_DEFAULT_BACKENDS_INIT();
-}
-
-/**@brief Function for initializing power management.
- */
-static void power_management_init(void) {
-  ret_code_t err_code;
-  err_code = nrf_pwr_mgmt_init();
-  APP_ERROR_CHECK(err_code);
-}
-
-/**
- * Pin change handler
- */
-static void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action) {
-  //NRF_LOG_INFO("in_pin_handler(): pin=%d", pin);
-  
-  if (pin != BCM_LED) {
-    return;
-  }
-
-  if (nrf_gpio_pin_read(BCM_LED) > 0) {
-    //NRF_LOG_INFO("Feedback-LED ON");
-    bsp_board_led_on(bsp_board_pin_to_led_idx(FEEDBACK_LED));
-  } else {
-    //NRF_LOG_INFO("Feedback-LED OFF");
-    bsp_board_led_off(bsp_board_pin_to_led_idx(FEEDBACK_LED));
-  }
-
-  //nrf_drv_gpiote_out_toggle(PIN_OUT);
-}
-
-/**
- * @brief Function for configuring: Configures GPIOTE to give an interrupt on pin change.
- */
-static void gpio_init(void) {
-  ret_code_t err_code;
-
-  // Initialization of GPIOTE is allready done by app_button library
-  //err_code = nrf_drv_gpiote_init();
-  //APP_ERROR_CHECK(err_code);
-
-  /*
-    nrf_drv_gpiote_out_config_t out_config = GPIOTE_CONFIG_OUT_SIMPLE(false);
-    err_code = nrf_drv_gpiote_out_init(PIN_OUT, &out_config);
-    APP_ERROR_CHECK(err_code);
-  */
-
-  nrf_drv_gpiote_in_config_t in_config = NRFX_GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
-  in_config.pull = NRF_GPIO_PIN_PULLUP;
-
-  err_code = nrf_drv_gpiote_in_init(BCM_LED, &in_config, in_pin_handler);
-  APP_ERROR_CHECK(err_code);
-
-  nrf_drv_gpiote_in_event_enable(BCM_LED, true);
-}
-
-
-
-APP_TIMER_DEF(my_serial_receive_timer_id);
-
-static void stop_serial_receive_timer(void) {
-  ret_code_t ret_code;
-  ret_code = app_timer_stop(my_serial_receive_timer_id);
-  APP_ERROR_CHECK(ret_code);
-  is_receiving_data_from_scan_engine = false;
-}
-
-static void serial_receive_timeout_handler() {
-  //NRF_LOG_INFO("serial_receive_timeout_handler()");
-
-  //NRF_LOG_INFO("Finally Received: %X", scan_engine_inbound_message_temp);
-
-  strcpy(scan_engine_inbound_message, scan_engine_inbound_message_temp);
-
-  memset(scan_engine_inbound_message_temp, 0, sizeof(scan_engine_inbound_message_temp));
-  
-  stop_serial_receive_timer();
-}
-
-static void create_serial_receive_timer(void) {
-  ret_code_t ret_code;
-  ret_code = app_timer_create(&my_serial_receive_timer_id, APP_TIMER_MODE_SINGLE_SHOT, serial_receive_timeout_handler);
-  APP_ERROR_CHECK(ret_code);
-}
-
-static void start_serial_receive_timer(void) {
-  ret_code_t ret_code;
-  if (is_receiving_data_from_scan_engine == false) {
-    ret_code = app_timer_start(my_serial_receive_timer_id, APP_TIMER_TICKS(50), NULL);
-    APP_ERROR_CHECK(ret_code);
-    is_receiving_data_from_scan_engine = true;
-  }
-}
-
-static void serial_sleep_handler(void) {
-  //NRF_LOG_INFO("serial_sleep_handler()");
-  __WFE();
-  __SEV();
-  __WFE();
-}
-
-/**
- * Serial Empfang via Event Handler ist schlecht dokumentiert. Hier gibt es ein paar interessante Case:
- * https://devzone.nordicsemi.com/f/nordic-q-a/34391/serial-port-library-receive-interrupt
- * https://devzone.nordicsemi.com/f/nordic-q-a/22320/serial-port-interrupt
- */
-static void serial_event_handler(struct nrf_serial_s const *p_serial, nrf_serial_event_t event) {
-  switch (event) {
-  case NRF_SERIAL_EVENT_TX_DONE:
-    //NRF_LOG_INFO("serial_event_handler(): NRF_SERIAL_EVENT_TX_DONE");
-    break;
-  case NRF_SERIAL_EVENT_RX_DATA:
-    //NRF_LOG_INFO("serial_event_handler(): NRF_SERIAL_EVENT_RX_DATA");
-    start_serial_receive_timer();
-    char c;
-    ret_code_t ret_code;
-    ret_code = nrf_queue_read(p_serial->p_ctx->p_config->p_queues->p_rxq, &c, sizeof(c));
-    //ret_code = nrf_serial_read(&serial_uart, &c, sizeof(c), NULL, 0);
-    APP_ERROR_CHECK(ret_code);
-    //NRF_LOG_INFO("Received: %d (0%x)", c);
-    strcat(scan_engine_inbound_message_temp, &c);
-    break;
-  case NRF_SERIAL_EVENT_DRV_ERR:
-    NRF_LOG_INFO("serial_event_handler(): NRF_SERIAL_EVENT_DRV_ERR");
-    break;
-  case NRF_SERIAL_EVENT_FIFO_ERR:
-    NRF_LOG_INFO("serial_event_handler(): NRF_SERIAL_EVENT_FIFO_ERR");
-    break;
-  default:
-    NRF_LOG_INFO("serial_event_handler(): default");
-    break;
-  }
-
-  /*
-  if (event == NRF_SERIAL_EVENT_RX_DATA) {
-    char c;
-    ret_code_t ret_code;
-    ret_code = nrf_serial_read(&serial_uart, &c, sizeof(c), NULL, 500);
-    APP_ERROR_CHECK(ret_code);
-    NRF_LOG_INFO("serial_event_handler: %c", c);
-  }
-  */
-}
-
-NRF_SERIAL_CONFIG_DEF(serial_config, NRF_SERIAL_MODE_DMA, &serial_queues, &serial_buffs, serial_event_handler, serial_sleep_handler);
-
-/**
- * Function for initializing serial communication.
- */
-static void init_serial(void) {
-  ret_code_t ret_code;
-  ret_code = nrf_serial_init(&serial_uart, &m_uart0_drv_config, &serial_config);
-  APP_ERROR_CHECK(ret_code);
-}
 
 /**@brief Function for the Event Scheduler initialization.
  */
@@ -565,60 +196,562 @@ static void scheduler_init(void)
     APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
 }
 
-/**@brief Function for calculating the 2's complement checksum for the given content.
- */
-uint16_t calc_checksum(const char* str, const uint8_t len) {
-  uint16_t checksum, i, sum =  0;
 
-  for (i = 0; i < len; i++) {
-    sum += str[i];
-  }
-  
-  NRF_LOG_INFO("calc_checksum: sum is %x", sum);
-  
-  checksum =~ sum + 1;
+static void log_init(void)
+{
+    ret_code_t err_code = NRF_LOG_INIT(NULL);
+    APP_ERROR_CHECK(err_code);
 
-  NRF_LOG_INFO("calc_checksum: checksum is %x", checksum);
-  
-  return checksum;
+    NRF_LOG_DEFAULT_BACKENDS_INIT();
 }
+
+/**@brief Function for initializing power management.
+ * See https://embeddedcentric.com/lesson-14-nrf5x-power-management-tutorial/
+ */
+static void power_management_init(void)
+{
+    ret_code_t err_code;
+    err_code = nrf_pwr_mgmt_init();
+    APP_ERROR_CHECK(err_code);
+}
+
+
+/**@brief Function for the Timer initialization.
+ *
+ * @details Initializes the timer module.
+ */
+static void timers_init(void)
+{
+    //NRF_LOG_INFO("timers_init()");
+
+    // Initialize timer module, making it use the scheduler
+    ret_code_t err_code = app_timer_init();
+    APP_ERROR_CHECK(err_code);
+}
+
+/**@brief Function for the LEDs initialization.
+ *
+ * @details Initializes all LEDs used by the application.
+ */
+static void leds_init(void) {
+    //NRF_LOG_INFO("leds_init()");
+    bsp_board_init(BSP_INIT_LEDS);
+}
+
+
+
+static void non_blocking_delay_timeout_handler()
+{
+    NRF_LOG_INFO("non_blocking_deleay_timeout_handler()");
+
+    m_is_non_blocking_delay_wait = false;
+}
+
+
+static void non_blocking_delay_ms(uint64_t delay)
+{
+    NRF_LOG_INFO("non_blocking_delay_ms(): START - %d ms", delay);
+    m_is_non_blocking_delay_wait = true;
+
+    APP_ERROR_CHECK(app_timer_start(m_non_blocking_delay_timer_id, APP_TIMER_TICKS(delay), NULL));
+
+    while (m_is_non_blocking_delay_wait)
+    {
+        //NRF_LOG_INFO("Wait for is_non_blocking_delay is getting FALSE...");
+        nrf_pwr_mgmt_run(); // funktioniert nicht in main
+        //app_sched_execute();  // funktioniert in main
+    }
+
+    NRF_LOG_INFO("non_blocking_delay_ms(): END - %d ms", delay);
+}
+
+bool em2000h_send_command(const char * command, size_t size, bool wait_for_ack)
+{
+
+    // clear last scan engine inbound messag
+    memset(m_scan_engine_inbound_message, 0, sizeof(m_scan_engine_inbound_message));
+
+    ret_code_t ret = nrf_serial_write(&m_serial_uart, command, size, NULL, SERIAL_MAX_WRITE_TIMEOUT);
+    APP_ERROR_CHECK(ret);
+
+    if (wait_for_ack) {
+        while (m_is_receiving_data_from_scan_engine == true || m_scan_engine_inbound_message == 0)
+        {
+            NRF_LOG_INFO("Waiting for scan engine ACK message...");
+            // Wait for scan engine inbound message
+            //app_sched_execute();
+            nrf_pwr_mgmt_run();
+        }
+
+        NRF_LOG_INFO("Received scan engine inbound message: %X, %d, %c, (size %d)",
+                          m_scan_engine_inbound_message, m_scan_engine_inbound_message, m_scan_engine_inbound_message, sizeof(m_scan_engine_inbound_message));
+
+        for (int i=0; i<sizeof(m_scan_engine_inbound_message_hex)/sizeof(char); i++)
+        {
+            NRF_LOG_INFO("HEX-Chars of message: 0x%X", m_scan_engine_inbound_message_hex[i]);
+        }
+
+
+        if (m_scan_engine_inbound_message == 536882224) // 0xD0
+        {
+            // ACK-Message
+            NRF_LOG_INFO("ACK-Message received.");
+            em2000h_send_command(CMD_ACK, 6, false);
+        }
+        else if (m_scan_engine_inbound_message[1] == 209) // 0xD1
+        {
+            NRF_LOG_INFO("NACK-Message received.");
+            // NACK-Message
+            //if (resend) {
+            //   em2000h_send_command(CMD_ACK, 6, false, resend_counter=1);
+            //}
+        }
+        else
+        {
+            // Unexpected Message
+        }
+
+        return true;
+    }
+    else
+    {
+        // When no ACK-message is expected, wait 50ms after sending the command.
+        // So subsequent commands are separated by a minimum of 50ms.
+        non_blocking_delay_ms(50);
+
+        return true;
+    }
+
+    return false;
+}
+
+
+static void barcode_module_init()
+{
+    NRF_LOG_INFO("barcode_module_init()");
+
+    nrf_gpio_cfg_output(BCM_TRIGGER);
+    nrf_gpio_pin_write(BCM_TRIGGER, 1);
+
+    nrf_gpio_cfg_output(BCM_WAKEUP);
+    nrf_gpio_pin_write(BCM_WAKEUP, 1);
+
+    nrf_gpio_cfg_input(BCM_LED, NRF_GPIO_PIN_NOPULL);
+    nrf_gpio_cfg_input(BCM_BUZZER, NRF_GPIO_PIN_NOPULL);
+
+
+    bool send_ret = false;
+
+    /*
+    NRF_LOG_INFO("Send command CMD_PARAM_SET_SOFTWARE_HANDSHAKING_DISABLE");
+    send_ret = em2000h_send_command(CMD_PARAM_SET_SOFTWARE_HANDSHAKING_DISABLE, 9, false);
+    if (!send_ret) {
+      NRF_LOG_ERROR("Sending command CMD_PARAM_SET_SOFTWARE_HANDSHAKING_DISABLE failed.");
+    }
+    */
+    /*
+    NRF_LOG_INFO("Send command CMD_PARAM_SET_SOFTWARE_HANDSHAKING_ENABLE");
+    send_ret = em2000h_send_command(CMD_PARAM_SET_SOFTWARE_HANDSHAKING_ENABLE, 9, false);
+    if (!send_ret) {
+      NRF_LOG_ERROR("Sending command CMD_PARAM_SET_SOFTWARE_HANDSHAKING_ENABLE failed.");
+    }
+    */
+    /*
+    NRF_LOG_INFO("Send command CMD_PARAM_SET_POWER_MODE_LOW");
+    send_ret = em2000h_send_command(CMD_PARAM_SET_POWER_MODE_LOW, 9, false);
+    if (!send_ret) {
+      NRF_LOG_ERROR("Sending command CMD_PARAM_SET_POWER_MODE_LOW failed.");
+    }
+    NRF_LOG_INFO("Send command CMD_PARAM_SET_TRIGGER_MODE_HOST");
+    send_ret = em2000h_send_command(CMD_PARAM_SET_TRIGGER_MODE_HOST, 9, false);
+    if (!send_ret) {
+      NRF_LOG_ERROR("Sending command CMD_PARAM_SET_TRIGGER_MODE_HOST failed.");
+    }
+    */
+
+    NRF_LOG_INFO("Send command CMD_WAKEUP");
+    send_ret = em2000h_send_command(CMD_WAKEUP, 1, false);
+    if (!send_ret)
+    {
+        NRF_LOG_ERROR("Sending command CMD_WAKEUP failed.");
+    }
+
+    NRF_LOG_INFO("Send command CMD_SCAN_DISABLE");
+    send_ret = em2000h_send_command(CMD_SCAN_DISABLE, 6, true);
+    if (!send_ret)
+    {
+        NRF_LOG_ERROR("Sending command CMD_SCAN_DISABLE failed.");
+    }
+
+    NRF_LOG_INFO("Send command CMD_SCAN_ENABLE");
+    send_ret = em2000h_send_command(CMD_SCAN_ENABLE, 6, true);
+    if (!send_ret)
+    {
+        NRF_LOG_ERROR("Sending command CMD_SCAN_ENABLE failed.");
+    }
+
+    NRF_LOG_INFO("Send command CMD_PARAM_GET_SOFTWARE_HANDSHAKING");
+    send_ret = em2000h_send_command(CMD_PARAM_GET_SOFTWARE_HANDSHAKING, 7, false);
+    if (!send_ret)
+    {
+        NRF_LOG_ERROR("Sending command CMD_PARAM_GET_SOFTWARE_HANDSHAKING failed.");
+    }
+
+    NRF_LOG_INFO("Scan Engine Init Finished.");
+}
+
+
+/**@brief Button 1 handler function to be called by the scheduler.
+ */
+void button1_scheduled_event_handler(void * p_event_data, uint16_t event_size)
+{
+    uint8_t button_action = *((uint8_t*) p_event_data);
+
+    if (button_action == APP_BUTTON_PUSH)
+    {
+        NRF_LOG_INFO("Button_1 push");
+        // Clear barcode buffer
+        memset(m_scan_engine_inbound_barcode, 0, sizeof(m_scan_engine_inbound_barcode));
+        // Start barcode decode session
+        em2000h_send_command(CMD_WAKEUP, 1, false);
+        em2000h_send_command(CMD_START_DECODE, 6, true);
+    }
+    else if (button_action == APP_BUTTON_RELEASE)
+    {
+        NRF_LOG_INFO("Button_1 released");
+        // Stop barcode decode session
+        em2000h_send_command(CMD_STOP_DECODE, 6, true);
+    }
+}
+
+
+/**@brief Button 2 handler function to be called by the scheduler.
+ */
+void button2_scheduled_event_handler(void * p_event_data, uint16_t event_size)
+{
+    uint8_t button_action = *((uint8_t*) p_event_data);
+
+    if (button_action == APP_BUTTON_PUSH)
+    {
+        NRF_LOG_INFO("Button_2 push");
+    }
+    else if (button_action == APP_BUTTON_RELEASE)
+    {
+        NRF_LOG_INFO("Button_2 released");
+        barcode_module_init();
+    }
+}
+
+
+/**@brief Button 3 handler function to be called by the scheduler.
+ */
+void button3_scheduled_event_handler(void * p_event_data, uint16_t event_size)
+{
+    uint8_t button_action = *((uint8_t*) p_event_data);
+
+    if (button_action == APP_BUTTON_PUSH)
+    {
+        NRF_LOG_INFO("Button_3 push");
+    }
+    else if (button_action == APP_BUTTON_RELEASE)
+    {
+        NRF_LOG_INFO("Button_3 released");
+    }
+}
+
+
+/**@brief Button 4 handler function to be called by the scheduler.
+ */
+void button4_scheduled_event_handler(void * p_event_data, uint16_t event_size)
+{
+    // Log execution mode.
+    /*
+    if (current_int_priority_get() == APP_IRQ_PRIORITY_THREAD)
+    {
+        NRF_LOG_INFO("button4_scheduled_event_handler() [executing in thread/main mode]");
+    }
+    else
+    {
+        NRF_LOG_INFO("button4_scheduled_event_handler() [executing in interrupt handler mode]");
+    }
+    */
+    
+    uint8_t button_action = *((uint8_t*) p_event_data);
+
+    if (button_action == APP_BUTTON_RELEASE)
+    {
+        NRF_LOG_INFO("Button_4 released");
+        // Reset scan engine
+        nrf_gpio_pin_write(BCM_WAKEUP, 0);
+        non_blocking_delay_ms(200);
+        nrf_gpio_pin_write(BCM_WAKEUP, 1);
+    }
+}
+
+
+/**@brief Function for handling events from the button handler module.
+ *
+ * @param[in] pin_no        The pin that the event applies to.
+ * @param[in] button_action The button action (press/release).
+ */
+static void button_event_handler(uint8_t pin_no, uint8_t button_action)
+{
+    // NRF_LOG_INFO("button_event_handler()");
+    ret_code_t err_code;
+
+    switch (pin_no)
+    {
+        case BUTTON_1:
+            app_sched_event_put(&button_action, sizeof(button_action), button1_scheduled_event_handler);
+            break;
+        case BUTTON_2:
+            NRF_LOG_INFO("Button_2 released");
+            app_sched_event_put(&button_action, sizeof(button_action), button2_scheduled_event_handler);            
+            break;
+        case BUTTON_3:
+            NRF_LOG_INFO("Button_3 handle");
+            app_sched_event_put(&button_action, sizeof(button_action), button3_scheduled_event_handler);
+            break;
+        case BUTTON_4:
+            NRF_LOG_INFO("Button_4 handle");
+            app_sched_event_put(&button_action, sizeof(button_action), button4_scheduled_event_handler);
+            break;
+        default:
+            // APP_ERROR_HANDLER(pin_no);
+            NRF_LOG_INFO("Unsupported button: pin=%d", pin_no);
+            break;
+    }
+}
+
+/**@brief Function for initializing the button handler module.
+ */
+static void buttons_init()
+{
+    NRF_LOG_INFO("buttons_init()");
+
+    uint32_t err_code;
+
+    // The array must be static because a pointer to it will be saved in the button handler module.
+    static app_button_cfg_t buttons[] = {
+        {BUTTON_1, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_event_handler},
+        {BUTTON_2, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_event_handler},
+        {BUTTON_3, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_event_handler},
+        {BUTTON_4, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_event_handler}};
+
+    err_code = app_button_init(buttons, ARRAY_SIZE(buttons), BUTTON_DETECTION_DELAY);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = app_button_enable();
+    APP_ERROR_CHECK(err_code);
+}
+
+/**
+ * Pin change handler
+ */
+static void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
+{
+    // NRF_LOG_INFO("in_pin_handler(): pin=%d", pin);
+
+    if (pin != BCM_LED)
+    {
+        return;
+    }
+
+    if (nrf_gpio_pin_read(BCM_LED) > 0)
+    {
+        // NRF_LOG_INFO("Feedback-LED ON");
+        bsp_board_led_on(bsp_board_pin_to_led_idx(FEEDBACK_LED));
+    }
+    else
+    {
+        // NRF_LOG_INFO("Feedback-LED OFF");
+        bsp_board_led_off(bsp_board_pin_to_led_idx(FEEDBACK_LED));
+    }
+
+    // nrf_drv_gpiote_out_toggle(PIN_OUT);
+}
+
+/**
+ * @brief Function for configuring: Configures GPIOTE to give an interrupt on pin change.
+ */
+static void gpio_init(void)
+{
+    ret_code_t err_code;
+
+    // Initialization of GPIOTE is allready done by app_button library
+    /*
+    err_code = nrf_drv_gpiote_init();
+    APP_ERROR_CHECK(err_code);
+
+    // Button GPIO config
+    nrf_drv_gpiote_in_config_t in_config_buttons = GPIOTE_CONFIG_IN_SENSE_LOTOHI(true);
+    in_config_buttons.pull = NRF_GPIO_PIN_PULLUP;
+
+    err_code = nrf_drv_gpiote_in_init(BUTTON_1, &in_config_buttons, button_event_handler);
+    APP_ERROR_CHECK(err_code);
+    err_code = nrf_drv_gpiote_in_init(BUTTON_2, &in_config_buttons, button_event_handler);
+    APP_ERROR_CHECK(err_code);
+    err_code = nrf_drv_gpiote_in_init(BUTTON_3, &in_config_buttons, button_event_handler);
+    APP_ERROR_CHECK(err_code);
+    err_code = nrf_drv_gpiote_in_init(BUTTON_4, &in_config_buttons, button_event_handler);
+    APP_ERROR_CHECK(err_code);
+
+    nrf_drv_gpiote_in_event_enable(BUTTON_1, true);
+    nrf_drv_gpiote_in_event_enable(BUTTON_2, true);
+    nrf_drv_gpiote_in_event_enable(BUTTON_3, true);
+    nrf_drv_gpiote_in_event_enable(BUTTON_4, true);
+    */
+
+    // BCM LED GPIO config
+    nrf_drv_gpiote_in_config_t in_config_bcm_led = NRFX_GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
+    in_config_bcm_led.pull = NRF_GPIO_PIN_PULLUP;
+
+    err_code = nrf_drv_gpiote_in_init(BCM_LED, &in_config_bcm_led, in_pin_handler);
+    APP_ERROR_CHECK(err_code);
+
+    nrf_drv_gpiote_in_event_enable(BCM_LED, true);
+}
+
+
+static void serial_receive_timeout_handler()
+{
+    NRF_LOG_INFO("serial_receive_timeout_handler()");
+
+    NRF_LOG_INFO("Finally Received: %X", m_scan_engine_inbound_message_temp);
+
+    for (int i = 0; i < sizeof(m_scan_engine_inbound_message_temp) / sizeof(m_scan_engine_inbound_message_temp[0]); i++)
+    {
+        NRF_LOG_INFO("Finally received cars: 0x%X", m_scan_engine_inbound_message_temp[i]);
+    }
+
+    strcpy(m_scan_engine_inbound_message, m_scan_engine_inbound_message_temp);
+
+    memset(m_scan_engine_inbound_message_temp, 0, sizeof(m_scan_engine_inbound_message_temp));
+
+    m_is_receiving_data_from_scan_engine = false;
+    m_number_of_bytes_transfered = 0;
+}
+
+
+static void timers_create(void)
+{
+    ret_code_t ret_code;
+
+    // timer for serial receiving
+    ret_code = app_timer_create(&m_serial_receive_timer_id, APP_TIMER_MODE_SINGLE_SHOT, serial_receive_timeout_handler);
+    APP_ERROR_CHECK(ret_code);
+    
+    // timer for non blocking delays
+    ret_code = app_timer_create(&m_non_blocking_delay_timer_id, APP_TIMER_MODE_SINGLE_SHOT, non_blocking_delay_timeout_handler);
+    APP_ERROR_CHECK(ret_code);
+}
+
+
+static void start_serial_receive_timer(void)
+{
+    NRF_LOG_INFO("start_serial_receive_timer()");
+    ret_code_t ret_code;
+    ret_code = app_timer_start(m_serial_receive_timer_id, APP_TIMER_TICKS(25), NULL);
+    APP_ERROR_CHECK(ret_code);
+}
+
+
+static void serial_sleep_handler(void)
+{
+    NRF_LOG_INFO("serial_sleep_handler()");
+    nrf_pwr_mgmt_run();
+    //app_sched_execute();
+}
+
+
+/**
+ * Serial Empfang via Event Handler ist schlecht dokumentiert. Hier gibt es ein paar interessante
+ * Case: https://devzone.nordicsemi.com/f/nordic-q-a/34391/serial-port-library-receive-interrupt
+ * https://devzone.nordicsemi.com/f/nordic-q-a/22320/serial-port-interrupt
+ */
+static void serial_event_handler(struct nrf_serial_s const * p_serial, nrf_serial_event_t event)
+{
+    switch (event)
+    {
+        case NRF_SERIAL_EVENT_TX_DONE:
+            // NRF_LOG_INFO("serial_event_handler(): NRF_SERIAL_EVENT_TX_DONE");
+            break;
+        case NRF_SERIAL_EVENT_RX_DATA:
+            NRF_LOG_INFO("serial_event_handler(): NRF_SERIAL_EVENT_RX_DATA");
+            if (m_is_receiving_data_from_scan_engine == false)
+            {
+                // start of new transfer
+                start_serial_receive_timer();
+                m_is_receiving_data_from_scan_engine = true;
+                m_number_of_bytes_transfered = 0;
+                memset(m_scan_engine_inbound_message_hex, 0, sizeof(m_scan_engine_inbound_message_hex));
+            }
+
+            char c;
+            ret_code_t ret_code = nrf_queue_read(p_serial->p_ctx->p_config->p_queues->p_rxq, &c, sizeof(c));
+            APP_ERROR_CHECK(ret_code);
+
+            NRF_LOG_INFO("Received: %d (0x%X)", c);
+
+            strcat(m_scan_engine_inbound_message_temp, &c);
+
+            m_scan_engine_inbound_message_hex[m_number_of_bytes_transfered++] = c;
+
+            break;
+        case NRF_SERIAL_EVENT_DRV_ERR:
+            NRF_LOG_INFO("serial_event_handler(): NRF_SERIAL_EVENT_DRV_ERR");
+            break;
+        case NRF_SERIAL_EVENT_FIFO_ERR:
+            NRF_LOG_INFO("serial_event_handler(): NRF_SERIAL_EVENT_FIFO_ERR");
+            break;
+        default:
+            NRF_LOG_INFO("serial_event_handler(): default");
+            break;
+    }
+}
+
+
+NRF_SERIAL_CONFIG_DEF(m_serial_config, NRF_SERIAL_MODE_DMA, &m_serial_queues, &m_serial_buffs, serial_event_handler, serial_sleep_handler);
+
+/**
+ * Function for initializing serial communication.
+ */
+static void serial_init(void)
+{
+    ret_code_t ret_code;
+    ret_code = nrf_serial_init(&m_serial_uart, &m_uart0_drv_config, &m_serial_config);
+    APP_ERROR_CHECK(ret_code);
+}
+
 
 /**@brief Function for application main entry.
  */
-int main(void) {
-  uint32_t err_code;
+void main(void)
+{
+    // Initialize.
+    log_init();
+    lfclk_init();
+    power_management_init();
+    leds_init();
+    scheduler_init();
+    buttons_init();
+    gpio_init();
+    serial_init();
+    timers_init();
+    timers_create();
+    
+    // Test if non-blocking delay works in main(). Remove it later.
+    non_blocking_delay_ms(1000);
 
-  // Initialize.
-  lfclk_config();
-  log_init();
-  leds_init();
-  scheduler_init();
-  timers_init();
-  buttons_init();
-  //barcode_module_init()
-  gpio_init();
-  init_serial();
-  create_serial_receive_timer();
-  power_management_init();
-  
-  //calc_checksum(test_cmd, 4);
-  
-  // Start execution.
-  NRF_LOG_INFO("TicTac Barcode Scanner started.");
+    // Start execution.
+    NRF_LOG_INFO("TicTac Barcode Scanner started.");
 
-  // Enter main loop.
-  for (;;) {
-     idle_state_handle();
-    /*
-    app_sched_execute();
-
-    // Wait for an event.
-    __WFE();
-    // Clear the event register.
-    __SEV();
-    __WFE();
-    */
-  }
+    // Enter main loop.
+    for (;;)
+    {
+        nrf_pwr_mgmt_run();
+        app_sched_execute();
+    }
 }
 
 /**
