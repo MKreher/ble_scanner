@@ -81,6 +81,8 @@
 #define CTS_PIN     UART_PIN_DISCONNECTED // Not connected
 #define RTS_PIN     UART_PIN_DISCONNECTED // Not connected
 
+#define TICKS_PER_MILLISECOND APP_TIMER_TICKS(1) // Factor for converting ticks to milliseconds
+
 #define BUTTON_DETECTION_DELAY APP_TIMER_TICKS(50) // Delay from a GPIOTE event until a button is reported as pushed (in number of timer ticks)
 
 #define DEAD_BEEF 0xDEADBEEF // Value used as error code on stack dump, can be used to identify stack location on stack unwind
@@ -106,21 +108,24 @@ typedef enum
     IDLE,
     AWAITING_BARCODE,
     AWAITING_ACK_MESSAGE,
-    AWAITING_PARAM_DATA,
+    AWAITING_PARAM_DATA
 } scan_engine_communication_state_t;
 
 
-static scan_engine_communication_state_t m_scan_engine_comm_state;
+static scan_engine_communication_state_t m_scan_engine_comm_state = IDLE;
 
-static char m_scan_engine_inbound_message[16];
-static char m_scan_engine_inbound_message_temp[16];
+//static char m_scan_engine_inbound_message[16];
+//static char m_scan_engine_inbound_message_temp[16];
 static char m_scan_engine_inbound_barcode[16];
 static char m_scan_engine_inbound_message_hex[16];
 
 static bool m_is_receiving_data_from_scan_engine = false;
+static bool m_is_new_message_from_scan_engine = false;
+static bool m_is_new_barcode_from_scan_engine = false;
 static uint16_t m_number_of_bytes_transfered = 0;
 
 static bool m_is_non_blocking_delay_wait = false;
+static bool m_scan_engine_cancel_operation = false;
 
 #define SERIAL_MAX_WRITE_TIMEOUT NRF_SERIAL_MAX_TIMEOUT
 
@@ -235,14 +240,24 @@ static void timers_init(void)
  */
 static void leds_init(void) {
     //NRF_LOG_INFO("leds_init()");
+
     bsp_board_init(BSP_INIT_LEDS);
 }
 
 
+static void stop_non_blocking_delay_timer()
+{
+    //NRF_LOG_INFO("stop_non_blocking_delay_timer()");
+    
+    APP_ERROR_CHECK(app_timer_stop(m_non_blocking_delay_timer_id));
+
+    m_is_non_blocking_delay_wait = false;
+}
+
 
 static void non_blocking_delay_timeout_handler()
 {
-    NRF_LOG_INFO("non_blocking_deleay_timeout_handler()");
+    //NRF_LOG_INFO("non_blocking_deleay_timeout_handler()");
 
     m_is_non_blocking_delay_wait = false;
 }
@@ -250,71 +265,148 @@ static void non_blocking_delay_timeout_handler()
 
 static void non_blocking_delay_ms(uint64_t delay)
 {
-    NRF_LOG_INFO("non_blocking_delay_ms(): START - %d ms", delay);
+    //NRF_LOG_INFO("non_blocking_delay_ms(): START - %d ms", delay);
+
     m_is_non_blocking_delay_wait = true;
 
     APP_ERROR_CHECK(app_timer_start(m_non_blocking_delay_timer_id, APP_TIMER_TICKS(delay), NULL));
 
+    uint32_t timeStart = app_timer_cnt_get();
+
     while (m_is_non_blocking_delay_wait)
     {
+        /*
+        if (m_scan_engine_cancel_operation) {
+            stop_non_blocking_delay_timer();
+            break;
+        }
+        */
+
         //NRF_LOG_INFO("Wait for is_non_blocking_delay is getting FALSE...");
         nrf_pwr_mgmt_run(); // funktioniert nicht in main
         //app_sched_execute();  // funktioniert in main
-    }
+    }    
 
-    NRF_LOG_INFO("non_blocking_delay_ms(): END - %d ms", delay);
+    uint32_t timeEnd = app_timer_cnt_get();
+    uint32_t timeDiff = app_timer_cnt_diff_compute(timeEnd, timeStart);	
+
+    //NRF_LOG_INFO("non_blocking_delay_ms(): END - %d ms (real wait time %d)", delay, timeDiff / TICKS_PER_MILLISECOND);
 }
+
+static void print_state(void)
+{
+    NRF_LOG_INFO("m_scan_engine_comm_state: %d", m_scan_engine_comm_state);
+
+    NRF_LOG_INFO("m_is_receiving_data_from_scan_engine: %d", m_is_receiving_data_from_scan_engine);
+    NRF_LOG_INFO("m_is_new_message_from_scan_engine: %d", m_is_new_message_from_scan_engine);
+    NRF_LOG_INFO("m_is_new_barcode_from_scan_engine: %d", m_is_new_barcode_from_scan_engine);
+    NRF_LOG_INFO("m_is_non_blocking_delay_wait: %d", m_is_non_blocking_delay_wait);
+    NRF_LOG_INFO("m_scan_engine_cancel_operation: %d", m_scan_engine_cancel_operation);
+
+    NRF_LOG_INFO("m_scan_engine_inbound_message_hex: %X", m_scan_engine_inbound_message_hex);
+    NRF_LOG_INFO("m_scan_engine_inbound_barcode: %s", m_scan_engine_inbound_barcode);
+}
+
 
 bool em2000h_send_command(const char * command, size_t size, bool wait_for_ack)
 {
+    print_state();
 
     // clear last scan engine inbound messag
-    memset(m_scan_engine_inbound_message, 0, sizeof(m_scan_engine_inbound_message));
+    //memset(m_scan_engine_inbound_message, 0, sizeof(m_scan_engine_inbound_message));
+    m_is_new_message_from_scan_engine = false;
+    //m_scan_engine_cancel_operation = false;
+
+    if (command == CMD_START_DECODE)
+    {
+        // Clear barcode buffer
+        memset(m_scan_engine_inbound_barcode, 0, sizeof(m_scan_engine_inbound_barcode));
+        m_is_new_barcode_from_scan_engine = false;
+    }
 
     ret_code_t ret = nrf_serial_write(&m_serial_uart, command, size, NULL, SERIAL_MAX_WRITE_TIMEOUT);
     APP_ERROR_CHECK(ret);
 
+    // TODO: Implement wait-timeout to prevent infinite loop.
     if (wait_for_ack) {
-        while (m_is_receiving_data_from_scan_engine == true || m_scan_engine_inbound_message == 0)
+        m_scan_engine_comm_state = AWAITING_ACK_MESSAGE;
+        // Wait for scan engine inbound message
+        while(!m_is_new_message_from_scan_engine)
         {
             NRF_LOG_INFO("Waiting for scan engine ACK message...");
-            // Wait for scan engine inbound message
-            //app_sched_execute();
+
+            //if (m_scan_engine_cancel_operation) {              
+            //    return false;
+            //    m_scan_engine_comm_state = IDLE;
+            //}
             nrf_pwr_mgmt_run();
         }
 
-        NRF_LOG_INFO("Received scan engine inbound message: %X, %d, %c, (size %d)",
-                          m_scan_engine_inbound_message, m_scan_engine_inbound_message, m_scan_engine_inbound_message, sizeof(m_scan_engine_inbound_message));
-
+        /*
         for (int i=0; i<sizeof(m_scan_engine_inbound_message_hex)/sizeof(char); i++)
         {
-            NRF_LOG_INFO("HEX-Chars of message: 0x%X", m_scan_engine_inbound_message_hex[i]);
+            NRF_LOG_INFO("HEX-Chars of ACK-message: 0x%X", m_scan_engine_inbound_message_hex[i]);
         }
+        */
 
-
-        if (m_scan_engine_inbound_message == 536882224) // 0xD0
+         
+        // TODO: The check for the ACK-/NACK-message should be enhanced.
+        //       Every byte of the message should be checked for categorization the message as ACK/NACK.
+        if (m_scan_engine_inbound_message_hex[1] == 0xD0)
         {
             // ACK-Message
             NRF_LOG_INFO("ACK-Message received.");
-            em2000h_send_command(CMD_ACK, 6, false);
+
+            if (command == CMD_START_DECODE)
+            {
+                // Command for start a barcode decode session
+                m_scan_engine_comm_state = AWAITING_BARCODE;
+            }
+            else
+            {
+                m_scan_engine_comm_state = IDLE;
+            }
+
+            //em2000h_send_command(CMD_ACK, 6, false); // ACK of ACK message not neccessary
+            
+            return true;
         }
-        else if (m_scan_engine_inbound_message[1] == 209) // 0xD1
+        else if (m_scan_engine_inbound_message_hex[1] == 0xD1)
         {
             NRF_LOG_INFO("NACK-Message received.");
+
+            // TODO: Implement Resend of the message.
             // NACK-Message
             //if (resend) {
             //   em2000h_send_command(CMD_ACK, 6, false, resend_counter=1);
             //}
+
+            m_scan_engine_comm_state = IDLE;
+            
+            return false;
         }
         else
         {
+            NRF_LOG_INFO("Unexpected-Message received.");
             // Unexpected Message
-        }
 
-        return true;
+            m_scan_engine_comm_state = IDLE;
+
+            return false;
+        }
     }
     else
     {
+        NRF_LOG_INFO("No ACK-Message expected.");
+
+        if (command[1] == 0xC7)
+        {
+            // Command for inquiry an scan engine parameter 
+            m_scan_engine_comm_state = AWAITING_PARAM_DATA;
+        } else {
+            m_scan_engine_comm_state = IDLE;
+        }
+    
         // When no ACK-message is expected, wait 50ms after sending the command.
         // So subsequent commands are separated by a minimum of 50ms.
         non_blocking_delay_ms(50);
@@ -405,23 +497,58 @@ static void barcode_module_init()
  */
 void button1_scheduled_event_handler(void * p_event_data, uint16_t event_size)
 {
+    NRF_LOG_INFO("button1_scheduled_event_handler()");
     uint8_t button_action = *((uint8_t*) p_event_data);
-
+    bool se_command_resp = false;
     if (button_action == APP_BUTTON_PUSH)
     {
         NRF_LOG_INFO("Button_1 push");
-        // Clear barcode buffer
-        memset(m_scan_engine_inbound_barcode, 0, sizeof(m_scan_engine_inbound_barcode));
         // Start barcode decode session
-        em2000h_send_command(CMD_WAKEUP, 1, false);
-        em2000h_send_command(CMD_START_DECODE, 6, true);
+        NRF_LOG_INFO("Send comannd CMD_WAKEUP.");
+        se_command_resp = em2000h_send_command(CMD_WAKEUP, 1, false);
+        NRF_LOG_INFO("CMD_WAKEUP returned %d", se_command_resp);
+        NRF_LOG_INFO("Send comannd CMD_START_DECODE.");
+        se_command_resp = em2000h_send_command(CMD_START_DECODE, 6, true);
+        NRF_LOG_INFO("CMD_START_DECODE returned %d", se_command_resp);
+        
+        // Waiting for barcode
+        NRF_LOG_INFO("Waiting for barcode - BEFORE");
+        while (m_scan_engine_comm_state == AWAITING_BARCODE)
+        {
+            NRF_LOG_INFO("Waiting for barcode...");
+            
+            if (m_scan_engine_cancel_operation) {
+                NRF_LOG_INFO("Waiting for barcode... CANCEL");
+                m_is_new_barcode_from_scan_engine = false;
+                m_scan_engine_comm_state = IDLE;                
+                break;
+            }
+
+            if (m_is_new_barcode_from_scan_engine) {
+                NRF_LOG_INFO("******************************");
+                NRF_LOG_INFO("*** Processing BARCODE: %s ***", m_scan_engine_inbound_barcode);
+                NRF_LOG_INFO("******************************");
+                m_is_new_barcode_from_scan_engine = false;
+                m_scan_engine_comm_state = IDLE;
+            }
+            //app_sched_execute();
+            nrf_pwr_mgmt_run();
+        }
+        NRF_LOG_INFO("Waiting for barcode - AFTER");
     }
     else if (button_action == APP_BUTTON_RELEASE)
     {
         NRF_LOG_INFO("Button_1 released");
         // Stop barcode decode session
-        em2000h_send_command(CMD_STOP_DECODE, 6, true);
+        NRF_LOG_INFO("Send comannd CMD_WAKEUP.");
+        se_command_resp = em2000h_send_command(CMD_WAKEUP, 1, false);
+        NRF_LOG_INFO("CMD_WAKEUP returned %d", se_command_resp);
+        NRF_LOG_INFO("Send comannd CMD_STOP_DECODE.");
+        se_command_resp = em2000h_send_command(CMD_STOP_DECODE, 6, true);
+        NRF_LOG_INFO("CMD_STOP_DECODE returned %d", se_command_resp);
     }
+
+    NRF_LOG_INFO("button1_scheduled_event_handler() - end");
 }
 
 
@@ -482,9 +609,18 @@ void button4_scheduled_event_handler(void * p_event_data, uint16_t event_size)
     {
         NRF_LOG_INFO("Button_4 released");
         // Reset scan engine
-        nrf_gpio_pin_write(BCM_WAKEUP, 0);
-        non_blocking_delay_ms(200);
-        nrf_gpio_pin_write(BCM_WAKEUP, 1);
+        //nrf_gpio_pin_write(BCM_WAKEUP, 0);
+        non_blocking_delay_ms(2000);
+        //nrf_gpio_pin_write(BCM_WAKEUP, 1);
+    }
+    else if (button_action == APP_BUTTON_PUSH)
+    {
+        NRF_LOG_INFO("Button_4 pushed");
+        non_blocking_delay_ms(10000);
+    }
+    else 
+    {
+      NRF_LOG_INFO("Button_4 unknown button action: %d", button_action);
     }
 }
 
@@ -502,10 +638,32 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
     switch (pin_no)
     {
         case BUTTON_1:
+            NRF_LOG_INFO("Button_1 handle");
+            if (button_action == APP_BUTTON_PUSH)
+            {
+                m_scan_engine_comm_state = IDLE;
+
+                memset(m_scan_engine_inbound_message_hex, 0, sizeof(m_scan_engine_inbound_message_hex));
+                memset(m_scan_engine_inbound_barcode, 0, sizeof(m_scan_engine_inbound_barcode));
+
+                m_is_receiving_data_from_scan_engine = false;
+                m_is_new_message_from_scan_engine = false;
+                m_is_new_barcode_from_scan_engine = false;
+                m_number_of_bytes_transfered = 0;
+
+                m_is_non_blocking_delay_wait = false;
+                m_scan_engine_cancel_operation = false;
+            }
+            else if (button_action == APP_BUTTON_RELEASE) 
+            {
+               //if (m_scan_engine_comm_state == AWAITING_BARCODE) {
+               m_scan_engine_cancel_operation = true;
+               //}
+            }            
             app_sched_event_put(&button_action, sizeof(button_action), button1_scheduled_event_handler);
             break;
         case BUTTON_2:
-            NRF_LOG_INFO("Button_2 released");
+            NRF_LOG_INFO("Button_2 handle");
             app_sched_event_put(&button_action, sizeof(button_action), button2_scheduled_event_handler);            
             break;
         case BUTTON_3:
@@ -514,6 +672,14 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
             break;
         case BUTTON_4:
             NRF_LOG_INFO("Button_4 handle");
+            if (button_action == APP_BUTTON_PUSH)
+            {
+                m_scan_engine_cancel_operation = false;
+            }
+            else if (button_action == APP_BUTTON_RELEASE) 
+            {
+                m_scan_engine_cancel_operation = true;
+            }            
             app_sched_event_put(&button_action, sizeof(button_action), button4_scheduled_event_handler);
             break;
         default:
@@ -550,22 +716,13 @@ static void buttons_init()
  */
 static void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
-    // NRF_LOG_INFO("in_pin_handler(): pin=%d", pin);
-
-    if (pin != BCM_LED)
+    if (pin = BCM_LED)
     {
-        return;
-    }
-
-    if (nrf_gpio_pin_read(BCM_LED) > 0)
+        NRF_LOG_INFO("Feedback-LED: %d", action);
+        //bsp_board_led_on(bsp_board_pin_to_led_idx(FEEDBACK_LED));
+    } else if (pin == BCM_BUZZER)
     {
-        // NRF_LOG_INFO("Feedback-LED ON");
-        bsp_board_led_on(bsp_board_pin_to_led_idx(FEEDBACK_LED));
-    }
-    else
-    {
-        // NRF_LOG_INFO("Feedback-LED OFF");
-        bsp_board_led_off(bsp_board_pin_to_led_idx(FEEDBACK_LED));
+        NRF_LOG_INFO("Feedback-Buzzer: %d", action);
     }
 
     // nrf_drv_gpiote_out_toggle(PIN_OUT);
@@ -605,30 +762,42 @@ static void gpio_init(void)
     // BCM LED GPIO config
     nrf_drv_gpiote_in_config_t in_config_bcm_led = NRFX_GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
     in_config_bcm_led.pull = NRF_GPIO_PIN_PULLUP;
-
+    
+    /*
     err_code = nrf_drv_gpiote_in_init(BCM_LED, &in_config_bcm_led, in_pin_handler);
     APP_ERROR_CHECK(err_code);
 
     nrf_drv_gpiote_in_event_enable(BCM_LED, true);
+    */
+}
+
+
+static void stop_serial_receive_timer()
+{
+    NRF_LOG_INFO("stop_serial_receive_timer()");
+    
+    APP_ERROR_CHECK(app_timer_stop(m_non_blocking_delay_timer_id));
+        
+    //memset(m_scan_engine_inbound_message_hex, 0, sizeof(m_scan_engine_inbound_message_hex));
+    //memset(m_scan_engine_inbound_barcode, 0, sizeof(m_scan_engine_inbound_barcode));
+    //m_is_receiving_data_from_scan_engine = false;
+    //m_is_new_message_from_scan_engine = false;
+    //m_is_new_barcode_from_scan_engine = false;
+    //m_number_of_bytes_transfered = 0;
 }
 
 
 static void serial_receive_timeout_handler()
 {
-    NRF_LOG_INFO("serial_receive_timeout_handler()");
-
-    NRF_LOG_INFO("Finally Received: %X", m_scan_engine_inbound_message_temp);
-
-    for (int i = 0; i < sizeof(m_scan_engine_inbound_message_temp) / sizeof(m_scan_engine_inbound_message_temp[0]); i++)
-    {
-        NRF_LOG_INFO("Finally received cars: 0x%X", m_scan_engine_inbound_message_temp[i]);
+    NRF_LOG_INFO("serial_receive_timeout_handler(), state=%d", m_scan_engine_comm_state);
+    
+    if (m_scan_engine_comm_state == AWAITING_BARCODE) {
+        m_is_new_barcode_from_scan_engine = true;
+        NRF_LOG_INFO("***** serial_receive_timeout_handler: BARCODE=%s", m_scan_engine_inbound_barcode);
     }
-
-    strcpy(m_scan_engine_inbound_message, m_scan_engine_inbound_message_temp);
-
-    memset(m_scan_engine_inbound_message_temp, 0, sizeof(m_scan_engine_inbound_message_temp));
-
+    
     m_is_receiving_data_from_scan_engine = false;
+    m_is_new_message_from_scan_engine = true;
     m_number_of_bytes_transfered = 0;
 }
 
@@ -674,10 +843,10 @@ static void serial_event_handler(struct nrf_serial_s const * p_serial, nrf_seria
     switch (event)
     {
         case NRF_SERIAL_EVENT_TX_DONE:
-            // NRF_LOG_INFO("serial_event_handler(): NRF_SERIAL_EVENT_TX_DONE");
+            //NRF_LOG_INFO("serial_event_handler(): NRF_SERIAL_EVENT_TX_DONE");
             break;
         case NRF_SERIAL_EVENT_RX_DATA:
-            NRF_LOG_INFO("serial_event_handler(): NRF_SERIAL_EVENT_RX_DATA");
+            //NRF_LOG_INFO("serial_event_handler(): NRF_SERIAL_EVENT_RX_DATA (state: %d)", m_scan_engine_comm_state);
             if (m_is_receiving_data_from_scan_engine == false)
             {
                 // start of new transfer
@@ -690,12 +859,36 @@ static void serial_event_handler(struct nrf_serial_s const * p_serial, nrf_seria
             char c;
             ret_code_t ret_code = nrf_queue_read(p_serial->p_ctx->p_config->p_queues->p_rxq, &c, sizeof(c));
             APP_ERROR_CHECK(ret_code);
-
-            NRF_LOG_INFO("Received: %d (0x%X)", c);
-
-            strcat(m_scan_engine_inbound_message_temp, &c);
+            
+            NRF_LOG_INFO("Byte received: %d (0x%X) [state=%d]", c, c, m_scan_engine_comm_state);
 
             m_scan_engine_inbound_message_hex[m_number_of_bytes_transfered++] = c;
+            
+            // TODO: m_scan_engine_inbound_barcode im serial timeout handler aus m_scan_engine_inbound_message_hex zusammenbauen.
+            if (m_scan_engine_comm_state == AWAITING_BARCODE)
+            {
+                strcat(m_scan_engine_inbound_barcode, &c);
+            }
+
+            /*
+            if (m_scan_engine_comm_state == AWAITING_BARCODE
+                || m_scan_engine_comm_state == AWAITING_PARAM_DATA
+                || m_scan_engine_comm_state == AWAITING_ACK_MESSAGE)
+            {
+                m_scan_engine_inbound_message_hex[m_number_of_bytes_transfered++] = c;
+            
+                // TODO: m_scan_engine_inbound_barcode im serial timeout handler aus m_scan_engine_inbound_message_hex zusammenbauen.
+                if (m_scan_engine_comm_state == AWAITING_BARCODE)
+                {
+                    strcat(m_scan_engine_inbound_barcode, &c);
+                }
+            }
+            else 
+            {
+                // ignore incomming bytes
+                NRF_LOG_WARNING("Ignoriere reveived byte: %d (0x%X) ", c);
+            }
+            */
 
             break;
         case NRF_SERIAL_EVENT_DRV_ERR:
@@ -741,11 +934,16 @@ void main(void)
     timers_create();
     
     // Test if non-blocking delay works in main(). Remove it later.
-    non_blocking_delay_ms(1000);
+    //non_blocking_delay_ms(1000);
 
     // Start execution.
     NRF_LOG_INFO("TicTac Barcode Scanner started.");
 
+    NRF_LOG_INFO("State IDLE:__________________%d", IDLE);
+    NRF_LOG_INFO("State AWAITING_BARCODE:______%d", AWAITING_BARCODE);
+    NRF_LOG_INFO("State AWAITING_ACK_MESSAGE:__%d", AWAITING_ACK_MESSAGE);
+    NRF_LOG_INFO("State AWAITING_PARAM_DATA:___%d", AWAITING_PARAM_DATA);
+    
     // Enter main loop.
     for (;;)
     {
