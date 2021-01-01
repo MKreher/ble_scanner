@@ -916,6 +916,7 @@ static void serial_event_handler(struct nrf_serial_s const * p_serial, nrf_seria
 
 NRF_SERIAL_CONFIG_DEF(m_serial_config, NRF_SERIAL_MODE_DMA, &m_serial_queues, &m_serial_buffs, serial_event_handler, serial_sleep_handler);
 
+
 /**
  * Function for initializing serial communication.
  */
@@ -926,13 +927,42 @@ static void serial_init(void)
     APP_ERROR_CHECK(ret_code);
 }
 
+/*
+static char m_text[16];
+static void handler(void * p_event_data, uint16_t event_size)
+{       
+    char * text =  (char *) p_event_data;
+
+    NRF_LOG_INFO("handler(): %s", text);    
+
+    for (int i=0; i < event_size; i++)
+    {
+        NRF_LOG_INFO("handler(): %c", text[i]);
+    }    
+}
+
+
+static void call_handler(const char * p_param)
+{
+    NRF_LOG_INFO("call_handler(): %s", p_param);    
+    handler((void*) p_param, strlen(p_param));
+}
+*/
 
 /**@brief Function for application main entry.
  */
 void main(void)
 {
+
     // Initialize.
     log_init();
+    
+    /*
+    memset(m_text, '\0', sizeof(m_text));
+    strcpy(m_text, "4711-ABC0815");
+    call_handler(m_text);
+    */
+
     lfclk_init();
     power_management_init();
     leds_init();

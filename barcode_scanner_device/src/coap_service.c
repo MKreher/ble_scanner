@@ -29,9 +29,9 @@
 
 /** Modify SERVER_IPV6_ADDRESS according to your setup.
  *  The address provided below is a place holder.  */
-//  2003:e8:274a:a00:c3ac:3fe7:e732:f182
-#define SERVER_IPV6_ADDRESS             0x20, 0x03, 0x00, 0xE8, 0x27, 0x1C, 0x32, 0x00, \
-                                        0xAE, 0xF5, 0x5F, 0x7F, 0x78, 0xD2, 0x3A, 0x51        /**< IPv6 address of the server node. */
+//  2003:e8:2722:c500:1891:7fc:1d32:a3ec
+#define SERVER_IPV6_ADDRESS             0x20, 0x03, 0x00, 0xe8, 0x27, 0x22, 0xc5, 0x00, \
+                                        0x18, 0x91, 0x07, 0xfc, 0x1d, 0x32, 0xa3, 0xec        /**< IPv6 address of the server node. */
 
 static const ipv6_addr_t               m_broker_addr =
 {
@@ -68,7 +68,7 @@ static const ipv6_addr_t               m_broker_addr =
 
 #define APP_MQTT_BROKER_PORT                8883                                                    /**< Port number of MQTT Broker being used. */
 #define APP_MQTT_BROKER_NON_SECURE_PORT     1883                                                    /**< Port number of MQTT Broker being used. */
-#define APP_MQTT_PUBLISH_TOPIC              "blescanner/barcode"                                       /**< MQTT topic to which this application publishes. */
+#define APP_MQTT_PUBLISH_TOPIC              "tictac/barcode"                                       /**< MQTT topic to which this application publishes. */
 
 /**@brief Application state with respect to MQTT. */
 typedef enum
@@ -92,13 +92,13 @@ static ipv6_medium_instance_t      m_ipv6_medium;
 static bool                        m_is_interface_up;
 static uint8_t                     m_well_known_core[100];
 static ipv6_state_t                m_ipv6_state      = INACTIVE;                             /**< IPv6 state. */
-static const char                  m_uri_part_blescanner[]  = "blescanner";
+static const char                  m_uri_part_blescanner[]  = "tictac";
 static const char                  m_uri_part_barcode[]    = "barcode";
-static int                         m_temperature        = 39;
+static int                         m_temperature        = 37;
 static uint16_t                    m_global_token_count = 0x0102;
 
 static mqtt_client_t                        m_app_mqtt_client;                                      /**< MQTT Client instance reference provided by the MQTT module. */
-static const char                           m_client_id[] = "nrfPublisher";                         /**< Unique MQTT client identifier. */
+static const char                           m_client_id[] = "TicTac";                         /**< Unique MQTT client identifier. */
 static app_mqtt_state_t                     m_connection_state = APP_MQTT_STATE_IDLE;               /**< MQTT Connection state. */
 static bool                                 m_do_ind_err = false;
 static uint8_t                              m_ind_err_count = 0;
@@ -227,7 +227,7 @@ static void timers_init(void)
 static void coap_response_handler(uint32_t status, void * p_arg, coap_message_t * p_response)
 {
     APPL_LOG("Response Code : %d", p_response->header.code);
-    if (p_response->header.code == COAP_CODE_204_CHANGED)
+    if (p_response->header.code == COAP_CODE_201_CREATED)
     {
         // success
         APPL_LOG("CoAP request success response.");
@@ -244,7 +244,7 @@ static void coap_response_handler(uint32_t status, void * p_arg, coap_message_t 
  *
  * @param[in]   barcode        The barcode value.
  */
-void coap_send_barcode(char *barcode)
+void coap_send_barcode(const char * barcode)
 {
     APPL_LOG("coap_send_barcode()....");
     uint32_t err_code;
@@ -270,7 +270,7 @@ void coap_send_barcode(char *barcode)
     coap_remote_t         remote_device;
 
     message_conf.type             = COAP_MESSAGE_TYPE;
-    message_conf.code             = COAP_CODE_PUT;
+    message_conf.code             = COAP_CODE_POST;
     message_conf.port.port_number = LOCAL_PORT_NUM;
     message_conf.id               = 0; // Auto-generate message ID.
 
@@ -651,7 +651,7 @@ void app_mqtt_evt_handler(mqtt_client_t * const p_client, const mqtt_evt_t * p_e
  *
  * @param[in]   barcode        The barcode value.
  */
-void mqtt_send_barcode(char *barcode)
+void mqtt_send_barcode(const char * barcode)
 {
     APPL_LOG("mqtt_send_barcode()....");
 
@@ -796,7 +796,7 @@ void commissioning_power_off_cb(bool power_off_on_failure)
 
 /**@brief Function for initialization of the CoAP stack.
  */
-int init_coap(void)
+int coap_ipv6_init(void)
 {
     uint32_t err_code;
 

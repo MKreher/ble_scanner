@@ -5,18 +5,18 @@
 #include <stdint.h>
 
 /**@brief Function for initializing the CoAP stack. */
-void init_coap();
+void coap_ipv6_init();
 
 /**@brief Function for sending barcode via CoAP.
  *
  * @param[in]   barcode        The barcode value.
  */
-void coap_send_barcode(char *barcode);
+void coap_send_barcode(const char * barcode);
 
 /**@brief Function for sending barcode via MQTT.
  *
  * @param[in]   barcode        The barcode value.
  */
-void mqtt_send_barcode(char *barcode);
+void mqtt_send_barcode(const char * barcode);
 
 #endif // COAP_SERVICE_H__

@@ -48,15 +48,6 @@
 #include "app_timer.h"
 #include "app_scheduler.h"
 #include "app_util_platform.h"
-/*
-#include "ble.h"
-#include "ble_advdata.h"
-#include "ble_conn_params.h"
-#include "ble_err.h"
-#include "ble_hci.h"
-#include "ble_lbs.h"
-#include "ble_srv_common.h"
-*/
 #include "boards.h"
 #include "nordic_common.h"
 #include "nrf.h"
@@ -73,65 +64,50 @@
 #include "nrf_sdh.h"
 #include "nrf_sdh_ble.h"
 #include "nrf_serial.h"
+#include "nrf_gfx.h"
 #include <stdint.h>
 #include <string.h>
 
+#include "utils.h"
 #include "coap_service.h"
-
-// Waveshare ePaper
-#include "nrf_gfx.h"
 #include "waveshare_epd.h"
 #include "ImageData.h"
+#include "em3000h.h"
 
-static uint8_t disptxt_buffer[16] = "Hello World";
+// Waveshare ePaper
 static uint8_t epaper_pending;
 static const nrf_lcd_t * p_lcd = &nrf_lcd_wsepd154;
 extern const nrf_gfx_font_desc_t orkney_24ptFontInfo;
 static const nrf_gfx_font_desc_t * p_font = &orkney_24ptFontInfo;
 
-#define ADVERTISING_LED LED_1 /**< Is on when device is advertising. */
-#define CONNECTED_LED   LED_2   /**< Is on when device has connected. */
-#define LEDBUTTON_LED   LED_3   /**< LED to be toggled with the help of the LED Button Service. */
-#define FEEDBACK_LED    LED_4   /**< LED indicates a successfull scanning. */
+#define ADVERTISING_LED LED_1 // Is on when device is advertising
+#define CONNECTED_LED   LED_2 // Is on when device has connected
+#define LEDBUTTON_LED   LED_3 // LED to be toggled with the help of the LED Button Service
+#define FEEDBACK_LED    LED_4 // LED indicates a successfull scanning
 
 #define UART_PIN_DISCONNECTED 0xFFFFFFFF
 
 // define pins to barcode module
-#define BCM_TRIGGER 47                 /** P1.14 on board, Pin #12 at barcode scanner module (Driving this pin low causes the scan engine to start a scan and decode session).*/
-#define BCM_WAKEUP  46                 /** P1.15 on board, Pin #11 at barcode scanner module (When the scan engine is in low power mode, pulsing this pin low for 200 nsec awakens the scan engine). */
-#define BCM_LED     45                 /** P1.13 on board, Pin #10 at barcode scanner module. */
-#define BCM_BUZZER  44                 /** P1.12 on board, Pin #09 at barcode scanner module. */
-#define BCM_TX TX_PIN_NUMBER           /** RX-Pin #4 at barcode scanner module. */
-#define BCM_RX RX_PIN_NUMBER           /** TX-Pin #5 at barcode scanner module. */
-#define CTS_PIN UART_PIN_DISCONNECTED  /** Not connected. */
-#define RTS_PIN UART_PIN_DISCONNECTED  /** Not connected. */
+#define BCM_TRIGGER 47                    // P1.14 on board, Pin #12 at barcode scanner module
+#define BCM_WAKEUP  46                    // P1.15 on board, Pin #11 at barcode scanner module
+#define BCM_LED     45                    // P1.13 on board, Pin #10 at barcode scanner module
+#define BCM_BUZZER  44                    // P1.12 on board, Pin #09 at barcode scanner module
+#define BCM_TX      TX_PIN_NUMBER         // RX-Pin #4 at barcode scanner module
+#define BCM_RX      RX_PIN_NUMBER         // TX-Pin #5 at barcode scanner module
+#define CTS_PIN     UART_PIN_DISCONNECTED // Not connected
+#define RTS_PIN     UART_PIN_DISCONNECTED // Not connected
 
-//#define APP_BLE_OBSERVER_PRIO 3 /**< Application's BLE observer priority. You shouldn't need to modify this value. */
-//#define APP_BLE_CONN_CFG_TAG 1  /**< A tag identifying the SoftDevice BLE configuration. */
+#define BUTTON_DETECTION_DELAY APP_TIMER_TICKS(50) // Delay from a GPIOTE event until a button is reported as pushed (in number of timer ticks)
 
-//#define APP_ADV_INTERVAL 64                                    /**< The advertising interval (in units of 0.625 ms; this value corresponds to 40 ms). */
-//#define APP_ADV_DURATION BLE_GAP_ADV_TIMEOUT_GENERAL_UNLIMITED /**< The advertising time-out (in units of seconds). When set to 0, we will never time out. */
+#define DEAD_BEEF 0xDEADBEEF // Value used as error code on stack dump, can be used to identify stack location on stack unwind
 
-//#define MIN_CONN_INTERVAL MSEC_TO_UNITS(100, UNIT_1_25_MS) /**< Minimum acceptable connection interval (0.5 seconds). */
-//#define MAX_CONN_INTERVAL MSEC_TO_UNITS(200, UNIT_1_25_MS) /**< Maximum acceptable connection interval (1 second). */
-//#define SLAVE_LATENCY 0                                    /**< Slave latency. */
-//#define CONN_SUP_TIMEOUT MSEC_TO_UNITS(4000, UNIT_10_MS)   /**< Connection supervisory time-out (4 seconds). */
+#define SCHED_MAX_EVENT_DATA_SIZE 16 // Maximum size of scheduler events
+#define SCHED_QUEUE_SIZE 196         // Maximum number of events in the scheduler queue
 
-//#define FIRST_CONN_PARAMS_UPDATE_DELAY APP_TIMER_TICKS(20000) /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (15 seconds). */
-//#define NEXT_CONN_PARAMS_UPDATE_DELAY APP_TIMER_TICKS(5000)   /**< Time between each call to sd_ble_gap_conn_param_update after the first call (5 seconds). */
-//#define MAX_CONN_PARAMS_UPDATE_COUNT 3                        /**< Number of attempts before giving up the connection parameter negotiation. */
-
-#define BUTTON_DETECTION_DELAY APP_TIMER_TICKS(50) /**< Delay from a GPIOTE event until a button is reported as pushed (in number of timer ticks). */
-
-#define DEAD_BEEF 0xDEADBEEF /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
-
-#define SCHED_MAX_EVENT_DATA_SIZE       16                                                    /**< Maximum size of scheduler events. */
-#define SCHED_QUEUE_SIZE                196                                                   /**< Maximum number of events in the scheduler queue. */
-
-#define APP_ENABLE_LOGS                 1                                                     /**< Enable logs in the application. */
+#define APP_ENABLE_LOGS 1 // Enable logs in the application
 
 #if (APP_ENABLE_LOGS == 1)
-#define APPL_LOG  NRF_LOG_INFO
+#define APPL_LOG NRF_LOG_INFO
 #define APPL_DUMP NRF_LOG_RAW_HEXDUMP_INFO
 #define APPL_ADDR IPV6_ADDRESS_LOG
 #else // APP_ENABLE_LOGS
@@ -140,43 +116,81 @@ static const nrf_gfx_font_desc_t * p_font = &orkney_24ptFontInfo;
 #define APPL_ADDR(...)
 #endif // APP_ENABLE_LOGS
 
-//BLE_LBS_DEF(m_lbs);       /**< LED Button Service instance. */
-//NRF_BLE_GATT_DEF(m_gatt); /**< GATT module instance. */
-//NRF_BLE_QWR_DEF(m_qwr);   /**< Context for the Queued Write module.*/
+typedef enum
+{
+    IDLE,
+    AWAITING_BARCODE,
+    AWAITING_ACK_MESSAGE,
+    AWAITING_PARAM_DATA
+} scan_engine_communication_state_t;
 
-//static uint16_t m_conn_handle = BLE_CONN_HANDLE_INVALID; /**< Handle of the current connection. */
 
-//static uint8_t m_adv_handle = BLE_GAP_ADV_SET_HANDLE_NOT_SET;           /**< Advertising handle used to identify an advertising set. */
-//static uint8_t m_enc_advdata[BLE_GAP_ADV_SET_DATA_SIZE_MAX];            /**< Buffer for storing an encoded advertising set. */
-//static uint8_t m_enc_scan_response_data[BLE_GAP_ADV_SET_DATA_SIZE_MAX]; /**< Buffer for storing an encoded scan data. */
+static scan_engine_communication_state_t m_scan_engine_comm_state = IDLE;
 
-char barcode_buffer[30];
-bool is_serial_timer_active = false;
+static char m_scan_engine_inbound_barcode[16];
+static char m_scan_engine_inbound_message_hex[16];
+
+static bool m_is_receiving_data_from_scan_engine = false;
+static bool m_is_new_message_from_scan_engine = false;
+static bool m_is_new_barcode_from_scan_engine = false;
+static uint16_t m_number_of_bytes_transfered = 0;
+
+static bool m_scan_engine_cancel_operation = false;
+
+#define SERIAL_MAX_WRITE_TIMEOUT NRF_SERIAL_MAX_TIMEOUT
+
+NRF_SERIAL_DRV_UART_CONFIG_DEF(m_uart0_drv_config, BCM_RX, BCM_TX, RTS_PIN, CTS_PIN,
+                               NRF_UART_HWFC_DISABLED, NRF_UART_PARITY_EXCLUDED, NRF_UART_BAUDRATE_9600,
+                               UART_DEFAULT_CONFIG_IRQ_PRIORITY);
+
+#define SERIAL_FIFO_TX_SIZE 32
+#define SERIAL_FIFO_RX_SIZE 32
+NRF_SERIAL_QUEUES_DEF(m_serial_queues, SERIAL_FIFO_TX_SIZE, SERIAL_FIFO_RX_SIZE);
+
+#define SERIAL_BUFF_TX_SIZE 1
+#define SERIAL_BUFF_RX_SIZE 1
+NRF_SERIAL_BUFFERS_DEF(m_serial_buffs, SERIAL_BUFF_TX_SIZE, SERIAL_BUFF_RX_SIZE);
+
+NRF_SERIAL_UART_DEF(m_serial_uart, 0);
+
+APP_TIMER_DEF(m_serial_receive_timer_id);
+APP_TIMER_DEF(m_feedback_timer_id);
+
+
+void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
+{
+    #if NRF_LOG_ENABLED
+        error_info_t * err_info = (error_info_t*)info;
+        NRF_LOG_ERROR(" id = %d, pc = %d, file = %s, line number: %d, error code = %d = %s \r\n", \
+        id, pc, nrf_log_push((char*)err_info->p_file_name), err_info->line_num, err_info->err_code, nrf_log_push((char*)nrf_strerror_find(err_info->err_code)));
+    #endif
+    
+    //(void)m_ui_led_set_event(M_UI_ERROR);
+    NRF_LOG_FINAL_FLUSH();
+    nrf_delay_ms(5);
+    
+    // On assert, the system can only recover with a reset.
+    #ifndef DEBUG
+        NVIC_SystemReset();
+    #endif
+
+    app_error_save_and_stop(id, pc, info);
+}
+
 
 /**@brief Function for initializing low-frequency clock.
  */
-static void lfclk_config(void) {
-  ret_code_t err_code = nrf_drv_clock_init();
-  APP_ERROR_CHECK(err_code);
+static void lfclk_init(void)
+{
+    //NRF_LOG_INFO("lfclk_config()");
 
-  nrf_drv_clock_lfclk_request(NULL);
+    ret_code_t err_code = nrf_drv_clock_init();
+    APP_ERROR_CHECK(err_code);
+
+    nrf_drv_clock_lfclk_request(NULL);
 }
 
-/**@brief Struct that contains pointers to the encoded advertising data. */
-/*
-static ble_gap_adv_data_t m_adv_data =
-    {
-        .adv_data =
-            {
-                .p_data = m_enc_advdata,
-                .len = BLE_GAP_ADV_SET_DATA_SIZE_MAX},
-        .scan_rsp_data =
-            {
-                .p_data = m_enc_scan_response_data,
-                .len = BLE_GAP_ADV_SET_DATA_SIZE_MAX
 
-            }};
-*/
 /**@brief Function for assert macro callback.
  *
  * @details This function will be called in case of an assert in the SoftDevice.
@@ -188,111 +202,14 @@ static ble_gap_adv_data_t m_adv_data =
  * @param[in] line_num    Line number of the failing ASSERT call.
  * @param[in] p_file_name File name of the failing ASSERT call.
  */
-void assert_nrf_callback(uint16_t line_num, const uint8_t *p_file_name) {
-  app_error_handler(DEAD_BEEF, line_num, p_file_name);
+void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
+{
+    NRF_LOG_INFO("assert_nrf_callback()");
+
+    app_error_handler(DEAD_BEEF, line_num, p_file_name);
 }
 
-/**@brief Function for the LEDs initialization.
- *
- * @details Initializes all LEDs used by the application.
- */
-static void leds_init(void) {
-  bsp_board_init(BSP_INIT_LEDS);
-}
 
-/**@brief Function for the Timer initialization.
- *
- * @details Initializes the timer module.
- */
-static void timers_init(void) {
-  // Initialize timer module, making it use the scheduler
-  ret_code_t err_code = app_timer_init();
-  APP_ERROR_CHECK(err_code);
-}
-
-/**@brief Function for the GAP initialization.
- *
- * @details This function sets up all the necessary GAP (Generic Access Profile) parameters of the
- *          device including the device name, appearance, and the preferred connection parameters.
- */
-/*
-static void gap_params_init(void) {
-  ret_code_t err_code;
-  ble_gap_conn_params_t gap_conn_params;
-  ble_gap_conn_sec_mode_t sec_mode;
-
-  BLE_GAP_CONN_SEC_MODE_SET_OPEN(&sec_mode);
-
-  err_code = sd_ble_gap_device_name_set(&sec_mode,
-      (const uint8_t *)DEVICE_NAME,
-      strlen(DEVICE_NAME));
-  APP_ERROR_CHECK(err_code);
-
-  memset(&gap_conn_params, 0, sizeof(gap_conn_params));
-
-  gap_conn_params.min_conn_interval = MIN_CONN_INTERVAL;
-  gap_conn_params.max_conn_interval = MAX_CONN_INTERVAL;
-  gap_conn_params.slave_latency = SLAVE_LATENCY;
-  gap_conn_params.conn_sup_timeout = CONN_SUP_TIMEOUT;
-
-  err_code = sd_ble_gap_ppcp_set(&gap_conn_params);
-  APP_ERROR_CHECK(err_code);
-}
-*/
-/**@brief Function for initializing the GATT module.
- */
-/*
-static void gatt_init(void) {
-  ret_code_t err_code = nrf_ble_gatt_init(&m_gatt, NULL);
-  APP_ERROR_CHECK(err_code);
-}
-*/
-/**@brief Function for initializing the Advertising functionality.
- *
- * @details Encodes the required advertising data and passes it to the stack.
- *          Also builds a structure to be passed to the stack when starting advertising.
- */
-/*
-static void advertising_init(void) {
-  ret_code_t err_code;
-  ble_advdata_t advdata;
-  ble_advdata_t srdata;
-
-  ble_uuid_t adv_uuids[] = {{LBS_UUID_SERVICE, m_lbs.uuid_type}};
-
-  // Build and set advertising data.
-  memset(&advdata, 0, sizeof(advdata));
-
-  advdata.name_type = BLE_ADVDATA_FULL_NAME;
-  advdata.include_appearance = true;
-  advdata.flags = BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE;
-
-  memset(&srdata, 0, sizeof(srdata));
-  srdata.uuids_complete.uuid_cnt = sizeof(adv_uuids) / sizeof(adv_uuids[0]);
-  srdata.uuids_complete.p_uuids = adv_uuids;
-
-  err_code = ble_advdata_encode(&advdata, m_adv_data.adv_data.p_data, &m_adv_data.adv_data.len);
-  APP_ERROR_CHECK(err_code);
-
-  err_code = ble_advdata_encode(&srdata, m_adv_data.scan_rsp_data.p_data, &m_adv_data.scan_rsp_data.len);
-  APP_ERROR_CHECK(err_code);
-
-  ble_gap_adv_params_t adv_params;
-
-  // Set advertising parameters.
-  memset(&adv_params, 0, sizeof(adv_params));
-
-  adv_params.primary_phy = BLE_GAP_PHY_1MBPS;
-  adv_params.duration = APP_ADV_DURATION;
-  adv_params.properties.type = BLE_GAP_ADV_TYPE_CONNECTABLE_SCANNABLE_UNDIRECTED;
-  adv_params.p_peer_addr = NULL;
-  adv_params.filter_policy = BLE_GAP_ADV_FP_ANY;
-  adv_params.interval = APP_ADV_INTERVAL;
-
-  err_code = sd_ble_gap_adv_set_configure(&m_adv_handle, &m_adv_data, &adv_params);
-  APP_ERROR_CHECK(err_code);
-}
-*/
 /**@brief Function for handling Queued Write Module errors.
  *
  * @details A pointer to this function will be passed to each service which may need to inform the
@@ -300,238 +217,101 @@ static void advertising_init(void) {
  *
  * @param[in]   nrf_error   Error code containing information about what went wrong.
  */
-static void nrf_qwr_error_handler(uint32_t nrf_error) {
-  APP_ERROR_HANDLER(nrf_error);
+static void nrf_qwr_error_handler(uint32_t nrf_error)
+{
+    NRF_LOG_INFO("nrf_qwr_error_handler()");
+
+    APP_ERROR_HANDLER(nrf_error);
 }
 
-/**@brief Function for handling write events to the LED characteristic.
+
+/**@brief Function for the Event Scheduler initialization.
+ */
+static void scheduler_init(void)
+{
+    APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
+}
+
+
+static void log_init(void)
+{
+    ret_code_t err_code = NRF_LOG_INIT(NULL);
+    APP_ERROR_CHECK(err_code);
+
+    NRF_LOG_DEFAULT_BACKENDS_INIT();
+}
+
+/**@brief Function for initializing power management.
+ * See https://embeddedcentric.com/lesson-14-nrf5x-power-management-tutorial/
+ */
+static void power_management_init(void)
+{
+    ret_code_t err_code;
+    err_code = nrf_pwr_mgmt_init();
+    APP_ERROR_CHECK(err_code);
+}
+
+
+/**@brief Function for the Timer initialization.
  *
- * @param[in] p_lbs     Instance of LED Button Service to which the write applies.
- * @param[in] led_state Written/desired state of the LED.
+ * @details Initializes the timer module.
  */
-/*
-static void led_write_handler(uint16_t conn_handle, ble_lbs_t *p_lbs, uint8_t led_state) {
-  if (led_state) {
-    bsp_board_led_on(bsp_board_pin_to_led_idx(LEDBUTTON_LED));
-    NRF_LOG_INFO("Received LED ON!");
-  } else {
-    bsp_board_led_off(bsp_board_pin_to_led_idx(LEDBUTTON_LED));
-    NRF_LOG_INFO("Received LED OFF!");
-  }
+static void timers_init(void)
+{
+    //NRF_LOG_INFO("timers_init()");
+
+    // Initialize timer module, making it use the scheduler
+    ret_code_t err_code = app_timer_init();
+    APP_ERROR_CHECK(err_code);
 }
-*/
 
-/**@brief Function for initializing services that will be used by the application.
- */
-/*
-static void services_init(void) {
-  ret_code_t err_code;
-  ble_lbs_init_t init = {0};
-  nrf_ble_qwr_init_t qwr_init = {0};
-
-  // Initialize Queued Write Module.
-  qwr_init.error_handler = nrf_qwr_error_handler;
-
-  err_code = nrf_ble_qwr_init(&m_qwr, &qwr_init);
-  APP_ERROR_CHECK(err_code);
-
-  // Initialize LBS.
-  init.led_write_handler = led_write_handler;
-
-  err_code = ble_lbs_init(&m_lbs, &init);
-  APP_ERROR_CHECK(err_code);
-}
-*(
-/**@brief Function for handling the Connection Parameters Module.
+/**@brief Function for the LEDs initialization.
  *
- * @details This function will be called for all events in the Connection Parameters Module that
- *          are passed to the application.
- *
- * @note All this function does is to disconnect. This could have been done by simply
- *       setting the disconnect_on_fail config parameter, but instead we use the event
- *       handler mechanism to demonstrate its use.
- *
- * @param[in] p_evt  Event received from the Connection Parameters Module.
+ * @details Initializes all LEDs used by the application.
  */
-/*
-static void on_conn_params_evt(ble_conn_params_evt_t *p_evt) {
-  ret_code_t err_code;
+static void leds_init(void) {
+    //NRF_LOG_INFO("leds_init()");
 
-  if (p_evt->evt_type == BLE_CONN_PARAMS_EVT_FAILED) {
-    err_code = sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_CONN_INTERVAL_UNACCEPTABLE);
-    APP_ERROR_CHECK(err_code);
-  }
+    bsp_board_init(BSP_INIT_LEDS);
 }
-*/
-/**@brief Function for handling a Connection Parameters error.
- *
- * @param[in] nrf_error  Error code containing information about what went wrong.
- */
-/*
-static void conn_params_error_handler(uint32_t nrf_error) {
-  APP_ERROR_HANDLER(nrf_error);
+
+
+static void log_execution_mode(const char * context_name)
+{
+    // Log execution mode.
+    if (current_int_priority_get() == APP_IRQ_PRIORITY_THREAD)
+    {
+        NRF_LOG_INFO("%s: executing in thread/main mode", context_name);
+    }
+    else
+    {
+        NRF_LOG_INFO("%s: executing in interrupt handler mode", context_name);
+    }
 }
-*/
-/**@brief Function for initializing the Connection Parameters module.
- */
-/*
-static void conn_params_init(void) {
-  ret_code_t err_code;
-  ble_conn_params_init_t cp_init;
 
-  memset(&cp_init, 0, sizeof(cp_init));
-
-  cp_init.p_conn_params = NULL;
-  cp_init.first_conn_params_update_delay = FIRST_CONN_PARAMS_UPDATE_DELAY;
-  cp_init.next_conn_params_update_delay = NEXT_CONN_PARAMS_UPDATE_DELAY;
-  cp_init.max_conn_params_update_count = MAX_CONN_PARAMS_UPDATE_COUNT;
-  cp_init.start_on_notify_cccd_handle = BLE_GATT_HANDLE_INVALID;
-  cp_init.disconnect_on_fail = false;
-  cp_init.evt_handler = on_conn_params_evt;
-  cp_init.error_handler = conn_params_error_handler;
-
-  err_code = ble_conn_params_init(&cp_init);
-  APP_ERROR_CHECK(err_code);
-}
-*/
-/**@brief Function for starting advertising.
- */
-/*
-static void advertising_start(void) {
-  ret_code_t err_code;
-
-  err_code = sd_ble_gap_adv_start(m_adv_handle, APP_BLE_CONN_CFG_TAG);
-  APP_ERROR_CHECK(err_code);
-
-  bsp_board_led_on(bsp_board_pin_to_led_idx(ADVERTISING_LED));
-}
-*/
-/**@brief Function for handling BLE events.
- *
- * @param[in]   p_ble_evt   Bluetooth stack event.
- * @param[in]   p_context   Unused.
- */
-/*
-static void ble_evt_handler(ble_evt_t const *p_ble_evt, void *p_context) {
-  ret_code_t err_code;
-
-  switch (p_ble_evt->header.evt_id) {
-  case BLE_GAP_EVT_CONNECTED:
-    NRF_LOG_INFO("Connected");
-    bsp_board_led_on(bsp_board_pin_to_led_idx(CONNECTED_LED));
-    bsp_board_led_off(bsp_board_pin_to_led_idx(ADVERTISING_LED));
-    m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
-    err_code = nrf_ble_qwr_conn_handle_assign(&m_qwr, m_conn_handle);
-    APP_ERROR_CHECK(err_code);
-    err_code = app_button_enable();
-    APP_ERROR_CHECK(err_code);
-    break;
-
-  case BLE_GAP_EVT_DISCONNECTED:
-    NRF_LOG_INFO("Disconnected");
-    bsp_board_led_off(bsp_board_pin_to_led_idx(CONNECTED_LED));
-    m_conn_handle = BLE_CONN_HANDLE_INVALID;
-    err_code = app_button_disable();
-    APP_ERROR_CHECK(err_code);
-    advertising_start();
-    break;
-
-  case BLE_GAP_EVT_SEC_PARAMS_REQUEST:
-    // Pairing not supported
-    err_code = sd_ble_gap_sec_params_reply(m_conn_handle,
-        BLE_GAP_SEC_STATUS_PAIRING_NOT_SUPP,
-        NULL,
-        NULL);
-    APP_ERROR_CHECK(err_code);
-    break;
-
-  case BLE_GAP_EVT_PHY_UPDATE_REQUEST: {
-    NRF_LOG_DEBUG("PHY update request.");
-    ble_gap_phys_t const phys =
-        {
-            .rx_phys = BLE_GAP_PHY_AUTO,
-            .tx_phys = BLE_GAP_PHY_AUTO,
-        };
-    err_code = sd_ble_gap_phy_update(p_ble_evt->evt.gap_evt.conn_handle, &phys);
-    APP_ERROR_CHECK(err_code);
-  } break;
-
-  case BLE_GATTS_EVT_SYS_ATTR_MISSING:
-    // No system attributes have been stored.
-    err_code = sd_ble_gatts_sys_attr_set(m_conn_handle, NULL, 0, 0);
-    APP_ERROR_CHECK(err_code);
-    break;
-
-  case BLE_GATTC_EVT_TIMEOUT:
-    // Disconnect on GATT Client timeout event.
-    NRF_LOG_DEBUG("GATT Client Timeout.");
-    err_code = sd_ble_gap_disconnect(p_ble_evt->evt.gattc_evt.conn_handle,
-        BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
-    APP_ERROR_CHECK(err_code);
-    break;
-
-  case BLE_GATTS_EVT_TIMEOUT:
-    // Disconnect on GATT Server timeout event.
-    NRF_LOG_DEBUG("GATT Server Timeout.");
-    err_code = sd_ble_gap_disconnect(p_ble_evt->evt.gatts_evt.conn_handle,
-        BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
-    APP_ERROR_CHECK(err_code);
-    break;
-
-  default:
-    // No implementation needed.
-    break;
-  }
-}
-*/
-/**@brief Function for initializing the BLE stack.
- *
- * @details Initializes the SoftDevice and the BLE event interrupt.
- */
-/*
-static void ble_stack_init(void) {
-  ret_code_t err_code;
-
-  err_code = nrf_sdh_enable_request();
-  APP_ERROR_CHECK(err_code);
-
-  // Configure the BLE stack using the default settings.
-  // Fetch the start address of the application RAM.
-  uint32_t ram_start = 0;
-  err_code = nrf_sdh_ble_default_cfg_set(APP_BLE_CONN_CFG_TAG, &ram_start);
-  APP_ERROR_CHECK(err_code);
-
-  // Enable BLE stack.
-  err_code = nrf_sdh_ble_enable(&ram_start);
-  APP_ERROR_CHECK(err_code);
-
-  // Register a handler for BLE events.
-  NRF_SDH_BLE_OBSERVER(m_ble_observer, APP_BLE_OBSERVER_PRIO, ble_evt_handler, NULL);
-}
-*/
 
 static void epaper_demo_clear(void)
 {
     NRF_LOG_INFO("Display clear.");
     APP_ERROR_CHECK(nrf_gfx_init(p_lcd));
     nrf_gfx_screen_fill(p_lcd, 0xff);
-    //nrf_gfx_display(p_lcd);
-
-    nrf_gfx_rotation_set(p_lcd, NRF_LCD_ROTATE_90);
-    wsepd154_draw_monobmp((const uint8_t *)gImage_1in54);
     nrf_gfx_display(p_lcd);
+
+    //nrf_gfx_rotation_set(p_lcd, NRF_LCD_ROTATE_90);
+    //wsepd154_draw_monobmp((const uint8_t *)gImage_1in54);
+    //nrf_gfx_display(p_lcd);
 
     //nrf_gfx_uninit(p_lcd);
 }
 
-static void epaper_demo_text(void)
+static void epaper_demo_text(const char * text)
 {
     NRF_LOG_INFO("Display text.");
     //APP_ERROR_CHECK(nrf_gfx_init(p_lcd));
     nrf_gfx_rotation_set(p_lcd, NRF_LCD_ROTATE_180);
     nrf_gfx_point_t text_start = NRF_GFX_POINT(15, 70);
     nrf_gfx_screen_fill(p_lcd, 0xff);
-    APP_ERROR_CHECK(nrf_gfx_print(p_lcd, &text_start, 0x00, (const char *)disptxt_buffer, p_font, true));
+    APP_ERROR_CHECK(nrf_gfx_print(p_lcd, &text_start, 0x00, text, p_font, true));
     nrf_gfx_display(p_lcd);
     //nrf_gfx_uninit(p_lcd);
 }
@@ -565,341 +345,728 @@ static void epaper_demo_imarray(void)
     //nrf_gfx_uninit(p_lcd);
 }
 
-void startScanByTriggerPin() {
-  //NRF_LOG_INFO("Start Scanning...");
 
-  nrf_gpio_pin_write(BCM_WAKEUP, 1);
-  nrf_gpio_pin_write(BCM_TRIGGER, 1);
-  nrf_delay_ms(1);
-  nrf_gpio_pin_write(BCM_WAKEUP, 0);
-  nrf_gpio_pin_write(BCM_TRIGGER, 0);
+static void print_state(void)
+{
+    NRF_LOG_INFO("m_scan_engine_comm_state: %d", m_scan_engine_comm_state);
+
+    NRF_LOG_INFO("m_is_receiving_data_from_scan_engine: %d", m_is_receiving_data_from_scan_engine);
+    NRF_LOG_INFO("m_is_new_message_from_scan_engine: %d", m_is_new_message_from_scan_engine);
+    NRF_LOG_INFO("m_is_new_barcode_from_scan_engine: %d", m_is_new_barcode_from_scan_engine);
+    //NRF_LOG_INFO("m_is_non_blocking_delay_wait: %d", m_is_non_blocking_delay_wait);
+    NRF_LOG_INFO("m_scan_engine_cancel_operation: %d", m_scan_engine_cancel_operation);
+
+    NRF_LOG_INFO("m_scan_engine_inbound_message_hex: %X", m_scan_engine_inbound_message_hex);
+    NRF_LOG_INFO("m_scan_engine_inbound_barcode: %s", m_scan_engine_inbound_barcode);
 }
 
-void stopScanByTriggerPin() {
-  //NRF_LOG_INFO("Stop Scanning.");
-  nrf_gpio_pin_write(BCM_WAKEUP, 1);
-  nrf_gpio_pin_write(BCM_TRIGGER, 1);
+
+bool em2000h_send_command(const char * command, size_t size, bool wait_for_ack)
+{
+    print_state();
+
+    // clear last scan engine inbound messag
+    //memset(m_scan_engine_inbound_message, 0, sizeof(m_scan_engine_inbound_message));
+    m_is_new_message_from_scan_engine = false;
+    //m_scan_engine_cancel_operation = false;
+
+    if (command == CMD_START_DECODE)
+    {
+        // Clear barcode buffer
+        memset(m_scan_engine_inbound_barcode, 0, sizeof(m_scan_engine_inbound_barcode));
+        m_is_new_barcode_from_scan_engine = false;
+    }
+
+    ret_code_t ret = nrf_serial_write(&m_serial_uart, command, size, NULL, SERIAL_MAX_WRITE_TIMEOUT);
+    APP_ERROR_CHECK(ret);
+
+    // TODO: Implement wait-timeout to prevent infinite loop.
+    if (wait_for_ack) {
+        m_scan_engine_comm_state = AWAITING_ACK_MESSAGE;
+        // Wait for scan engine inbound message
+        while(!m_is_new_message_from_scan_engine)
+        {
+            NRF_LOG_INFO("Waiting for scan engine ACK message...");
+
+            //if (m_scan_engine_cancel_operation) {              
+            //    return false;
+            //    m_scan_engine_comm_state = IDLE;
+            //}
+            if (NRF_LOG_PROCESS() == false)
+            {
+                nrf_pwr_mgmt_run();
+            }
+        }
+
+        /*
+        for (int i=0; i<sizeof(m_scan_engine_inbound_message_hex)/sizeof(char); i++)
+        {
+            NRF_LOG_INFO("HEX-Chars of ACK-message: 0x%X", m_scan_engine_inbound_message_hex[i]);
+        }
+        */
+
+         
+        // TODO: The check for the ACK-/NACK-message should be enhanced.
+        //       Every byte of the message should be checked for categorization the message as ACK/NACK.
+        if (m_scan_engine_inbound_message_hex[1] == 0xD0)
+        {
+            // ACK-Message
+            NRF_LOG_INFO("ACK-Message received.");
+
+            if (command == CMD_START_DECODE)
+            {
+                // Command for start a barcode decode session
+                m_scan_engine_comm_state = AWAITING_BARCODE;
+            }
+            else
+            {
+                m_scan_engine_comm_state = IDLE;
+            }
+
+            //em2000h_send_command(CMD_ACK, 6, false); // ACK of ACK message not neccessary
+            
+            return true;
+        }
+        else if (m_scan_engine_inbound_message_hex[1] == 0xD1)
+        {
+            NRF_LOG_INFO("NACK-Message received.");
+
+            // TODO: Implement Resend of the message.
+            // NACK-Message
+            //if (resend) {
+            //   em2000h_send_command(CMD_ACK, 6, false, resend_counter=1);
+            //}
+
+            m_scan_engine_comm_state = IDLE;
+            
+            return false;
+        }
+        else
+        {
+            NRF_LOG_INFO("Unexpected-Message received.");
+            // Unexpected Message
+
+            m_scan_engine_comm_state = IDLE;
+
+            return false;
+        }
+    }
+    else
+    {
+        NRF_LOG_INFO("No ACK-Message expected.");
+
+        if (command[1] == 0xC7)
+        {
+            // Command for inquiry an scan engine parameter 
+            m_scan_engine_comm_state = AWAITING_PARAM_DATA;
+        } else {
+            m_scan_engine_comm_state = IDLE;
+        }
+    
+        // When no ACK-message is expected, wait 50ms after sending the command.
+        // So subsequent commands are separated by a minimum of 50ms.
+        non_blocking_delay_ms(50);
+
+        return true;
+    }
+
+    return false;
 }
+
+
+static void barcode_module_init()
+{
+    NRF_LOG_INFO("barcode_module_init()");
+
+    nrf_gpio_cfg_output(BCM_TRIGGER);
+    nrf_gpio_pin_write(BCM_TRIGGER, 1);
+
+    nrf_gpio_cfg_output(BCM_WAKEUP);
+    nrf_gpio_pin_write(BCM_WAKEUP, 1);
+
+    nrf_gpio_cfg_input(BCM_LED, NRF_GPIO_PIN_NOPULL);
+    nrf_gpio_cfg_input(BCM_BUZZER, NRF_GPIO_PIN_NOPULL);
+
+
+    bool send_ret = false;
+
+    /*
+    NRF_LOG_INFO("Send command CMD_PARAM_SET_SOFTWARE_HANDSHAKING_DISABLE");
+    send_ret = em2000h_send_command(CMD_PARAM_SET_SOFTWARE_HANDSHAKING_DISABLE, 9, false);
+    if (!send_ret) {
+      NRF_LOG_ERROR("Sending command CMD_PARAM_SET_SOFTWARE_HANDSHAKING_DISABLE failed.");
+    }
+    */
+    /*
+    NRF_LOG_INFO("Send command CMD_PARAM_SET_SOFTWARE_HANDSHAKING_ENABLE");
+    send_ret = em2000h_send_command(CMD_PARAM_SET_SOFTWARE_HANDSHAKING_ENABLE, 9, false);
+    if (!send_ret) {
+      NRF_LOG_ERROR("Sending command CMD_PARAM_SET_SOFTWARE_HANDSHAKING_ENABLE failed.");
+    }
+    */
+    /*
+    NRF_LOG_INFO("Send command CMD_PARAM_SET_POWER_MODE_LOW");
+    send_ret = em2000h_send_command(CMD_PARAM_SET_POWER_MODE_LOW, 9, false);
+    if (!send_ret) {
+      NRF_LOG_ERROR("Sending command CMD_PARAM_SET_POWER_MODE_LOW failed.");
+    }
+    NRF_LOG_INFO("Send command CMD_PARAM_SET_TRIGGER_MODE_HOST");
+    send_ret = em2000h_send_command(CMD_PARAM_SET_TRIGGER_MODE_HOST, 9, false);
+    if (!send_ret) {
+      NRF_LOG_ERROR("Sending command CMD_PARAM_SET_TRIGGER_MODE_HOST failed.");
+    }
+    */
+
+    NRF_LOG_INFO("Send command CMD_WAKEUP");
+    send_ret = em2000h_send_command(CMD_WAKEUP, 1, false);
+    if (!send_ret)
+    {
+        NRF_LOG_ERROR("Sending command CMD_WAKEUP failed.");
+    }
+
+    NRF_LOG_INFO("Send command CMD_SCAN_DISABLE");
+    send_ret = em2000h_send_command(CMD_SCAN_DISABLE, 6, true);
+    if (!send_ret)
+    {
+        NRF_LOG_ERROR("Sending command CMD_SCAN_DISABLE failed.");
+    }
+
+    NRF_LOG_INFO("Send command CMD_SCAN_ENABLE");
+    send_ret = em2000h_send_command(CMD_SCAN_ENABLE, 6, true);
+    if (!send_ret)
+    {
+        NRF_LOG_ERROR("Sending command CMD_SCAN_ENABLE failed.");
+    }
+
+    NRF_LOG_INFO("Send command CMD_PARAM_GET_SOFTWARE_HANDSHAKING");
+    send_ret = em2000h_send_command(CMD_PARAM_GET_SOFTWARE_HANDSHAKING, 7, false);
+    if (!send_ret)
+    {
+        NRF_LOG_ERROR("Sending command CMD_PARAM_GET_SOFTWARE_HANDSHAKING failed.");
+    }
+
+    NRF_LOG_INFO("Send command CMD_PARAM_SET_TERMINATOR_DISABLE");
+    send_ret = em2000h_send_command(CMD_PARAM_SET_TERMINATOR_DISABLE, 10, false);
+    if (!send_ret) {
+      NRF_LOG_ERROR("Sending command CMD_PARAM_SET_TERMINATOR_DISABLE failed.");
+    }
+
+    NRF_LOG_INFO("Scan Engine Init Finished.");
+}
+
+
+static void display_barcode(const char * barcode)
+{
+    NRF_LOG_INFO("display_barcode(): x %s x", barcode);
+    epaper_demo_text(barcode);
+}
+
+
+static void display_barcode_scheduled_handler(void * p_event_data, uint16_t event_size)
+{
+    const char * barcode = (const char *) p_event_data;
+    display_barcode(barcode);
+}
+
+static void signal_feedback_positive()
+{
+    NRF_LOG_INFO("signal_feedback_positive()");
+    APP_ERROR_CHECK(app_timer_stop(m_feedback_timer_id));
+    bsp_board_led_on(bsp_board_pin_to_led_idx(FEEDBACK_LED));
+    APP_ERROR_CHECK(app_timer_start(m_feedback_timer_id, APP_TIMER_TICKS(500), NULL));
+}
+
+
+static void signal_feedback_positive_scheduled_handler(void * p_event_data, uint16_t event_size)
+{
+    signal_feedback_positive();
+}
+
+static void send_barcode_to_server(const char * barcode)
+{    
+    NRF_LOG_INFO("send_barcode_to_server(): %s", barcode);
+
+    coap_send_barcode(barcode);
+    mqtt_send_barcode(barcode);    
+}
+
+static void send_barcode_to_server_scheduled_handler(void * p_event_data, uint16_t event_size)
+{    
+    const char * barcode = (const char *) p_event_data;
+    send_barcode_to_server(barcode);
+}
+
+static void process_barcode(const char* m_scan_engine_inbound_barcode)
+{
+    NRF_LOG_INFO("process_barcode(): BARCODE=%s", m_scan_engine_inbound_barcode);
+    
+    // Log execution mode.
+    log_execution_mode("process_barcode()");
+    
+    // Signal positiv feedback
+    app_sched_event_put(NULL, NULL, signal_feedback_positive_scheduled_handler);
+
+    // Send barcode to server
+    app_sched_event_put((void*) m_scan_engine_inbound_barcode, strlen(m_scan_engine_inbound_barcode), send_barcode_to_server_scheduled_handler);
+
+    // Display barcode on screen
+    app_sched_event_put((void*) m_scan_engine_inbound_barcode, strlen(m_scan_engine_inbound_barcode), display_barcode_scheduled_handler);
+    //epaper_demo_text(m_scan_engine_inbound_barcode);
+}    
+
+
+
+
+void process_barcode_scheduled(void * p_event_data, uint16_t event_size)
+{
+    process_barcode((const char *) m_scan_engine_inbound_barcode);
+}
+
+/**@brief Button 1 handler function to be called by the scheduler.
+ */
+void button1_scheduled_event_handler(void * p_event_data, uint16_t event_size)
+{
+    NRF_LOG_INFO("button1_scheduled_event_handler()");
+
+    // Log execution mode.
+    if (current_int_priority_get() == APP_IRQ_PRIORITY_THREAD)
+    {
+        NRF_LOG_INFO("button1_scheduled_event_handler() [executing in thread/main mode]");
+    }
+    else
+    {
+        NRF_LOG_INFO("button1_scheduled_event_handler() [executing in interrupt handler mode]");
+    }
+    
+    uint8_t button_action = *((uint8_t*) p_event_data);
+    bool se_command_resp = false;
+    if (button_action == APP_BUTTON_PUSH)
+    {
+        NRF_LOG_INFO("Button_1 pushed");
+        // Start barcode decode session
+        NRF_LOG_INFO("Send comannd CMD_WAKEUP.");
+        se_command_resp = em2000h_send_command(CMD_WAKEUP, 1, false);
+        NRF_LOG_INFO("CMD_WAKEUP returned %d", se_command_resp);
+        NRF_LOG_INFO("Send comannd CMD_START_DECODE.");
+        se_command_resp = em2000h_send_command(CMD_START_DECODE, 6, true);
+        NRF_LOG_INFO("CMD_START_DECODE returned %d", se_command_resp);
+        
+        // Waiting for barcode
+        NRF_LOG_INFO("Waiting for barcode - BEFORE");
+        while (m_scan_engine_comm_state == AWAITING_BARCODE)
+        {
+            NRF_LOG_INFO("Waiting for barcode...");
+            
+            if (m_scan_engine_cancel_operation) {
+                NRF_LOG_INFO("Waiting for barcode... CANCEL");
+                m_is_new_barcode_from_scan_engine = false;
+                m_scan_engine_comm_state = IDLE;                
+                break;
+            }
+
+            if (m_is_new_barcode_from_scan_engine) {
+                
+                NRF_LOG_INFO("******************************");
+                NRF_LOG_INFO("*** Processing BARCODE: %s ***", m_scan_engine_inbound_barcode);
+                NRF_LOG_INFO("******************************");                
+                m_is_new_barcode_from_scan_engine = false;
+                m_scan_engine_comm_state = IDLE;                
+                process_barcode(m_scan_engine_inbound_barcode);
+            }
+            if (NRF_LOG_PROCESS() == false)
+            {
+                nrf_pwr_mgmt_run();
+            }
+        }
+        NRF_LOG_INFO("Waiting for barcode - AFTER");
+    }
+    else if (button_action == APP_BUTTON_RELEASE)
+    {
+        /*
+        strcpy(m_scan_engine_inbound_barcode[0], "4711-ABC01099");
+        app_sched_event_put(m_scan_engine_inbound_barcode, sizeof(m_scan_engine_inbound_barcode), process_barcode_scheduled);
+        */
+
+        NRF_LOG_INFO("Button_1 released");
+
+        print_state();
+
+        // Stop barcode decode session
+        if (m_scan_engine_cancel_operation)
+        {
+            NRF_LOG_INFO("Send comannd CMD_WAKEUP.");
+            se_command_resp = em2000h_send_command(CMD_WAKEUP, 1, false);
+            NRF_LOG_INFO("CMD_WAKEUP returned %d", se_command_resp);
+            NRF_LOG_INFO("Send comannd CMD_STOP_DECODE.");
+            se_command_resp = em2000h_send_command(CMD_STOP_DECODE, 6, true);
+            NRF_LOG_INFO("CMD_STOP_DECODE returned %d", se_command_resp);
+        }
+    }
+
+    NRF_LOG_INFO("button1_scheduled_event_handler() - end");
+}
+
+
+/**@brief Button 2 handler function to be called by the scheduler.
+ */
+void button2_scheduled_event_handler(void * p_event_data, uint16_t event_size)
+{
+    uint8_t button_action = *((uint8_t*) p_event_data);
+
+    if (button_action == APP_BUTTON_PUSH)
+    {
+        NRF_LOG_INFO("Button_2 pushed");
+    }
+    else if (button_action == APP_BUTTON_RELEASE)
+    {
+        NRF_LOG_INFO("Button_2 released");
+        barcode_module_init();
+    }
+}
+
+
+/**@brief Button 3 handler function to be called by the scheduler.
+ */
+void button3_scheduled_event_handler(void * p_event_data, uint16_t event_size)
+{
+    uint8_t button_action = *((uint8_t*) p_event_data);
+
+    if (button_action == APP_BUTTON_PUSH)
+    {
+        NRF_LOG_INFO("Button_3 pushed");
+    }
+    else if (button_action == APP_BUTTON_RELEASE)
+    {
+        NRF_LOG_INFO("Button_3 released");
+        epaper_demo_draw();
+    }
+}
+
+
+/**@brief Button 4 handler function to be called by the scheduler.
+ */
+void button4_scheduled_event_handler(void * p_event_data, uint16_t event_size)
+{
+    
+    log_execution_mode("button4_scheduled_event_handler()");
+
+    uint8_t button_action = *((uint8_t*) p_event_data);
+
+    if (button_action == APP_BUTTON_PUSH)
+    {
+        NRF_LOG_INFO("Button_4 pushed");
+        //non_blocking_delay_ms(10000);
+    }    
+    else if (button_action == APP_BUTTON_RELEASE)
+    {
+        NRF_LOG_INFO("Button_4 released");
+        //epaper_demo_imarray();
+        // Reset scan engine
+        nrf_gpio_pin_write(BCM_WAKEUP, 0);
+        NRF_LOG_INFO("Wait...");
+        non_blocking_delay_ms(2000);
+        NRF_LOG_INFO("Wait... end.");
+        nrf_gpio_pin_write(BCM_WAKEUP, 1);        
+    }
+    else 
+    {
+      NRF_LOG_INFO("Button_4 unknown button action: %d", button_action);
+    }
+}
+
 
 /**@brief Function for handling events from the button handler module.
  *
  * @param[in] pin_no        The pin that the event applies to.
  * @param[in] button_action The button action (press/release).
  */
-static void button_event_handler(uint8_t pin_no, uint8_t button_action) {
-  //NRF_LOG_INFO("button_event_handler()");
-  ret_code_t err_code;
+static void button_event_handler(uint8_t pin_no, uint8_t button_action)
+{
+    // NRF_LOG_INFO("button_event_handler()");
+    ret_code_t err_code;
 
-  switch (pin_no) {
-  case BUTTON_1:
-    if (button_action == APP_BUTTON_PUSH) {
-      //NRF_LOG_INFO("Button_1 push");
-      startScanByTriggerPin();
-    } else if (button_action == APP_BUTTON_RELEASE) {
-      //NRF_LOG_INFO("Button_1 released");
-      stopScanByTriggerPin();
-      //epaper_demo_text();
+    switch (pin_no)
+    {
+        case BUTTON_1:
+            NRF_LOG_INFO("Button_1 handle");
+            if (button_action == APP_BUTTON_PUSH)
+            {
+                m_scan_engine_comm_state = IDLE;
+
+                memset(m_scan_engine_inbound_message_hex, 0, sizeof(m_scan_engine_inbound_message_hex));
+                memset(m_scan_engine_inbound_barcode, 0, sizeof(m_scan_engine_inbound_barcode));
+
+                m_is_receiving_data_from_scan_engine = false;
+                m_is_new_message_from_scan_engine = false;
+                m_is_new_barcode_from_scan_engine = false;
+                m_number_of_bytes_transfered = 0;
+
+                //stop_non_blocking_delay();
+                m_scan_engine_cancel_operation = false;
+            }
+            else if (button_action == APP_BUTTON_RELEASE) 
+            {
+               if (m_scan_engine_comm_state == AWAITING_BARCODE) {
+                  m_scan_engine_cancel_operation = true;
+               }
+            }            
+            app_sched_event_put(&button_action, sizeof(button_action), button1_scheduled_event_handler);
+            break;
+        case BUTTON_2:
+            NRF_LOG_INFO("Button_2 handle");
+            app_sched_event_put(&button_action, sizeof(button_action), button2_scheduled_event_handler);            
+            break;
+        case BUTTON_3:
+            NRF_LOG_INFO("Button_3 handle");
+            app_sched_event_put(&button_action, sizeof(button_action), button3_scheduled_event_handler);
+            break;
+        case BUTTON_4:
+            NRF_LOG_INFO("Button_4 handle");
+            app_sched_event_put(&button_action, sizeof(button_action), button4_scheduled_event_handler);
+            break;
+        default:
+            // APP_ERROR_HANDLER(pin_no);
+            NRF_LOG_WARNING("Unsupported button: pin=%d", pin_no);
+            break;
     }
-    /*
-      NRF_LOG_INFO("Send button state change.");
-      err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, button_action);
-      if (err_code != NRF_SUCCESS &&
-          err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
-          err_code != NRF_ERROR_INVALID_STATE &&
-          err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-      {
-          APP_ERROR_CHECK(err_code);
-      }
-    */
-    break;
-  case BUTTON_2:
-    if (button_action == APP_BUTTON_RELEASE) {
-      NRF_LOG_INFO("Button_2 released");
-      epaper_demo_draw();
-    }
-    break;
-  case BUTTON_3:
-    if (button_action == APP_BUTTON_RELEASE) {
-      NRF_LOG_INFO("Button_3 released");
-      epaper_demo_imarray();
-    }
-    break;
-  case BUTTON_4:
-    if (button_action == APP_BUTTON_RELEASE) {
-      NRF_LOG_INFO("Button_4 released");
-    }
-    break;
-  default:
-    //APP_ERROR_HANDLER(pin_no);
-    NRF_LOG_INFO("Unsupported button: pin=%d", pin_no);
-    break;
-  }
 }
+
 
 static void button_event_handler_MOCK(uint8_t pin_no, uint8_t button_action) {
-  NRF_LOG_INFO("button_event_handler_MOCK() called.");
+    NRF_LOG_INFO("button_event_handler_MOCK() called.");
   
-  ret_code_t err_code;
+    ret_code_t err_code;
 
-  switch (pin_no) {
-  case BUTTON_1:
-    if (button_action == APP_BUTTON_PUSH) {
-      coap_send_barcode("4711-0815");
-      mqtt_send_barcode("4711-0815");
+    switch (pin_no)
+    {
+    case BUTTON_1:
+        if (button_action == APP_BUTTON_PUSH)
+        {
+          coap_send_barcode("4711-0815");
+          mqtt_send_barcode("4711-0815");
+        }
+        break;
+    default:
+        APP_ERROR_HANDLER(pin_no);
+        break;
     }
-    break;
-  default:
-    APP_ERROR_HANDLER(pin_no);
-    break;
-  }
 }
+
 
 /**@brief Function for initializing the button handler module.
  */
-static void buttons_init() {
-  NRF_LOG_INFO("buttons_init()");
+static void buttons_init()
+{
+    NRF_LOG_INFO("buttons_init()");
 
-  uint32_t err_code;
+    uint32_t err_code;
 
-  //The array must be static because a pointer to it will be saved in the button handler module.
-  static app_button_cfg_t buttons[] =
-      {
-          {BUTTON_1, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_event_handler}
-         ,{BUTTON_2, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_event_handler}
-         ,{BUTTON_3, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_event_handler}
-         ,{BUTTON_4, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_event_handler}
-      };
+    // The array must be static because a pointer to it will be saved in the button handler module.
+    static app_button_cfg_t buttons[] = {
+        {BUTTON_1, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_event_handler_MOCK},
+        {BUTTON_2, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_event_handler},
+        {BUTTON_3, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_event_handler},
+        {BUTTON_4, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_event_handler}};
 
-  err_code = app_button_init(buttons, ARRAY_SIZE(buttons), BUTTON_DETECTION_DELAY);
-  APP_ERROR_CHECK(err_code);
+    err_code = app_button_init(buttons, ARRAY_SIZE(buttons), BUTTON_DETECTION_DELAY);
+    APP_ERROR_CHECK(err_code);
 
-  err_code = app_button_enable();
-  APP_ERROR_CHECK(err_code);
-}
-
-
-static void log_init(void) {
-  ret_code_t err_code = NRF_LOG_INIT(NULL);
-  APP_ERROR_CHECK(err_code);
-
-  NRF_LOG_DEFAULT_BACKENDS_INIT();
-}
-
-/**@brief Function for initializing power management.
- */
-static void power_management_init(void) {
-  ret_code_t err_code;
-  err_code = nrf_pwr_mgmt_init();
-  APP_ERROR_CHECK(err_code);
+    err_code = app_button_enable();
+    APP_ERROR_CHECK(err_code);
 }
 
 /**
  * Pin change handler
  */
-static void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action) {
-  //NRF_LOG_INFO("in_pin_handler(): pin=%d", pin);
-  
-  if (pin != BCM_LED) {
-    return;
-  }
+static void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
+{
+    if (pin = BCM_LED)
+    {
+        NRF_LOG_INFO("Feedback-LED: %d", action);
+        //bsp_board_led_on(bsp_board_pin_to_led_idx(FEEDBACK_LED));
+    } else if (pin == BCM_BUZZER)
+    {
+        NRF_LOG_INFO("Feedback-Buzzer: %d", action);
+    }
 
-  if (nrf_gpio_pin_read(BCM_LED) > 0) {
-    //NRF_LOG_INFO("Feedback-LED ON");
-    bsp_board_led_on(bsp_board_pin_to_led_idx(FEEDBACK_LED));
-  } else {
-    //NRF_LOG_INFO("Feedback-LED OFF");
-    bsp_board_led_off(bsp_board_pin_to_led_idx(FEEDBACK_LED));
-  }
-
-  //nrf_drv_gpiote_out_toggle(PIN_OUT);
+    // nrf_drv_gpiote_out_toggle(PIN_OUT);
 }
 
 /**
  * @brief Function for configuring: Configures GPIOTE to give an interrupt on pin change.
  */
-static void gpio_init(void) {
-  ret_code_t err_code;
+static void gpio_init(void)
+{
+    ret_code_t err_code;
 
-  // Initialization of GPIOTE is allready done by app_button library
-  //err_code = nrf_drv_gpiote_init();
-  //APP_ERROR_CHECK(err_code);
-
-  /*
-    nrf_drv_gpiote_out_config_t out_config = GPIOTE_CONFIG_OUT_SIMPLE(false);
-    err_code = nrf_drv_gpiote_out_init(PIN_OUT, &out_config);
+    // Initialization of GPIOTE is allready done by app_button library
+    /*
+    err_code = nrf_drv_gpiote_init();
     APP_ERROR_CHECK(err_code);
-  */
 
-  nrf_drv_gpiote_in_config_t in_config = NRFX_GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
-  in_config.pull = NRF_GPIO_PIN_PULLUP;
+    // Button GPIO config
+    nrf_drv_gpiote_in_config_t in_config_buttons = GPIOTE_CONFIG_IN_SENSE_LOTOHI(true);
+    in_config_buttons.pull = NRF_GPIO_PIN_PULLUP;
 
-  err_code = nrf_drv_gpiote_in_init(BCM_LED, &in_config, in_pin_handler);
-  APP_ERROR_CHECK(err_code);
+    err_code = nrf_drv_gpiote_in_init(BUTTON_1, &in_config_buttons, button_event_handler);
+    APP_ERROR_CHECK(err_code);
+    err_code = nrf_drv_gpiote_in_init(BUTTON_2, &in_config_buttons, button_event_handler);
+    APP_ERROR_CHECK(err_code);
+    err_code = nrf_drv_gpiote_in_init(BUTTON_3, &in_config_buttons, button_event_handler);
+    APP_ERROR_CHECK(err_code);
+    err_code = nrf_drv_gpiote_in_init(BUTTON_4, &in_config_buttons, button_event_handler);
+    APP_ERROR_CHECK(err_code);
 
-  nrf_drv_gpiote_in_event_enable(BCM_LED, true);
+    nrf_drv_gpiote_in_event_enable(BUTTON_1, true);
+    nrf_drv_gpiote_in_event_enable(BUTTON_2, true);
+    nrf_drv_gpiote_in_event_enable(BUTTON_3, true);
+    nrf_drv_gpiote_in_event_enable(BUTTON_4, true);
+    */
+
+    // BCM LED GPIO config
+    nrf_drv_gpiote_in_config_t in_config_bcm_led = NRFX_GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
+    in_config_bcm_led.pull = NRF_GPIO_PIN_PULLUP;
+    
+    /*
+    err_code = nrf_drv_gpiote_in_init(BCM_LED, &in_config_bcm_led, in_pin_handler);
+    APP_ERROR_CHECK(err_code);
+
+    nrf_drv_gpiote_in_event_enable(BCM_LED, true);
+    */
 }
 
 
-
-APP_TIMER_DEF(my_serial_receive_timer_id);
-
-static void stop_serial_receive_timer(void) {
-  ret_code_t ret_code;
-  ret_code = app_timer_stop(my_serial_receive_timer_id);
-  APP_ERROR_CHECK(ret_code);
-  is_serial_timer_active = false;
+static void stop_serial_receive_timer()
+{
+    NRF_LOG_INFO("stop_serial_receive_timer()");
+    
+    APP_ERROR_CHECK(app_timer_stop(m_serial_receive_timer_id));
+        
+    //memset(m_scan_engine_inbound_message_hex, 0, sizeof(m_scan_engine_inbound_message_hex));
+    //memset(m_scan_engine_inbound_barcode, 0, sizeof(m_scan_engine_inbound_barcode));
+    //m_is_receiving_data_from_scan_engine = false;
+    //m_is_new_message_from_scan_engine = false;
+    //m_is_new_barcode_from_scan_engine = false;
+    //m_number_of_bytes_transfered = 0;
 }
 
-static void serial_receive_timeout_handler() {
-  NRF_LOG_INFO("serial_receive_timeout_handler()");
 
-  NRF_LOG_INFO("Barcode: %s", barcode_buffer);
-
-  memset(barcode_buffer, 0, sizeof(barcode_buffer));
-  
-  stop_serial_receive_timer();
+static void serial_receive_timeout_handler()
+{
+    NRF_LOG_INFO("serial_receive_timeout_handler(), state=%d", m_scan_engine_comm_state);
+    
+    if (m_scan_engine_comm_state == AWAITING_BARCODE) {
+        m_is_new_barcode_from_scan_engine = true;
+        NRF_LOG_INFO("***** serial_receive_timeout_handler: BARCODE=%s", m_scan_engine_inbound_barcode);
+    }
+    
+    m_is_receiving_data_from_scan_engine = false;
+    m_is_new_message_from_scan_engine = true;
+    m_number_of_bytes_transfered = 0;
 }
 
-static void create_serial_receive_timer(void) {
-  ret_code_t ret_code;
-  ret_code = app_timer_create(&my_serial_receive_timer_id, APP_TIMER_MODE_SINGLE_SHOT, serial_receive_timeout_handler);
-  APP_ERROR_CHECK(ret_code);
+static void feedback_timeout_handler_timeout_handler()
+{
+    bsp_board_led_off(bsp_board_pin_to_led_idx(FEEDBACK_LED));
 }
 
-static void start_serial_receive_timer(void) {
-  ret_code_t ret_code;
-  if (is_serial_timer_active == false) {
-    ret_code = app_timer_start(my_serial_receive_timer_id, APP_TIMER_TICKS(50), NULL);
+static void timers_create(void)
+{
+    ret_code_t ret_code;
+
+    // timer for serial receiving
+    ret_code = app_timer_create(&m_serial_receive_timer_id, APP_TIMER_MODE_SINGLE_SHOT, serial_receive_timeout_handler);
     APP_ERROR_CHECK(ret_code);
-    is_serial_timer_active = true;
-  }
+    
+    // Timer for signaling feedback to the user via LED or Buzzer
+    ret_code = app_timer_create(&m_feedback_timer_id, APP_TIMER_MODE_SINGLE_SHOT, feedback_timeout_handler_timeout_handler);
+    APP_ERROR_CHECK(ret_code);
 }
 
-static void serial_sleep_handler(void) {
-  //NRF_LOG_INFO("serial_sleep_handler()");
-  __WFE();
-  __SEV();
-  __WFE();
+
+static void start_serial_receive_timer(void)
+{
+    NRF_LOG_INFO("start_serial_receive_timer()");
+    ret_code_t ret_code;
+    ret_code = app_timer_start(m_serial_receive_timer_id, APP_TIMER_TICKS(25), NULL);
+    APP_ERROR_CHECK(ret_code);
 }
 
-NRF_SERIAL_DRV_UART_CONFIG_DEF(m_uart0_drv_config,
-    BCM_RX, BCM_TX, RTS_PIN, CTS_PIN,
-    NRF_UART_HWFC_DISABLED, NRF_UART_PARITY_EXCLUDED,
-    NRF_UART_BAUDRATE_9600,
-    UART_DEFAULT_CONFIG_IRQ_PRIORITY);
 
-#define SERIAL_FIFO_TX_SIZE 32
-#define SERIAL_FIFO_RX_SIZE 32
-NRF_SERIAL_QUEUES_DEF(serial_queues, SERIAL_FIFO_TX_SIZE, SERIAL_FIFO_RX_SIZE);
+static void serial_sleep_handler(void)
+{
+    NRF_LOG_INFO("serial_sleep_handler()");
 
-#define SERIAL_BUFF_TX_SIZE 1
-#define SERIAL_BUFF_RX_SIZE 1
-NRF_SERIAL_BUFFERS_DEF(serial_buffs, SERIAL_BUFF_TX_SIZE, SERIAL_BUFF_RX_SIZE);
+    if (NRF_LOG_PROCESS() == false)
+    {
+        nrf_pwr_mgmt_run();
+    }
+}
 
-NRF_SERIAL_UART_DEF(serial_uart, 0);
 
 /**
- * Serial Empfang via Event Handler ist schlecht dokumentiert. Hier gibt es ein paar interessante Case:
- * https://devzone.nordicsemi.com/f/nordic-q-a/34391/serial-port-library-receive-interrupt
+ * Serial Empfang via Event Handler ist schlecht dokumentiert. Hier gibt es ein paar interessante
+ * Case: https://devzone.nordicsemi.com/f/nordic-q-a/34391/serial-port-library-receive-interrupt
  * https://devzone.nordicsemi.com/f/nordic-q-a/22320/serial-port-interrupt
  */
-static void serial_event_handler(struct nrf_serial_s const *p_serial, nrf_serial_event_t event) {
-  switch (event) {
-  case NRF_SERIAL_EVENT_TX_DONE:
-    //NRF_LOG_INFO("serial_event_handler(): NRF_SERIAL_EVENT_TX_DONE");
-    break;
-  case NRF_SERIAL_EVENT_RX_DATA:
-    //NRF_LOG_INFO("serial_event_handler(): NRF_SERIAL_EVENT_RX_DATA");
-    start_serial_receive_timer();
-    char c;
-    ret_code_t ret_code;
-    ret_code = nrf_queue_read(p_serial->p_ctx->p_config->p_queues->p_rxq, &c, sizeof(c));
-    //ret_code = nrf_serial_read(&serial_uart, &c, sizeof(c), NULL, 0);
-    APP_ERROR_CHECK(ret_code);
-    //NRF_LOG_INFO("Received: %c", c);
-    strcat(barcode_buffer, &c);
-    break;
-  case NRF_SERIAL_EVENT_DRV_ERR:
-    //NRF_LOG_INFO("serial_event_handler(): NRF_SERIAL_EVENT_DRV_ERR");
-    break;
-  case NRF_SERIAL_EVENT_FIFO_ERR:
-    //NRF_LOG_INFO("serial_event_handler(): NRF_SERIAL_EVENT_FIFO_ERR");
-    break;
-  default:
-    //NRF_LOG_INFO("serial_event_handler(): default");
-    break;
-  }
+static void serial_event_handler(struct nrf_serial_s const * p_serial, nrf_serial_event_t event)
+{
+    switch (event)
+    {
+        case NRF_SERIAL_EVENT_TX_DONE:
+            //NRF_LOG_INFO("serial_event_handler(): NRF_SERIAL_EVENT_TX_DONE");
+            break;
+        case NRF_SERIAL_EVENT_RX_DATA:
+            //NRF_LOG_INFO("serial_event_handler(): NRF_SERIAL_EVENT_RX_DATA (state: %d)", m_scan_engine_comm_state);
+            if (m_is_receiving_data_from_scan_engine == false)
+            {
+                // start of new transfer
+                start_serial_receive_timer();
+                m_is_receiving_data_from_scan_engine = true;
+                m_number_of_bytes_transfered = 0;
+                memset(m_scan_engine_inbound_message_hex, 0, sizeof(m_scan_engine_inbound_message_hex));
+            }
 
-  /*
-  if (event == NRF_SERIAL_EVENT_RX_DATA) {
-    char c;
-    ret_code_t ret_code;
-    ret_code = nrf_serial_read(&serial_uart, &c, sizeof(c), NULL, 500);
-    APP_ERROR_CHECK(ret_code);
-    NRF_LOG_INFO("serial_event_handler: %c", c);
-  }
-  */
+            char c;
+            ret_code_t ret_code = nrf_queue_read(p_serial->p_ctx->p_config->p_queues->p_rxq, &c, sizeof(c));
+            APP_ERROR_CHECK(ret_code);
+            
+            NRF_LOG_INFO("Byte received: %d (0x%X) [state=%d]", c, c, m_scan_engine_comm_state);
+
+            m_scan_engine_inbound_message_hex[m_number_of_bytes_transfered++] = c;
+            
+            // TODO: m_scan_engine_inbound_barcode im serial timeout handler aus m_scan_engine_inbound_message_hex zusammenbauen.
+            if (m_scan_engine_comm_state == AWAITING_BARCODE)
+            {
+                strcat(m_scan_engine_inbound_barcode, &c);
+            }
+
+            break;
+        case NRF_SERIAL_EVENT_DRV_ERR:
+            NRF_LOG_INFO("serial_event_handler(): NRF_SERIAL_EVENT_DRV_ERR");
+            break;
+        case NRF_SERIAL_EVENT_FIFO_ERR:
+            NRF_LOG_INFO("serial_event_handler(): NRF_SERIAL_EVENT_FIFO_ERR");
+            break;
+        default:
+            NRF_LOG_INFO("serial_event_handler(): default");
+            break;
+    }
 }
 
-NRF_SERIAL_CONFIG_DEF(serial_config, NRF_SERIAL_MODE_IRQ, &serial_queues, &serial_buffs, serial_event_handler, serial_sleep_handler);
+
+NRF_SERIAL_CONFIG_DEF(m_serial_config, NRF_SERIAL_MODE_DMA, &m_serial_queues, &m_serial_buffs, serial_event_handler, serial_sleep_handler);
 
 /**
  * Function for initializing serial communication.
  */
-static void init_serial(void) {
-  ret_code_t ret_code;
-  ret_code = nrf_serial_init(&serial_uart, &m_uart0_drv_config, &serial_config);
-  APP_ERROR_CHECK(ret_code);
-}
-
-/**@brief Function for handling the idle state (main loop).
- *
- * @details If there is no pending log operation, then sleep until next the next event occurs.
- */
-static void idle_state_handle(void) {
-  if (NRF_LOG_PROCESS() == false) {
-    nrf_pwr_mgmt_run();
-  }
-}
-
-/**@brief Function for the Event Scheduler initialization.
- */
-static void scheduler_init(void)
+static void serial_init(void)
 {
-    APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
+    ret_code_t ret_code;
+    ret_code = nrf_serial_init(&m_serial_uart, &m_uart0_drv_config, &m_serial_config);
+    APP_ERROR_CHECK(ret_code);
 }
 
-// BARCODE MODULE STUFF >>>>>>>>>>>>>>
-
-static void barcode_module_init() {
-  
-  /*
-  nrf_gpio_cfg(
-        BCM_TRIGGER,
-        NRF_GPIO_PIN_DIR_OUTPUT,
-        NRF_GPIO_PIN_INPUT_DISCONNECT,
-        NRF_GPIO_PIN_NOPULL,
-        NRF_GPIO_PIN_S0S1,
-        GPIO_PIN_CNF_SENSE_Disabled);
-  nrf_gpio_cfg(
-        BCM_WAKEUP,
-        NRF_GPIO_PIN_DIR_OUTPUT,
-        NRF_GPIO_PIN_INPUT_DISCONNECT,
-        NRF_GPIO_PIN_NOPULL,
-        NRF_GPIO_PIN_S0S1,
-        GPIO_PIN_CNF_SENSE_Disabled);
-  */
-  nrf_gpio_cfg_output(BCM_TRIGGER);
-  nrf_gpio_pin_write(BCM_TRIGGER, 1);
-
-  nrf_gpio_cfg_output(BCM_WAKEUP);
-  nrf_gpio_pin_write(BCM_WAKEUP, 1);
-
-  nrf_gpio_cfg_input(BCM_LED, NRF_GPIO_PIN_NOPULL);
-  nrf_gpio_cfg_input(BCM_BUZZER, NRF_GPIO_PIN_NOPULL);
-}
-
-// <<<<<<<<<<<<<< BARCODE MODULE STUFF
 
 static void display_init()
 {
@@ -911,39 +1078,37 @@ static void display_init()
 /**@brief Function for application main entry.
  */
 int main(void) {
-  uint32_t err_code;
+    // Initialize.
+    log_init();
+    lfclk_init();
+    power_management_init();
+    leds_init();
+    scheduler_init();
+    buttons_init();
+    gpio_init();
+    serial_init();
+    timers_init();
+    timers_create();
+    utils_init();
+    coap_ipv6_init();
+    display_init();
+    
+    // Test if non-blocking delay works in main(). Remove it later.
+    //non_blocking_delay_ms(1000);
 
-  // Initialize.
-  lfclk_config();
-  log_init();
-  leds_init();
-  scheduler_init();
-  timers_init();
-  buttons_init();
-  barcode_module_init();
-  gpio_init();
-  init_serial();
-  create_serial_receive_timer();
-  power_management_init();
-  init_coap();
-  display_init();
-  
-  // Start execution.
-  NRF_LOG_INFO("TicTac Barcode Scanner started.");
-
-  // Enter main loop.
-  for (;;) {
-    app_sched_execute();
-
-    if (NRF_LOG_PROCESS() == false)
+    // Start execution.
+    NRF_LOG_INFO("TicTac Barcode Scanner started.");
+    
+    // Enter main loop.
+    for (;;)
     {
-      // Sleep waiting for an application event.
-      err_code = sd_app_evt_wait();
-      APP_ERROR_CHECK(err_code);
+        app_sched_execute();
 
-      //app_sched_execute();
+        if (NRF_LOG_PROCESS() == false)
+        {
+            nrf_pwr_mgmt_run();
+        }
     }
-  }
 }
 
 /**

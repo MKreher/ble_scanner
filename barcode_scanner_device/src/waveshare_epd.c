@@ -10,6 +10,8 @@
 #include "nrf_log.h"
 #include "app_scheduler.h"
 
+#include "utils.h"
+
 // EPD1IN54 commands
 #define DRIVER_OUTPUT_CONTROL                       0x01
 #define BOOSTER_SOFT_START_CONTROL                  0x0C
@@ -129,9 +131,10 @@ static void set_addr_window(uint16_t x_0, uint16_t y_0, uint16_t x_1, uint16_t y
 static void wait_until_idle(void)
 {
     NRF_LOG_INFO("epd busy\r\n");
-    while(nrf_gpio_pin_read(WSEPD_BUSY_PIN) == 1) {      //LOW: idle, HIGH: busy
-        app_sched_execute();  // prevent overflow of the app scheduler queue (NRF_ERROR_NO_MEM)
+    while(nrf_gpio_pin_read(WSEPD_BUSY_PIN) == 1) {      //LOW: idle, HIGH: busy        
         //NRF_LOG_INFO("epd is busy...\r\n");
+        //app_sched_execute();  // prevent overflow of the app scheduler queue (NRF_ERROR_NO_MEM)
+        non_blocking_delay_ms(5);
     }
     NRF_LOG_INFO("epd busy release\r\n");
 }

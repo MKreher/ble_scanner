@@ -25,6 +25,7 @@
   <ProjectSessionItem path="barcode_scanner;barcode_scanner"/>
   <ProjectSessionItem path="barcode_scanner;barcode_scanner;Application"/>
   <ProjectSessionItem path="barcode_scanner;barcode_scanner;nRF_Fonts"/>
+  <ProjectSessionItem path="barcode_scanner;barcode_scanner;nRF_IoT"/>
   <ProjectSessionItem path="barcode_scanner;barcode_scanner;nRF_Libraries"/>
   <ProjectSessionItem path="barcode_scanner;barcode_scanner;nRF_SoftDevice"/>
  </Project>
@@ -59,15 +60,10 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="177" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/libraries/timer/app_timer2.c" selected="0" top="168" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="4586" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/sdk_config.h" selected="0" top="4586" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="13" useTextEdit="1" openedFrom="C:/Work/ble_scanner/barcode_scanner_device/src/main.c" useBinaryEdit="0" left="0" path="../src/coap_service.c" selected="0" top="13" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="315" useTextEdit="1" openedFrom="C:/Work/ble_scanner/barcode_scanner_device/src/main.c" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/softdevice/common/nrf_sdh.c" selected="0" top="293" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="99" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/libraries/util/app_error_weak.c" selected="0" top="102" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="155" useTextEdit="1" openedFrom="C:/Work/ble_scanner/barcode_scanner_device/src/main.c" useBinaryEdit="0" left="0" path="../src/waveshare_epd.c" selected="0" top="155" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="87" useTextEdit="1" openedFrom="C:/Work/ble_scanner/barcode_scanner_device/src/main.c" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/boards/pca10056.h" selected="0" top="87" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="100" useTextEdit="1" openedFrom="C:/Work/ble_scanner/barcode_scanner_device/src/main.c" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/libraries/serial/nrf_serial.h" selected="0" top="83" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="115" useTextEdit="1" openedFrom="C:/Work/ble_scanner/barcode_scanner_device/src/main.c" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/modules/nrfx/hal/nrf_gpio.h" selected="1" top="115" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="33" y="1072" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/main.c" selected="1" top="1063" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="229" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/coap_service.c" selected="0" top="210" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="25" y="77" useTextEdit="1" openedFrom="C:/Work/ble_scanner/barcode_scanner_device/src/coap_service.c" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/iot/coap/coap_codes.h" selected="0" top="66" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="691" useTextEdit="1" openedFrom="C:/Work/ble_scanner/barcode_scanner_device/src/coap_service.c" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/iot/coap/coap.c" selected="0" top="660" codecName="Default"/>
  </Files>
- <ARMCrossStudioWindow activeProject="barcode_scanner" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="C:/Work/ble_scanner/barcode_scanner_device/src" debugSearchPath="" autoConnectCapabilities="3199"/>
+ <ARMCrossStudioWindow activeProject="barcode_scanner" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="C:/Work/ble_scanner/barcode_scanner_device/src" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>

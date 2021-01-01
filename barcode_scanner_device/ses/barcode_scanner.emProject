@@ -213,6 +213,10 @@
       <file file_name="../src/ImageData.h" />
       <file file_name="../src/waveshare_epd.c" />
       <file file_name="../src/waveshare_epd.h" />
+      <file file_name="../src/em3000h.c" />
+      <file file_name="../src/em3000h.h" />
+      <file file_name="../src/utils.h" />
+      <file file_name="../src/utils.c" />
     </folder>
     <folder Name="nRF_IoT">
       <file file_name="../../nRF5_SDK_16.0.0/components/iot/ble_6lowpan/ble_6lowpan.c" />

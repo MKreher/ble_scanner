@@ -12,6 +12,9 @@ https://devzone.nordicsemi.com/f/nordic-q-a/42462/ping-nrf52-iot-sdk-from-pc
 
 !!!https://visualgdb.com/tutorials/arm/nrf51/6lowpan/!!!
 
+# Coap Node-Red Message Propertoes (message.statusCode, message.payload, etc...)
+https://github.com/mcollina/node-coap
+
 # Set IPv6 forwarding (must be present).
 sudo echo 1 > /proc/sys/net/ipv6/conf/all/forwarding
 # Run radvd daemon.
@@ -61,6 +64,7 @@ fd00:a::0074:A4FF:FE16:3535
 
 2001:db8::00D0:52FF:FE09:9ED8
 
+sudo su
 modprobe bluetooth_6lowpan
 echo "connect 00:D0:52:09:9E:D8 1" > /sys/kernel/debug/bluetooth/6lowpan_control
 ifconfig -a bt0 add 2001:db8::1/64
