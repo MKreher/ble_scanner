@@ -88,8 +88,8 @@ static const nrf_gfx_font_desc_t * p_font = &orkney_24ptFontInfo;
 #define UART_PIN_DISCONNECTED 0xFFFFFFFF
 
 // define pins to barcode module
-#define BCM_TRIGGER 47                    // P1.14 on board, Pin #12 at barcode scanner module
-#define BCM_WAKEUP  46                    // P1.15 on board, Pin #11 at barcode scanner module
+#define BCM_TRIGGER 46                    // P1.14 on board, Pin #12 at barcode scanner module
+#define BCM_WAKEUP  47                    // P1.15 on board, Pin #11 at barcode scanner module
 #define BCM_LED     45                    // P1.13 on board, Pin #10 at barcode scanner module
 #define BCM_BUZZER  44                    // P1.12 on board, Pin #09 at barcode scanner module
 #define BCM_TX      TX_PIN_NUMBER         // RX-Pin #4 at barcode scanner module
@@ -863,7 +863,7 @@ static void buttons_init()
 
     // The array must be static because a pointer to it will be saved in the button handler module.
     static app_button_cfg_t buttons[] = {
-        {BUTTON_1, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_event_handler_MOCK},
+        {BUTTON_1, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_event_handler},
         {BUTTON_2, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_event_handler},
         {BUTTON_3, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_event_handler},
         {BUTTON_4, APP_BUTTON_ACTIVE_LOW, false, NRF_GPIO_PIN_PULLUP, button_event_handler}};

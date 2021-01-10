@@ -72,8 +72,8 @@
 #define UART_PIN_DISCONNECTED 0xFFFFFFFF
 
 // define pins to barcode module
-#define BCM_TRIGGER 47                    // P1.14 on board, Pin #12 at barcode scanner module
-#define BCM_WAKEUP  46                    // P1.15 on board, Pin #11 at barcode scanner module
+#define BCM_TRIGGER 46                    // P1.14 on board, Pin #12 at barcode scanner module
+#define BCM_WAKEUP  47                    // P1.15 on board, Pin #11 at barcode scanner module
 #define BCM_LED     45                    // P1.13 on board, Pin #10 at barcode scanner module
 #define BCM_BUZZER  44                    // P1.12 on board, Pin #09 at barcode scanner module
 #define BCM_TX      TX_PIN_NUMBER         // RX-Pin #4 at barcode scanner module
