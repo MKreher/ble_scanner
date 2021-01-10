@@ -1,34 +1,36 @@
 /**
  * @modified picospuch
  */
+extern "C" {
+  #include "nrf_delay.h"
+  #include "nrf_log.h"
+}
 
 #include "PN532_I2C.h"
-#include "PN532_debug.h"
-#include "Arduino.h"
 
 #define PN532_I2C_ADDRESS       (0x48 >> 1)
 
-
-PN532_I2C::PN532_I2C(TwoWire &wire)
+PN532_I2C::PN532_I2C(nrf_drv_twi_t &twi_master)
 {
-    _wire = &wire;
+    *m_twi_master = twi_master;
     command = 0;
 }
 
 void PN532_I2C::begin()
 {
-    _wire->begin();
+    //TODO: MKR init TWI here
+    //_wire->begin();
 }
 
 void PN532_I2C::wakeup()
 {
-    delay(500); // wait for all ready to manipulate pn532
+    nrf_delay_ms(500); // wait for all ready to manipulate pn532
 }
 
 int8_t PN532_I2C::writeCommand(const uint8_t *header, uint8_t hlen, const uint8_t *body, uint8_t blen)
 {
     command = header[0];
-    _wire->beginTransmission(PN532_I2C_ADDRESS);
+    //_wire->beginTransmission(PN532_I2C_ADDRESS); TODO: MKR ???
     
     write(PN532_PREAMBLE);
     write(PN532_STARTCODE1);
@@ -41,15 +43,15 @@ int8_t PN532_I2C::writeCommand(const uint8_t *header, uint8_t hlen, const uint8_
     write(PN532_HOSTTOPN532);
     uint8_t sum = PN532_HOSTTOPN532;    // sum of TFI + DATA
     
-    DMSG("write: ");
+    NRF_LOG_INFO("write: ");
        
     for (uint8_t i = 0; i < hlen; i++) {
         if (write(header[i])) {
             sum += header[i];
             
-            DMSG_HEX(header[i]);
+            NRF_LOG_INFO("0x%X", header[i]);
         } else {
-            DMSG("\nToo many data to send, I2C doesn't support such a big packet\n");     // I2C max packet: 32 bytes
+            NRF_LOG_INFO("\nToo many data to send, I2C doesn't support such a big packet\n");     // I2C max packet: 32 bytes
             return PN532_INVALID_FRAME;
         }
     }
@@ -58,9 +60,9 @@ int8_t PN532_I2C::writeCommand(const uint8_t *header, uint8_t hlen, const uint8_
         if (write(body[i])) {
             sum += body[i];
             
-            DMSG_HEX(body[i]);
+            NRF_LOG_INFO("0x%X", body[i]);
         } else {
-            DMSG("\nToo many data to send, I2C doesn't support such a big packet\n");     // I2C max packet: 32 bytes
+            NRF_LOG_INFO("\nToo many data to send, I2C doesn't support such a big packet\n");     // I2C max packet: 32 bytes
             return PN532_INVALID_FRAME;
         }
     }
@@ -69,9 +71,9 @@ int8_t PN532_I2C::writeCommand(const uint8_t *header, uint8_t hlen, const uint8_
     write(checksum);
     write(PN532_POSTAMBLE);
     
-    _wire->endTransmission();
+    //_wire->endTransmission(); TODO: MKR ???
     
-    DMSG('\n');
+    NRF_LOG_INFO("\n");
 
     return readAckFrame();
 }
@@ -81,13 +83,13 @@ int16_t PN532_I2C::getResponseLength(uint8_t buf[], uint8_t len, uint16_t timeou
     uint16_t time = 0;
 
     do {
-        if (_wire->requestFrom(PN532_I2C_ADDRESS, 6)) {
+//        if (_wire->requestFrom(PN532_I2C_ADDRESS, 6)) { TODO: MKR ???
             if (read() & 1) {  // check first byte --- status
                 break;         // PN532 is ready
             }
-        }
+//        }
 
-        delay(1);
+        nrf_delay_ms(1);
         time++;
         if ((0 != timeout) && (time > timeout)) {
             return -1;
@@ -105,11 +107,11 @@ int16_t PN532_I2C::getResponseLength(uint8_t buf[], uint8_t len, uint16_t timeou
     uint8_t length = read();
 
     // request for last respond msg again
-    _wire->beginTransmission(PN532_I2C_ADDRESS);
+    //_wire->beginTransmission(PN532_I2C_ADDRESS); TODO: MKR ???
     for (uint16_t i = 0; i < sizeof(PN532_NACK); ++i) {
       write(PN532_NACK[i]);
     }
-    _wire->endTransmission();
+    //_wire->endTransmission(); TODO: MKR ???
 
     return length;
 }
@@ -123,13 +125,13 @@ int16_t PN532_I2C::readResponse(uint8_t buf[], uint8_t len, uint16_t timeout)
 
     // [RDY] 00 00 FF LEN LCS (TFI PD0 ... PDn) DCS 00
     do {
-        if (_wire->requestFrom(PN532_I2C_ADDRESS, 6 + length + 2)) {
+        //if (_wire->requestFrom(PN532_I2C_ADDRESS, 6 + length + 2)) { TODO: MKR ???
             if (read() & 1) {  // check first byte --- status
                 break;         // PN532 is ready
             }
-        }
+        //}
 
-        delay(1);
+        nrf_delay_ms(1);
         time++;
         if ((0 != timeout) && (time > timeout)) {
             return -1;
@@ -160,21 +162,21 @@ int16_t PN532_I2C::readResponse(uint8_t buf[], uint8_t len, uint16_t timeout)
         return PN532_NO_SPACE;  // not enough space
     }
     
-    DMSG("read:  ");
-    DMSG_HEX(cmd);
+    NRF_LOG_INFO("read:  ");
+    NRF_LOG_INFO("0x%X", cmd);
     
     uint8_t sum = PN532_PN532TOHOST + cmd;
     for (uint8_t i = 0; i < length; i++) {
         buf[i] = read();
         sum += buf[i];
         
-        DMSG_HEX(buf[i]);
+        NRF_LOG_INFO("0x%X", buf[i]);
     }
-    DMSG('\n');
+    NRF_LOG_INFO("\n");
     
     uint8_t checksum = read();
     if (0 != (uint8_t)(sum + checksum)) {
-        DMSG("checksum is not ok\n");
+        NRF_LOG_INFO("checksum is not ok\n");
         return PN532_INVALID_FRAME;
     }
     read();         // POSTAMBLE
@@ -187,29 +189,29 @@ int8_t PN532_I2C::readAckFrame()
     const uint8_t PN532_ACK[] = {0, 0, 0xFF, 0, 0xFF, 0};
     uint8_t ackBuf[sizeof(PN532_ACK)];
     
-    DMSG("wait for ack at : ");
-    DMSG(millis());
-    DMSG('\n');
+    //TODO: MKR umstellen auf Timer
+
+    NRF_LOG_INFO("wait for ack at");
+    NRF_LOG_INFO("\n");
     
     uint16_t time = 0;
     do {
-        if (_wire->requestFrom(PN532_I2C_ADDRESS,  sizeof(PN532_ACK) + 1)) {
+        //if (_wire->requestFrom(PN532_I2C_ADDRESS,  sizeof(PN532_ACK) + 1)) { TODO: MKR ???
             if (read() & 1) {  // check first byte --- status
                 break;         // PN532 is ready
             }
-        }
+        //}
 
-        delay(1);
+        nrf_delay_ms(1);
         time++;
         if (time > PN532_ACK_WAIT_TIME) {
-            DMSG("Time out when waiting for ACK\n");
+            NRF_LOG_INFO("Time out when waiting for ACK\n");
             return PN532_TIMEOUT;
         }
     } while (1); 
     
-    DMSG("ready at : ");
-    DMSG(millis());
-    DMSG('\n');
+    NRF_LOG_INFO("ready after %d millis", time);
+    NRF_LOG_INFO("\n");
     
 
     for (uint8_t i = 0; i < sizeof(PN532_ACK); i++) {
@@ -217,7 +219,7 @@ int8_t PN532_I2C::readAckFrame()
     }
     
     if (memcmp(ackBuf, PN532_ACK, sizeof(PN532_ACK))) {
-        DMSG("Invalid ACK\n");
+        NRF_LOG_INFO("Invalid ACK\n");
         return PN532_INVALID_ACK;
     }
     

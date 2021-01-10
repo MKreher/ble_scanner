@@ -1,7 +1,15 @@
 
 #include "PN532_SPI.h"
-#include "PN532_debug.h"
-#include "Arduino.h"
+
+#define NRF_LOG_MODULE_NAME PN532
+#if PN532_LOG_ENABLED
+#define NRF_LOG_LEVEL       PN532_LOG_LEVEL
+#define NRF_LOG_INFO_COLOR  PN532_INFO_COLOR
+#else // PN532_LOG_ENABLED
+#define NRF_LOG_LEVEL       0
+#endif // PN532_LOG_ENABLED
+#include "nrf_log.h"
+NRF_LOG_MODULE_REGISTER();
 
 #define STATUS_READ     2
 #define DATA_WRITE      1

@@ -84,6 +84,8 @@
 #define TAG_TYPE_4_NDEF_FILE_SIZE           255                                           /// Size of the buffer for NDEF file.
 #define TAG_TYPE_4_NLEN_FIELD_SIZE          2                                             /// Size of NLEN field inside NDEF file.
 
+#include "test_c_w_cpp___WRAPPER.h"
+
 /**
  * @brief Possible Tag Types.
  */
@@ -392,12 +394,19 @@ void after_read_delay(void)
     nrf_delay_ms(TAG_AFTER_READ_DELAY);
 }
 
+void test_ccp_call() {
+    struct TestCWithCpp* c = newTestCWithCpp();
+    TestCWithCpp_doSomething(c, 5000);
+    deleteMyClass(c);
+}
 
 int main(void)
 {
     ret_code_t err_code;
 
     utils_setup();
+
+    test_ccp_call();
 
     err_code = adafruit_pn532_init(false);
     APP_ERROR_CHECK(err_code);

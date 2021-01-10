@@ -1,6 +1,9 @@
 
 #include "mac_link.h"
-#include "PN532_debug.h"
+
+extern "C" {
+  #include "nrf_log.h"
+}
 
 int8_t MACLink::activateAsTarget(uint16_t timeout)
 {

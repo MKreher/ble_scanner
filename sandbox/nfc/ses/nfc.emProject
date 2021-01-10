@@ -91,11 +91,6 @@
       <file file_name="../src/main.c" />
       <file file_name="../src/sdk_config.h" />
     </folder>
-    <folder Name="nRF_Segger_RTT">
-      <file file_name="../../../nRF5_SDK_16.0.0/external/segger_rtt/SEGGER_RTT.c" />
-      <file file_name="../../../nRF5_SDK_16.0.0/external/segger_rtt/SEGGER_RTT_Syscalls_SES.c" />
-      <file file_name="../../../nRF5_SDK_16.0.0/external/segger_rtt/SEGGER_RTT_printf.c" />
-    </folder>
     <folder Name="None">
       <file file_name="../../../nRF5_SDK_16.0.0/modules/nrfx/mdk/ses_startup_nrf52840.s" />
       <file file_name="../../../nRF5_SDK_16.0.0/modules/nrfx/mdk/ses_startup_nrf_common.s" />
@@ -133,6 +128,10 @@
       <file file_name="../src/NDEF/WString.h" />
     </folder>
     <folder Name="PN532">
+      <file file_name="../src/PN532/test_c_w_cpp.cpp" />
+      <file file_name="../src/PN532/test_c_w_cpp.h" />
+      <file file_name="../src/PN532/PN532_I2C.cpp" />
+      <file file_name="../src/PN532/PN532_I2C.h" />
       <file file_name="../src/PN532/emulatetag.cpp" />
       <file file_name="../src/PN532/emulatetag.h" />
       <file file_name="../src/PN532/llcp.cpp" />
@@ -141,14 +140,16 @@
       <file file_name="../src/PN532/mac_link.h" />
       <file file_name="../src/PN532/PN532.cpp" />
       <file file_name="../src/PN532/PN532.h" />
-      <file file_name="../src/PN532/PN532_debug.h" />
-      <file file_name="../src/PN532/PN532_I2C.cpp" />
-      <file file_name="../src/PN532/PN532_I2C.h" />
-      <file file_name="../src/PN532/PN532_SPI.cpp" />
-      <file file_name="../src/PN532/PN532_SPI.h" />
       <file file_name="../src/PN532/PN532Interface.h" />
       <file file_name="../src/PN532/snep.cpp" />
       <file file_name="../src/PN532/snep.h" />
+      <file file_name="../src/PN532/test_c_w_cpp___WRAPPER.cpp" />
+      <file file_name="../src/PN532/test_c_w_cpp___WRAPPER.h" />
+    </folder>
+    <folder Name="nRF_Segger_RTT">
+      <file file_name="../../../nRF5_SDK_16.0.0/external/segger_rtt/SEGGER_RTT.c" />
+      <file file_name="../../../nRF5_SDK_16.0.0/external/segger_rtt/SEGGER_RTT_Syscalls_SES.c" />
+      <file file_name="../../../nRF5_SDK_16.0.0/external/segger_rtt/SEGGER_RTT_printf.c" />
     </folder>
   </project>
   <configuration
