@@ -90,17 +90,17 @@ static inline void spi_write(uint8_t * data, size_t size)
 static inline void write_command(uint8_t c)
 {
     nrf_gpio_pin_clear(WSEPD_DC_PIN);
-    nrf_gpio_pin_clear(SPI_SS_PIN);
+    nrf_gpio_pin_clear(SPI_SS_PIN_DISPLAY);
     spi_write(&c, sizeof(c));
-    nrf_gpio_pin_set(SPI_SS_PIN);
+    nrf_gpio_pin_set(SPI_SS_PIN_DISPLAY);
 }
 
 static inline void write_data(uint8_t c)
 {
     nrf_gpio_pin_set(WSEPD_DC_PIN);
-    nrf_gpio_pin_clear(SPI_SS_PIN);
+    nrf_gpio_pin_clear(SPI_SS_PIN_DISPLAY);
     spi_write(&c, sizeof(c));
-    nrf_gpio_pin_set(SPI_SS_PIN);
+    nrf_gpio_pin_set(SPI_SS_PIN_DISPLAY);
 }
 
 static void set_cursor(uint16_t x, uint16_t y)
@@ -285,7 +285,7 @@ static ret_code_t hardware_init(void)
       spi_config.sck_pin = SPI_SCK_PIN,
       spi_config.mosi_pin = SPI_MOSI_PIN,
       spi_config.miso_pin = NRF_DRV_SPI_PIN_NOT_USED,
-      spi_config.ss_pin = SPI_SS_PIN,
+      spi_config.ss_pin = SPI_SS_PIN_DISPLAY,
       spi_config.irq_priority = SPI_DEFAULT_CONFIG_IRQ_PRIORITY,
       spi_config.orc = 0xFF,
       spi_config.frequency = NRF_DRV_SPI_FREQ_8M,

@@ -23,9 +23,12 @@
  <Project>
   <ProjectSessionItem path="nfc"/>
   <ProjectSessionItem path="nfc;nfc"/>
+  <ProjectSessionItem path="nfc;nfc;Application"/>
   <ProjectSessionItem path="nfc;nfc;NDEF"/>
-  <ProjectSessionItem path="nfc;nfc;nRF_NFC"/>
+  <ProjectSessionItem path="nfc;nfc;nRF_Drivers"/>
+  <ProjectSessionItem path="nfc;nfc;nRF_Libraries"/>
   <ProjectSessionItem path="nfc;nfc;PN532"/>
+  <ProjectSessionItem path="nfc;nfc;Segger Startup Files"/>
   <ProjectSessionItem path="nfc;nfc;Third Parties"/>
  </Project>
  <Register1>
@@ -59,11 +62,17 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="40" y="190" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/NDEF/NdefMessage.cpp" selected="1" top="190" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="14" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/NDEF/Ndef.h" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/NDEF/Ndef.cpp" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/NDEF/MifareClassic.cpp" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="190" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../nRF5_SDK_16.0.0/components/nfc/t4t_parser/cc_file/nfc_t4t_cc_file.c" selected="0" top="190" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="41" useTextEdit="1" openedFrom="C:/Work/ble_scanner/sandbox/nfc/src/PN532/PN532_SPI.cpp" useBinaryEdit="0" left="0" path="../src/sdk_config.h" selected="0" top="41" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="51" y="134" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/main.c" selected="0" top="117" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="44" y="42" useTextEdit="1" openedFrom="C:/Work/ble_scanner/sandbox/nfc/src/PN532/PN532.cpp" useBinaryEdit="0" left="0" path="../src/PN532/PN532_SPI.cpp" selected="1" top="28" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="11" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/PN532/PN532_Wrapper.h" selected="0" top="11" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="32" useTextEdit="1" openedFrom="C:/Work/ble_scanner/sandbox/nfc/src/main.c" useBinaryEdit="0" left="0" path="../src/PN532/PN532_Wrapper.cpp" selected="0" top="32" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="11" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/PN532/PN532_SPI.h" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="95" useTextEdit="1" openedFrom="C:/Work/ble_scanner/sandbox/nfc/src/PN532/PN532_Wrapper.cpp" useBinaryEdit="0" left="0" path="../src/PN532/PN532.cpp" selected="0" top="78" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="16" useTextEdit="1" openedFrom="C:/Work/ble_scanner/sandbox/nfc/src/PN532/PN532.cpp" useBinaryEdit="0" left="0" path="../src/pn532/PN532.h" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="159" useTextEdit="1" openedFrom="C:/Work/ble_scanner/sandbox/nfc/src/PN532/PN532_SPI.cpp" useBinaryEdit="0" left="0" path="../../../nRF5_SDK_16.0.0/integration/nrfx/legacy/nrf_drv_spi.h" selected="0" top="144" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="85" useTextEdit="1" openedFrom="C:/Work/ble_scanner/nRF5_SDK_16.0.0/integration/nrfx/legacy/nrf_drv_spi.h" useBinaryEdit="0" left="0" path="../../../nRF5_SDK_16.0.0/modules/nrfx/hal/nrf_spi.h" selected="0" top="69" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="12510" useTextEdit="1" openedFrom="C:/Work/ble_scanner/nRF5_SDK_16.0.0/modules/nrfx/hal/nrf_spi.h" useBinaryEdit="0" left="0" path="../../../nRF5_SDK_16.0.0/modules/nrfx/mdk/nrf52840_bitfields.h" selected="0" top="12494" codecName="Default"/>
  </Files>
  <ARMCrossStudioWindow activeProject="nfc" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="C:/Work/ble_scanner/sandbox/nfc/src/PN532" debugSearchPath="" autoConnectCapabilities="3199"/>
 </session>

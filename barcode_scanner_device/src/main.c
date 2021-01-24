@@ -760,7 +760,7 @@ void button4_scheduled_event_handler(void * p_event_data, uint16_t event_size)
     else if (button_action == APP_BUTTON_RELEASE)
     {
         NRF_LOG_INFO("Button_4 released");
-        //epaper_demo_imarray();
+        epaper_demo_imarray();
         // Reset scan engine
         nrf_gpio_pin_write(BCM_WAKEUP, 0);
         NRF_LOG_INFO("Wait...");
@@ -1077,7 +1077,7 @@ static void display_init()
 
 /**@brief Function for application main entry.
  */
-int main(void) {
+  int main(void) {
     // Initialize.
     log_init();
     lfclk_init();

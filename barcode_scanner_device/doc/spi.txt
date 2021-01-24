@@ -1,0 +1,3 @@
+https://electrosome.com/spi/
+
+https://learn.sparkfun.com/tutorials/serial-peripheral-interface-spi/all

@@ -16,7 +16,7 @@
       arm_target_device_name="nRF52840_xxAA"
       arm_target_interface_type="SWD"
       c_preprocessor_definitions="APP_TIMER_V2;APP_TIMER_V2_RTC1_ENABLED;BOARD_PCA10056;CONFIG_GPIO_AS_PINRESET;DEBUG;FLOAT_ABI_HARD;INITIALIZE_USER_SECTIONS;NO_VTOR_CONFIG;NRF52840_XXAA;"
-      c_user_include_directories="../src;../src/ndef;../src/pn532;../../../nRF5_SDK_16.0.0/components;../../../nRF5_SDK_16.0.0/components/boards;../../../nRF5_SDK_16.0.0/components/drivers_nrf/nrf_soc_nosd;../../../nRF5_SDK_16.0.0/components/libraries/atomic;../../../nRF5_SDK_16.0.0/components/libraries/atomic_fifo;../../../nRF5_SDK_16.0.0/components/libraries/balloc;../../../nRF5_SDK_16.0.0/components/libraries/bsp;../../../nRF5_SDK_16.0.0/components/libraries/button;../../../nRF5_SDK_16.0.0/components/libraries/delay;../../../nRF5_SDK_16.0.0/components/libraries/experimental_section_vars;../../../nRF5_SDK_16.0.0/components/libraries/fifo;../../../nRF5_SDK_16.0.0/components/libraries/hardfault;../../../nRF5_SDK_16.0.0/components/libraries/hardfault/nrf52;../../../nRF5_SDK_16.0.0/components/libraries/log;../../../nRF5_SDK_16.0.0/components/libraries/log/src;../../../nRF5_SDK_16.0.0/components/libraries/memobj;../../../nRF5_SDK_16.0.0/components/libraries/ringbuf;../../../nRF5_SDK_16.0.0/components/libraries/scheduler;../../../nRF5_SDK_16.0.0/components/libraries/sortlist;../../../nRF5_SDK_16.0.0/components/libraries/strerror;../../../nRF5_SDK_16.0.0/components/libraries/timer;../../../nRF5_SDK_16.0.0/components/libraries/uart;../../../nRF5_SDK_16.0.0/components/libraries/util;../../../nRF5_SDK_16.0.0/components/nfc/ndef/generic/message;../../../nRF5_SDK_16.0.0/components/nfc/ndef/generic/record;../../../nRF5_SDK_16.0.0/components/nfc/ndef/parser/message;../../../nRF5_SDK_16.0.0/components/nfc/ndef/parser/record;../../../nRF5_SDK_16.0.0/components/nfc/t2t_parser;../../../nRF5_SDK_16.0.0/components/nfc/t4t_parser/apdu;../../../nRF5_SDK_16.0.0/components/nfc/t4t_parser/cc_file;../../../nRF5_SDK_16.0.0/components/nfc/t4t_parser/hl_detection_procedure;../../../nRF5_SDK_16.0.0/components/nfc/t4t_parser/tlv;../../../nRF5_SDK_16.0.0/components/toolchain/cmsis/include;../../..;../../../nRF5_SDK_16.0.0/external/fprintf;../../../nRF5_SDK_16.0.0/external/nfc_adafruit_library;../../../nRF5_SDK_16.0.0/external/segger_rtt;../../../nRF5_SDK_16.0.0/integration/nrfx;../../../nRF5_SDK_16.0.0/integration/nrfx/legacy;../../../nRF5_SDK_16.0.0/modules/nrfx;../../../nRF5_SDK_16.0.0/modules/nrfx/drivers/include;../../../nRF5_SDK_16.0.0/modules/nrfx/hal;../../../nRF5_SDK_16.0.0/modules/nrfx/mdk;"
+      c_user_include_directories="../src;../src/ndef;../src/pn532;../../../nRF5_SDK_16.0.0/components;../../../nRF5_SDK_16.0.0/components/boards;../../../nRF5_SDK_16.0.0/components/drivers_nrf/nrf_soc_nosd;../../../nRF5_SDK_16.0.0/components/libraries/atomic;../../../nRF5_SDK_16.0.0/components/libraries/atomic_fifo;../../../nRF5_SDK_16.0.0/components/libraries/balloc;../../../nRF5_SDK_16.0.0/components/libraries/bsp;../../../nRF5_SDK_16.0.0/components/libraries/button;../../../nRF5_SDK_16.0.0/components/libraries/delay;../../../nRF5_SDK_16.0.0/components/libraries/experimental_section_vars;../../../nRF5_SDK_16.0.0/components/libraries/fifo;../../../nRF5_SDK_16.0.0/components/libraries/hardfault;../../../nRF5_SDK_16.0.0/components/libraries/hardfault/nrf52;../../../nRF5_SDK_16.0.0/components/libraries/log;../../../nRF5_SDK_16.0.0/components/libraries/log/src;../../../nRF5_SDK_16.0.0/components/libraries/memobj;../../../nRF5_SDK_16.0.0/components/libraries/pwr_mgmt;../../../nRF5_SDK_16.0.0/components/libraries/ringbuf;../../../nRF5_SDK_16.0.0/components/libraries/scheduler;../../../nRF5_SDK_16.0.0/components/libraries/sortlist;../../../nRF5_SDK_16.0.0/components/libraries/spi_mngr;../../../nRF5_SDK_16.0.0/components/libraries/strerror;../../../nRF5_SDK_16.0.0/components/libraries/timer;../../../nRF5_SDK_16.0.0/components/libraries/uart;../../../nRF5_SDK_16.0.0/components/libraries/util;../../../nRF5_SDK_16.0.0/components/nfc/ndef/generic/message;../../../nRF5_SDK_16.0.0/components/nfc/ndef/generic/record;../../../nRF5_SDK_16.0.0/components/nfc/ndef/parser/message;../../../nRF5_SDK_16.0.0/components/nfc/ndef/parser/record;../../../nRF5_SDK_16.0.0/components/nfc/t2t_parser;../../../nRF5_SDK_16.0.0/components/nfc/t4t_parser/apdu;../../../nRF5_SDK_16.0.0/components/nfc/t4t_parser/cc_file;../../../nRF5_SDK_16.0.0/components/nfc/t4t_parser/hl_detection_procedure;../../../nRF5_SDK_16.0.0/components/nfc/t4t_parser/tlv;../../../nRF5_SDK_16.0.0/components/toolchain/cmsis/include;../../..;../../../nRF5_SDK_16.0.0/external/fprintf;../../../nRF5_SDK_16.0.0/external/nfc_adafruit_library;../../../nRF5_SDK_16.0.0/external/segger_rtt;../../../nRF5_SDK_16.0.0/integration/nrfx;../../../nRF5_SDK_16.0.0/integration/nrfx/legacy;../../../nRF5_SDK_16.0.0/modules/nrfx;../../../nRF5_SDK_16.0.0/modules/nrfx/drivers/include;../../../nRF5_SDK_16.0.0/modules/nrfx/hal;../../../nRF5_SDK_16.0.0/modules/nrfx/mdk;"
       debug_register_definition_file="../../../nRF5_SDK_16.0.0/modules/nrfx/mdk/nrf52840.svd"
       debug_start_from_entry_point_symbol="No"
       debug_target_connection="J-Link"
@@ -46,9 +46,7 @@
     <folder Name="Board Definition">
       <file file_name="../../../nRF5_SDK_16.0.0/components/boards/boards.c" />
     </folder>
-    <folder Name="Third Parties">
-      <file file_name="../../../nRF5_SDK_16.0.0/external/nfc_adafruit_library/adafruit_pn532.c" />
-    </folder>
+    <folder Name="Third Parties" />
     <folder Name="nRF_Libraries">
       <file file_name="../../../nRF5_SDK_16.0.0/components/libraries/button/app_button.c" />
       <file file_name="../../../nRF5_SDK_16.0.0/components/libraries/util/app_error.c" />
@@ -72,17 +70,21 @@
       <file file_name="../../../nRF5_SDK_16.0.0/components/libraries/ringbuf/nrf_ringbuf.c" />
       <file file_name="../../../nRF5_SDK_16.0.0/components/libraries/sortlist/nrf_sortlist.c" />
       <file file_name="../../../nRF5_SDK_16.0.0/components/libraries/strerror/nrf_strerror.c" />
+      <file file_name="../../../nRF5_SDK_16.0.0/components/libraries/pwr_mgmt/nrf_pwr_mgmt.c" />
     </folder>
     <folder Name="nRF_Drivers">
+	  <file file_name="../../../nRF5_SDK_16.0.0/integration/nrfx/legacy/nrf_drv_clock.c" />
+	  <file file_name="../../../nRF5_SDK_16.0.0/modules/nrfx/drivers/src/nrfx_clock.c" />
       <file file_name="../../../nRF5_SDK_16.0.0/integration/nrfx/legacy/nrf_drv_twi.c" />
       <file file_name="../../../nRF5_SDK_16.0.0/integration/nrfx/legacy/nrf_drv_uart.c" />
       <file file_name="../../../nRF5_SDK_16.0.0/modules/nrfx/soc/nrfx_atomic.c" />
       <file file_name="../../../nRF5_SDK_16.0.0/modules/nrfx/drivers/src/nrfx_gpiote.c" />
       <file file_name="../../../nRF5_SDK_16.0.0/modules/nrfx/drivers/src/prs/nrfx_prs.c" />
-      <file file_name="../../../nRF5_SDK_16.0.0/modules/nrfx/drivers/src/nrfx_twi.c" />
-      <file file_name="../../../nRF5_SDK_16.0.0/modules/nrfx/drivers/src/nrfx_twim.c" />
       <file file_name="../../../nRF5_SDK_16.0.0/modules/nrfx/drivers/src/nrfx_uart.c" />
       <file file_name="../../../nRF5_SDK_16.0.0/modules/nrfx/drivers/src/nrfx_uarte.c" />
+      <file file_name="../../../nRF5_SDK_16.0.0/integration/nrfx/legacy/nrf_drv_spi.c" />
+      <file file_name="../../../nRF5_SDK_16.0.0/modules/nrfx/drivers/src/nrfx_spi.c" />
+      <file file_name="../../../nRF5_SDK_16.0.0/modules/nrfx/drivers/src/nrfx_spim.c" />
     </folder>
     <folder Name="Board Support">
       <file file_name="../../../nRF5_SDK_16.0.0/components/libraries/bsp/bsp.c" />
@@ -130,8 +132,6 @@
     <folder Name="PN532">
       <file file_name="../src/PN532/test_c_w_cpp.cpp" />
       <file file_name="../src/PN532/test_c_w_cpp.h" />
-      <file file_name="../src/PN532/PN532_I2C.cpp" />
-      <file file_name="../src/PN532/PN532_I2C.h" />
       <file file_name="../src/PN532/emulatetag.cpp" />
       <file file_name="../src/PN532/emulatetag.h" />
       <file file_name="../src/PN532/llcp.cpp" />
@@ -140,11 +140,15 @@
       <file file_name="../src/PN532/mac_link.h" />
       <file file_name="../src/PN532/PN532.cpp" />
       <file file_name="../src/PN532/PN532.h" />
-      <file file_name="../src/PN532/PN532Interface.h" />
       <file file_name="../src/PN532/snep.cpp" />
       <file file_name="../src/PN532/snep.h" />
       <file file_name="../src/PN532/test_c_w_cpp___WRAPPER.cpp" />
       <file file_name="../src/PN532/test_c_w_cpp___WRAPPER.h" />
+      <file file_name="../src/PN532/PN532_Wrapper.h" />
+      <file file_name="../src/PN532/PN532_Wrapper.cpp" />
+      <file file_name="../src/PN532/PN532Interface.h" />
+      <file file_name="../src/PN532/PN532_SPI.cpp" />
+      <file file_name="../src/PN532/PN532_SPI.h" />
     </folder>
     <folder Name="nRF_Segger_RTT">
       <file file_name="../../../nRF5_SDK_16.0.0/external/segger_rtt/SEGGER_RTT.c" />

@@ -148,9 +148,9 @@ typedef enum
  */
 typedef struct
 {
+    nrf_drv_twi_frequency_t frequency;           ///< TWI frequency.
     uint32_t                scl;                 ///< SCL pin number.
     uint32_t                sda;                 ///< SDA pin number.
-    nrf_drv_twi_frequency_t frequency;           ///< TWI frequency.
     uint8_t                 interrupt_priority;  ///< Interrupt priority.
     bool                    clear_bus_init;      ///< Clear bus during init.
     bool                    hold_bus_uninit;     ///< Hold pull up state on gpio pins after uninit.

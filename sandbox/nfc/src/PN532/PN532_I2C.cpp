@@ -2,24 +2,36 @@
  * @modified picospuch
  */
 extern "C" {
+  #include "sdk_config.h"
   #include "nrf_delay.h"
   #include "nrf_log.h"
+  #include "app_error.h"
 }
 
 #include "PN532_I2C.h"
 
-#define PN532_I2C_ADDRESS       (0x48 >> 1)
-
-PN532_I2C::PN532_I2C(nrf_drv_twi_t &twi_master)
+PN532_I2C::PN532_I2C(const nrf_drv_twi_t twi_master)
 {
-    *m_twi_master = twi_master;
-    command = 0;
+  m_twi_master = twi_master;
+  command = 0;
 }
 
 void PN532_I2C::begin()
 {
-    //TODO: MKR init TWI here
-    //_wire->begin();
+   NRF_LOG_INFO("Creating I2C");
+
+   nrf_drv_twi_config_t twi_config = NRF_DRV_TWI_DEFAULT_CONFIG;
+   twi_config.scl = PN532_CONFIG_SCL;
+   twi_config.sda = PN532_CONFIG_SDA;
+
+   ret_code_t ret = nrf_drv_twi_init(&m_twi_master, &twi_config, NULL, NULL);
+   if (ret != NRF_SUCCESS)
+   {
+       NRF_LOG_INFO("Failed to initialize TWI, err_code = %d", ret);
+       APP_ERROR_HANDLER(ret);
+   }
+   
+   nrf_drv_twi_enable(&m_twi_master);
 }
 
 void PN532_I2C::wakeup()
@@ -189,8 +201,6 @@ int8_t PN532_I2C::readAckFrame()
     const uint8_t PN532_ACK[] = {0, 0, 0xFF, 0, 0xFF, 0};
     uint8_t ackBuf[sizeof(PN532_ACK)];
     
-    //TODO: MKR umstellen auf Timer
-
     NRF_LOG_INFO("wait for ack at");
     NRF_LOG_INFO("\n");
     

@@ -101,17 +101,17 @@
 
 // <o> SPI_MISO_PIN  - Pin number
 #ifndef SPI_MISO_PIN
-#define SPI_MISO_PIN NRF_DRV_SPI_PIN_NOT_USED
+#define SPI_MISO_PIN 30
 #endif
 
 // <o> SPI_SCK_PIN  - Pin number
 #ifndef SPI_SCK_PIN
-#define SPI_SCK_PIN 30
+#define SPI_SCK_PIN 29
 #endif
 
 // <o> SPI_SS_PIN  - Pin number
-#ifndef SPI_SS_PIN
-#define SPI_SS_PIN 29
+#ifndef SPI_SS_PIN_DISPLAY
+#define SPI_SS_PIN_DISPLAY 26
 #endif
 
 // <o> SPI_IRQ_PRIORITY  - Interrupt priority

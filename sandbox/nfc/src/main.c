@@ -53,351 +53,146 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "boards.h"
+#include "app_util_platform.h"
+#include "app_timer.h"
+#include "app_scheduler.h"
+#include "nrf_pwr_mgmt.h"
+#include "nrf_drv_clock.h"
+//#include "nrf_spi_mngr.h"
 #include "app_error.h"
 #include "bsp.h"
 #include "hardfault.h"
 #include "nrf_delay.h"
 #include "sdk_macros.h"
 #include "sdk_config.h"
-
-#include "adafruit_pn532.h"
-#include "nfc_t2t_parser.h"
-#include "nfc_t4t_cc_file.h"
-#include "nfc_t4t_hl_detection_procedures.h"
-#include "nfc_ndef_msg_parser.h"
+#include "nrf_drv_gpiote.h"
 
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 
-#define SEL_RES_CASCADE_BIT_NUM            3                                              /// Number of Cascade bit within SEL_RES byte.
-#define SEL_RES_TAG_PLATFORM_MASK          0x60                                           /// Mask of Tag Platform bit group within SEL_RES byte.
-#define SEL_RES_TAG_PLATFORM_BIT_OFFSET    5                                              /// Offset of the Tag Platform bit group within SEL_RES byte.
+#include "PN532_Wrapper.h"
 
-#define TAG_TYPE_2_UID_LENGTH              7                                              /// Length of the Tag's UID.
-#define TAG_TYPE_2_DATA_AREA_SIZE_OFFSET   (T2T_CC_BLOCK_OFFSET + 2)                      /// Offset of the byte with Tag's Data size.
-#define TAG_TYPE_2_DATA_AREA_MULTIPLICATOR 8                                              /// Multiplicator for a value stored in the Tag's Data size byte.
-#define TAG_TYPE_2_FIRST_DATA_BLOCK_NUM    (T2T_FIRST_DATA_BLOCK_OFFSET / T2T_BLOCK_SIZE) /// First block number with Tag's Data.
-#define TAG_TYPE_2_BLOCKS_PER_EXCHANGE     (T2T_MAX_DATA_EXCHANGE / T2T_BLOCK_SIZE)       /// Number of blocks fetched in single Tag's Read command.
+#define SCHED_MAX_EVENT_DATA_SIZE 16 // Maximum size of scheduler events
+#define SCHED_QUEUE_SIZE 196         // Maximum number of events in the scheduler queue
 
-#define TAG_TYPE_4_NDEF_FILE_SIZE           255                                           /// Size of the buffer for NDEF file.
-#define TAG_TYPE_4_NLEN_FIELD_SIZE          2                                             /// Size of NLEN field inside NDEF file.
+static const nrf_drv_spi_t spi0 = NRF_DRV_SPI_INSTANCE(0);
 
-#include "test_c_w_cpp___WRAPPER.h"
-
-/**
- * @brief Possible Tag Types.
- */
-typedef enum
+static void lfclk_config(void)
 {
-    NFC_T2T = 0x00,      ///< Type 2 Tag Platform.
-    NFC_T4T = 0x01,      ///< Type 4A Tag Platform.
-    NFC_TT_NOT_SUPPORTED ///< Tag Type not supported.
-} nfc_tag_type_t;
+    ret_code_t err_code;
 
+    err_code = nrf_drv_clock_init();
+    APP_ERROR_CHECK(err_code);
 
-/**
- * @brief Macro for handling errors returne by Type 4 Tag modules.
- */
-#define T4T_ERROR_HANDLE(ERR_CODE, LOG) \
-    if (ERR_CODE != NRF_SUCCESS)        \
-    {                                   \
-        NRF_LOG_INFO(LOG, ERR_CODE);    \
-        return NRF_ERROR_INTERNAL;      \
+    nrf_drv_clock_lfclk_request(NULL);
+}
+
+void test_pn532() {
+/*
+    nrf_gpio_cfg_output(PN532_SPI_SS);
+
+    nrf_drv_spi_config_t spi_config = 
+      {
+        spi_config.sck_pin = SPI_SCK_PIN,
+        spi_config.mosi_pin = SPI_MOSI_PIN,
+        spi_config.miso_pin = SPI_MISO_PIN,
+        spi_config.ss_pin = PN532_SPI_SS,
+        spi_config.irq_priority = SPI_DEFAULT_CONFIG_IRQ_PRIORITY,
+        spi_config.orc = 0xFF,
+        spi_config.frequency = NRF_DRV_SPI_FREQ_8M,
+        spi_config.mode = NRF_DRV_SPI_MODE_0,
+        spi_config.bit_order = NRF_DRV_SPI_BIT_ORDER_MSB_FIRST
+      };
+
+    nrf_drv_spi_init(&spi, &spi_config, spi_event_handler, NULL);
+
+    nrf_gpio_pin_clear(PN532_SPI_SS);
+    nrf_delay_ms(2);
+    nrf_gpio_pin_set(PN532_SPI_SS);
+
+    spi_xfer_done = false;
+    uint8_t rx_buff;
+
+    APP_ERROR_CHECK(nrf_drv_spi_transfer(&spi, 1, 1, NULL, 0));
+
+    while (!spi_xfer_done)
+    {
+        NRF_LOG_INFO("SPI transfer in progress...");
+        __WFE();
     }
 
+    NRF_LOG_INFO("NFC tag reader started. PN532 version data.");
+*/
+    struct PN532* pn532 = createPN532_SPI(spi0);
+    pn532_begin(pn532);
+    
+    uint32_t versiondata = pn532_getFirmwareVersion(pn532);
+
+    NRF_LOG_INFO("NFC tag reader started. PN532 version data: %d", versiondata);
+}
+
+void button1_scheduled_event_handler(void * p_event_data, uint16_t event_size)
+{
+    // execution in thread/main mode.
+
+    /*
+    if (current_int_priority_get() == APP_IRQ_PRIORITY_THREAD)
+    {
+        NRF_LOG_INFO("button1_scheduled_event_handler() [executing in thread/main mode]");
+    }
+    else
+    {
+        NRF_LOG_INFO("button1_scheduled_event_handler() [executing in interrupt handler mode]");
+    }
+    */
+
+    
+    test_pn532();
+}
+
+static void bsp_event_handler(bsp_event_t event)
+{
+    switch (event)
+    {
+    case BSP_EVENT_KEY_0:
+        NRF_LOG_INFO("Button 1.");
+        app_sched_event_put(NULL, 0, button1_scheduled_event_handler);
+        break;
+    case BSP_EVENT_KEY_1:
+        NRF_LOG_INFO("Button 2.");
+        bsp_board_led_invert(BSP_BOARD_LED_0);
+        break;
+    case BSP_EVENT_KEY_2:
+        NRF_LOG_INFO("Button 3.");
+        break;
+    case BSP_EVENT_KEY_3:
+        NRF_LOG_INFO("Button 4.");
+        break;
+    default:
+        break;
+    }
+}
+
+
+/**
 
 /**
  * @brief Function for initializations not directly related to Adafruit.
  */
 void utils_setup(void)
 {
-    bsp_board_init(BSP_INIT_LEDS);
-
     APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
     NRF_LOG_DEFAULT_BACKENDS_INIT();
-}
 
+    lfclk_config();
+    APP_ERROR_CHECK(app_timer_init());
+    APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
+    APP_ERROR_CHECK(bsp_init(BSP_INIT_BUTTONS, bsp_event_handler));
 
-/**
- * @brief Function for analyzing NDEF data coming either from a Type 2 Tag TLV block or
- *        Type 4 Tag NDEF file.
- */
-void ndef_data_analyze(uint8_t * p_ndef_msg_buff, uint32_t nfc_data_len)
-{
-    ret_code_t err_code;
-
-    uint8_t  desc_buf[NFC_NDEF_PARSER_REQIRED_MEMO_SIZE_CALC(MAX_NDEF_RECORDS)];
-    uint32_t desc_buf_len = sizeof(desc_buf);
-
-    err_code = ndef_msg_parser(desc_buf,
-                               &desc_buf_len,
-                               p_ndef_msg_buff,
-                               &nfc_data_len);
-    if (err_code != NRF_SUCCESS)
-    {
-        NRF_LOG_INFO("Error during parsing a NDEF message.");
-    }
-
-    ndef_msg_printout((nfc_ndef_msg_desc_t *) desc_buf);
-}
-
-
-/**
- * @brief Function for reading data  from a Type 2 Tag Platform.
- */
-ret_code_t t2t_data_read(nfc_a_tag_info * p_tag_info, uint8_t * buffer, uint32_t buffer_size)
-{
-    ret_code_t err_code;
-    uint8_t    block_num = 0;
-
-    // Not enough size in the buffer to read a tag header.
-    if (buffer_size < T2T_FIRST_DATA_BLOCK_OFFSET)
-    {
-        return NRF_ERROR_NO_MEM;
-    }
-
-    if (p_tag_info->nfc_id_len != TAG_TYPE_2_UID_LENGTH)
-    {
-        return NRF_ERROR_NOT_SUPPORTED;
-    }
-
-    // Read blocks 0 - 3 to get the header information.
-    err_code = adafruit_pn532_tag2_read(block_num, buffer);
-    if (err_code)
-    {
-        NRF_LOG_INFO("Failed to read blocks: %d-%d", block_num,
-                     block_num + T2T_END_PAGE_OFFSET);
-        return NRF_ERROR_INTERNAL;
-    }
-
-    uint16_t data_bytes_in_tag = TAG_TYPE_2_DATA_AREA_MULTIPLICATOR *
-                                 buffer[TAG_TYPE_2_DATA_AREA_SIZE_OFFSET];
-
-    if (data_bytes_in_tag + T2T_FIRST_DATA_BLOCK_OFFSET > buffer_size)
-    {
-        return NRF_ERROR_NO_MEM;
-    }
-
-    uint8_t blocks_to_read = data_bytes_in_tag / T2T_BLOCK_SIZE;
-
-    for (block_num = TAG_TYPE_2_FIRST_DATA_BLOCK_NUM;
-         block_num < blocks_to_read;
-         block_num += TAG_TYPE_2_BLOCKS_PER_EXCHANGE)
-    {
-        uint16_t offset_for_block = T2T_BLOCK_SIZE * block_num;
-        err_code = adafruit_pn532_tag2_read(block_num, buffer + offset_for_block);
-        if (err_code)
-        {
-            NRF_LOG_INFO("Failed to read blocks: %d-%d",
-                         block_num,
-                         block_num + T2T_END_PAGE_OFFSET);
-            return NRF_ERROR_INTERNAL;
-        }
-    }
-
-    return NRF_SUCCESS;
-}
-
-
-/**
- * @brief Function for analyzing data from a Type 2 Tag Platform.
- *
- * This function parses content of a Type 2 Tag Platform and prints it out.
- */
-void t2t_data_analyze(uint8_t * buffer)
-{
-    ret_code_t err_code;
-
-    // Static declaration of Type 2 Tag structure.
-    NFC_TYPE_2_TAG_DESC_DEF(test_1, MAX_TLV_BLOCKS);
-    type_2_tag_t * test_type_2_tag = &NFC_TYPE_2_TAG_DESC(test_1);
-
-    err_code = type_2_tag_parse(test_type_2_tag, buffer);
-    if (err_code == NRF_ERROR_NO_MEM)
-    {
-        NRF_LOG_INFO("Not enough memory to read whole tag. Printing what've been read.");
-    }
-    else if (err_code != NRF_SUCCESS)
-    {
-        NRF_LOG_INFO("Error during parsing a tag. Printing what could've been read.");
-    }
-
-    type_2_tag_printout(test_type_2_tag);
-
-    tlv_block_t * p_tlv_block = test_type_2_tag->p_tlv_block_array;
-    uint32_t      i;
-
-    for (i = 0; i < test_type_2_tag->tlv_count; i++)
-    {
-        if (p_tlv_block->tag == TLV_NDEF_MESSAGE)
-        {
-            ndef_data_analyze(p_tlv_block->p_value, p_tlv_block->length);
-            p_tlv_block++;
-        }
-    }
-}
-
-
-/**
- * @brief Function for reading and analyzing data from a Type 2 Tag Platform.
- *
- * This function reads content of a Type 2 Tag Platform, parses it and prints it out.
- */
-ret_code_t t2t_data_read_and_analyze(nfc_a_tag_info * p_tag_info)
-{
-    ret_code_t     err_code;
-    static uint8_t t2t_data[TAG_TYPE_2_DATA_BUFFER_SIZE]; // Buffer for tag data.
-
-    err_code = t2t_data_read(p_tag_info, t2t_data, TAG_TYPE_2_DATA_BUFFER_SIZE);
-    VERIFY_SUCCESS(err_code);
-
-    t2t_data_analyze(t2t_data);
-
-    return NRF_SUCCESS;
-}
-
-
-/**
- * @brief Function for reading and analyzing data from a Type 4 Tag Platform.
- *
- * This function reads content of a Type 4 Tag Platform, parses it and prints it out.
- */
-ret_code_t t4t_data_read_and_analyze(nfc_a_tag_info * p_tag_info)
-{
-    ret_code_t err_code;
-
-    // Static declaration of Type 4 Tag structure.
-    NFC_T4T_CC_DESC_DEF(cc_file, MAX_TLV_BLOCKS);
-    static uint8_t ndef_files_buffs[MAX_TLV_BLOCKS][TAG_TYPE_4_NDEF_FILE_SIZE];
-
-    err_code = nfc_t4t_ndef_tag_app_select();
-    T4T_ERROR_HANDLE(err_code, "Error (0x%X) during NDEF Tag Application Select Procedure.");
-
-    err_code = nfc_t4t_cc_select();
-    T4T_ERROR_HANDLE(err_code, "Error (0x%X) during CC Select Procedure.");
-
-    nfc_t4t_capability_container_t * cc_file = &NFC_T4T_CC_DESC(cc_file);
-    err_code = nfc_t4t_cc_read(cc_file);
-    T4T_ERROR_HANDLE(err_code, "Error (0x%X) during CC Read Procedure.");
-
-    nfc_t4t_tlv_block_t * p_tlv_block = cc_file->p_tlv_block_array;
-    uint32_t              i;
-
-    for (i = 0; i < cc_file->tlv_count; i++)
-    {
-        if ((p_tlv_block->type == NDEF_FILE_CONTROL_TLV) ||
-            (p_tlv_block->value.read_access == CONTROL_FILE_READ_ACCESS_GRANTED))
-        {
-            err_code = nfc_t4t_file_select(p_tlv_block->value.file_id);
-            T4T_ERROR_HANDLE(err_code, "Error (0x%X) during NDEF Select Procedure.");
-
-            err_code = nfc_t4t_ndef_read(cc_file, ndef_files_buffs[i], TAG_TYPE_4_NDEF_FILE_SIZE);
-            T4T_ERROR_HANDLE(err_code, "Error (0x%X) during NDEF Read Procedure.");
-        }
-
-        p_tlv_block++;
-    }
-
-    nfc_t4t_cc_file_printout(cc_file);
-
-    p_tlv_block = cc_file->p_tlv_block_array;
-
-    for (i = 0; i < cc_file->tlv_count; i++)
-    {
-        if ((p_tlv_block->type == NDEF_FILE_CONTROL_TLV) ||
-            (p_tlv_block->value.file.p_content != NULL))
-        {
-            ndef_data_analyze(p_tlv_block->value.file.p_content + TAG_TYPE_4_NLEN_FIELD_SIZE,
-                              p_tlv_block->value.file.len - TAG_TYPE_4_NLEN_FIELD_SIZE);
-        }
-
-        p_tlv_block++;
-    }
-
-    return NRF_SUCCESS;
-}
-
-
-/**
- * @brief Function for identifying Tag Platform Type.
- */
-nfc_tag_type_t tag_type_identify(uint8_t sel_res)
-{
-    uint8_t platform_config;
-
-    // Check if Cascade bit in SEL_RES response is cleared. Cleared bit indicates that NFCID1 complete.
-    if (!IS_SET(sel_res, SEL_RES_CASCADE_BIT_NUM))
-    {
-        // Extract platform configuration from SEL_RES response.
-        platform_config = (sel_res & SEL_RES_TAG_PLATFORM_MASK) >> SEL_RES_TAG_PLATFORM_BIT_OFFSET;
-        if (platform_config < NFC_TT_NOT_SUPPORTED)
-        {
-            return (nfc_tag_type_t) platform_config;
-        }
-    }
-
-    return NFC_TT_NOT_SUPPORTED;
-}
-
-
-/**
- * @brief Function for detecting a Tag, identifying its Type and reading data from it.
- *
- * This function waits for a Tag to appear in the field. When a Tag is detected, Tag Platform
- * Type (2/4) is identified and appropriate read procedure is run.
- */
-ret_code_t tag_detect_and_read(void)
-{
-    ret_code_t     err_code;
-    nfc_a_tag_info tag_info;
-
-    // Detect a NFC-A Tag in the field and initiate a communication. This function activates
-    // the NFC RF field. If a Tag is present, basic information about detected Tag is returned
-    // in tag info structure.
-    err_code = adafruit_pn532_nfc_a_target_init(&tag_info, TAG_DETECT_TIMEOUT);
-
-    if (err_code != NRF_SUCCESS)
-    {
-        return NRF_ERROR_NOT_FOUND;
-    }
-    adafruit_pn532_tag_info_printout(&tag_info);
-
-    nfc_tag_type_t tag_type = tag_type_identify(tag_info.sel_res);
-    switch (tag_type)
-    {
-        case NFC_T2T:
-            NRF_LOG_INFO("Type 2 Tag Platform detected. ");
-            return t2t_data_read_and_analyze(&tag_info);
-
-        case NFC_T4T:
-            NRF_LOG_INFO("Type 4 Tag Platform detected. ");
-            return t4t_data_read_and_analyze(&tag_info);
-
-        default:
-            return NRF_ERROR_NOT_SUPPORTED;
-    }
-}
-
-
-/**
- * @brief Function for waiting specified time after a Tag read operation.
- */
-void after_read_delay(void)
-{
-    ret_code_t err_code;
-
-    // Turn off the RF field.
-    err_code = adafruit_pn532_field_off();
-    APP_ERROR_CHECK(err_code);
-    nrf_delay_ms(TAG_AFTER_READ_DELAY);
-}
-
-void test_ccp_call() {
-    struct TestCWithCpp* c = newTestCWithCpp();
-    TestCWithCpp_doSomething(c, 5000);
-    deleteMyClass(c);
+    bsp_board_init(BSP_INIT_LEDS);
 }
 
 int main(void)
@@ -406,43 +201,14 @@ int main(void)
 
     utils_setup();
 
-    test_ccp_call();
+    NRF_LOG_INFO("Firmware initialization finshed.");
 
-    err_code = adafruit_pn532_init(false);
-    APP_ERROR_CHECK(err_code);
-
-    NRF_LOG_INFO("NFC Adafruit tag reader example started.");
-
-    for (;;)
-    {
-        err_code = tag_detect_and_read();
-        switch (err_code)
-        {
-            case NRF_SUCCESS:
-                after_read_delay();
-                break;
-
-            case NRF_ERROR_NO_MEM:
-                NRF_LOG_INFO("Declared buffer for T2T is to small to store tag data.");
-                after_read_delay();
-                break;
-
-            case NRF_ERROR_NOT_FOUND:
-                NRF_LOG_INFO("No Tag found.");
-                // No delay here as we want to search for another tag immediately.
-                break;
-
-            case NRF_ERROR_NOT_SUPPORTED:
-                NRF_LOG_INFO("Tag not supported.");
-                after_read_delay();
-                break;
-
-            default:
-                NRF_LOG_INFO("Error during tag read.");
-                err_code = adafruit_pn532_field_off();
-                break;
-        }
-        NRF_LOG_FLUSH();
+    while (true)
+    {        
+        __WFE();
+        app_sched_execute();
+        //nrf_pwr_mgmt_run();
+        NRF_LOG_FLUSH();        
     }
 }
 
