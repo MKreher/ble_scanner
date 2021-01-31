@@ -12,6 +12,23 @@
 #include <stdint.h>
 #include "PN532Interface.h"
 
+#define PN532_HEADER_SEQUENCE_LENGTH        6
+#define PN532_CHECKSUM_SEQUENCE_LENGTH      2
+#define PN532_FRAME_OVERHEAD                (PN532_HEADER_SEQUENCE_LENGTH + PN532_CHECKSUM_SEQUENCE_LENGTH)
+
+// Lengths and offsets for specific commands and responses.
+#define COMMAND_GETFIRMWAREVERSION_LENGTH                     1
+#define REPLY_GETFIRMWAREVERSION_LENGTH                       (5 + PN532_FRAME_OVERHEAD)
+
+#define PN532_PREAMBLE_OFFSET   0
+#define PN532_STARTCODE1_OFFSET 1
+#define PN532_STARTCODE2_OFFSET 2
+#define PN532_LENGTH_OFFSET     3
+#define PN532_LENGTH_CS_OFFSET  4
+#define PN532_TFI_OFFSET        5
+#define PN532_DATA_OFFSET       6
+
+
 // PN532 Commands
 #define PN532_COMMAND_DIAGNOSE              (0x00)
 #define PN532_COMMAND_GETFIRMWAREVERSION    (0x02)

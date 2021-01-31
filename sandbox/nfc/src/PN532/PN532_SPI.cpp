@@ -90,14 +90,18 @@ int8_t PN532_SPI::writeCommand(const uint8_t *header, uint8_t hlen, const uint8_
     return 0;
 }
 
-/*
-int16_t PN532_SPI::readResponse(uint8_t buf[], uint8_t len, uint16_t timeout)
+int16_t PN532_SPI::readResponse(uint8_t *p_resp_buff, uint8_t p_resp_len, uint16_t p_timeout)
 {
+    // Die zu lesende Byte-Anzahl ist um eins größer als das eigentliche Response-Array des jeweiligen Commands,
+    // da als ersten DATA_READ gesendet werden muss.
+    uint8_t read_len = p_resp_len + 1;
+
     uint16_t time = 0;
+
     while (!isReady()) {
         nrf_delay_ms(1);
         time++;
-        if (timeout > 0 && time > timeout) {
+        if (p_timeout > 0 && time > p_timeout) {
             return PN532_TIMEOUT;
         }
     }
@@ -105,107 +109,33 @@ int16_t PN532_SPI::readResponse(uint8_t buf[], uint8_t len, uint16_t timeout)
     nrf_gpio_pin_clear(PN532_SPI_SS);
     nrf_delay_ms(1);
 
-    int16_t result;
-    do {
-        write(DATA_READ);
-
-        if (0x00 != read()      ||       // PREAMBLE
-                0x00 != read()  ||       // STARTCODE1
-                0xFF != read()           // STARTCODE2
-           ) {
-
-            result = PN532_INVALID_FRAME;
-            break;
-        }
-
-        uint8_t length = read();
-        if (0 != (uint8_t)(length + read())) {   // checksum of length
-            result = PN532_INVALID_FRAME;
-            break;
-        }
-
-        uint8_t cmd = m_command + 1;               // response command
-        if (PN532_PN532TOHOST != read() || (cmd) != read()) {
-            result = PN532_INVALID_FRAME;
-            break;
-        }
-
-        NRF_LOG_INFO("read: %x", cmd);
-
-        length -= 2;
-        if (length > len) {
-            for (uint8_t i = 0; i < length; i++) {
-                NRF_LOG_INFO("%x", read());                 // dump message
-            }
-            NRF_LOG_INFO("\nNot enough space\n");
-            read();
-            read();
-            result = PN532_NO_SPACE;  // not enough space
-            break;
-        }
-
-        uint8_t sum = PN532_PN532TOHOST + cmd;
-        for (uint8_t i = 0; i < length; i++) {
-            buf[i] = read();
-            sum += buf[i];
-
-            NRF_LOG_INFO("%x", buf[i]);
-        }
-        //NRF_LOG_INFO('\n');
-
-        uint8_t checksum = read();
-        if (0 != (uint8_t)(sum + checksum)) {
-            NRF_LOG_INFO("checksum is not ok");
-            result = PN532_INVALID_FRAME;
-            break;
-        }
-        read();         // POSTAMBLE
-
-        result = length;
-    } while (0);
-
-    nrf_gpio_pin_set(PN532_SPI_SS);
-
-    return result;
-}
-*/
-
-
-int16_t PN532_SPI::readResponse(uint8_t rx_buff[], uint8_t len, uint16_t timeout)
-{
-    uint16_t time = 0;
-    while (!isReady()) {
-        nrf_delay_ms(1);
-        time++;
-        if (timeout > 0 && time > timeout) {
-            return PN532_TIMEOUT;
-        }
-    }
-
-    nrf_gpio_pin_clear(PN532_SPI_SS);
-    nrf_delay_ms(1);
-
-    NRF_LOG_INFO("Read data from PN532");
+    NRF_LOG_INFO("Read response from PN532");
 
     g_spi_xfer_done = false;
     
-    uint8_t tx_buff[len];
-    memcpy(tx_buff, 0, len);
-    tx_buff[0] = DATA_READ;
+    uint8_t tx_buff[read_len];
+    memcpy(tx_buff, NULL, read_len);
+    tx_buff[0] = DATA_READ; // DATA_READ Byte als erstes sendens
+    
+    uint8_t rx_buff[read_len];
             
-    APP_ERROR_CHECK(nrf_drv_spi_transfer(&g_spi, tx_buff, len, rx_buff, len));
+    APP_ERROR_CHECK(nrf_drv_spi_transfer(&g_spi, tx_buff, read_len, rx_buff, read_len));
 
     while (!g_spi_xfer_done)
     {
-        NRF_LOG_INFO("SPI transfer (read) in progress...");
+        //NRF_LOG_INFO("SPI read in progress...");
         __WFE();
     }
   
-    NRF_LOG_INFO("SPI received data:");
-    NRF_LOG_HEXDUMP_INFO(rx_buff, len);
+    NRF_LOG_INFO("SPI Response read:");
+    NRF_LOG_HEXDUMP_INFO(rx_buff, read_len);
 
-    NRF_LOG_INFO("SPI transfer (write) done.");
-    
+    // Das empfangene Byte Array enthällt als erstes Element das Response-Byte auf das DATA_READ Byte.
+    // Das Byte Array umkopieren auf des Response Array und dabei dieses erste Byte weglassen.
+    memcpy(p_resp_buff, rx_buff+1, p_resp_len);
+    NRF_LOG_INFO("PN532 Response:");
+    NRF_LOG_HEXDUMP_INFO(p_resp_buff, p_resp_len);
+
     int16_t result = 0;
 
     nrf_gpio_pin_set(PN532_SPI_SS);
@@ -224,7 +154,9 @@ bool PN532_SPI::isReady()
     NRF_LOG_INFO("PN532 IRQ is HIGH");
     return false;
     
-    /*
+    /* wenn der IRO Pin gespart werden soll,
+       kann auch STATUS_READ Command zur Busy Abfrage
+       gesendet werden
     nrf_gpio_pin_clear(PN532_SPI_SS);
 
     write(STATUS_READ);
@@ -234,177 +166,91 @@ bool PN532_SPI::isReady()
     */
 }
 
-/*
 void PN532_SPI::writeFrame(const uint8_t *header, uint8_t hlen, const uint8_t *body, uint8_t blen)
 {
     nrf_gpio_pin_clear(PN532_SPI_SS);
-    nrf_delay_ms(2);               // wake up PN532
-
-    write(DATA_WRITE);
-    write(PN532_PREAMBLE);
-    write(PN532_STARTCODE1);
-    write(PN532_STARTCODE2);
-
-    uint8_t length = hlen + blen + 1;   // length of data field: TFI + DATA
-    write(length);
-    write(~length + 1);         // checksum of length
-
-    write(PN532_HOSTTOPN532);
-    uint8_t sum = PN532_HOSTTOPN532;    // sum of TFI + DATA
-
-    //NRF_LOG_INFO("write: ");
-
-    for (uint8_t i = 0; i < hlen; i++) {
-        write(header[i]);
-        sum += header[i];
-
-        //NRF_LOG_INFO("x%", header[i]);
-    }
-    for (uint8_t i = 0; i < blen; i++) {
-        write(body[i]);
-        sum += body[i];
-
-        //NRF_LOG_INFO("x%", body[i]);
-    }
-
-    uint8_t checksum = ~sum + 1;        // checksum of TFI + DATA
-    write(checksum);
-    write(PN532_POSTAMBLE);
-
-    nrf_gpio_pin_set(PN532_SPI_SS);
-
-    //NRF_LOG_INFO('\n');
-}
-*/
-
-void PN532_SPI::writeFrame(const uint8_t *header, uint8_t hlen, const uint8_t *body, uint8_t blen)
-{
-    nrf_gpio_pin_clear(PN532_SPI_SS);
-    nrf_delay_ms(2);               // wake up PN532
+    nrf_delay_ms(2); // wake up PN532
 
     uint8_t tx_buff[64];
-    uint8_t l = 0;
-    tx_buff[l++] = DATA_WRITE;
-    tx_buff[l++] = PN532_PREAMBLE;
-    tx_buff[l++] = PN532_STARTCODE1;
-    tx_buff[l++] = PN532_STARTCODE2;
+    uint8_t len = 0;
+    tx_buff[len++] = DATA_WRITE;
+    tx_buff[len++] = PN532_PREAMBLE;
+    tx_buff[len++] = PN532_STARTCODE1;
+    tx_buff[len++] = PN532_STARTCODE2;
 
     uint8_t length = hlen + blen + 1;   // length of data field: TFI + DATA
-    tx_buff[l++] = length;
-    tx_buff[l++] = (~length + 1);         // checksum of length
+    tx_buff[len++] = length;
+    tx_buff[len++] = (~length + 1);         // checksum of length
 
-    tx_buff[l++] = PN532_HOSTTOPN532;
+    tx_buff[len++] = PN532_HOSTTOPN532;
     uint8_t sum = PN532_HOSTTOPN532;    // sum of TFI + DATA
 
     for (uint8_t i = 0; i < hlen; i++) {
-        tx_buff[l++] = header[i];
+        tx_buff[len++] = header[i];
         sum += header[i];
     }
     for (uint8_t i = 0; i < blen; i++) {
-        tx_buff[l++] = body[i];
+        tx_buff[len++] = body[i];
         sum += body[i];
     }
 
     uint8_t checksum = ~sum + 1;        // checksum of TFI + DATA
-    tx_buff[l++] = checksum;
-    tx_buff[l++] = PN532_POSTAMBLE;
+    tx_buff[len++] = checksum;
+    tx_buff[len++] = PN532_POSTAMBLE;
+
+    write(tx_buff, len);
     
-    NRF_LOG_INFO("SPI writing data:");
-    NRF_LOG_HEXDUMP_INFO(tx_buff, l);
-    APP_ERROR_CHECK(nrf_drv_spi_transfer(&g_spi, tx_buff, l, NULL, 0));
-
-    while (!g_spi_xfer_done)
-    {
-        //NRF_LOG_INFO("SPI transfer (write) in progress...");
-        __WFE();
-    }
-  
     nrf_gpio_pin_set(PN532_SPI_SS);
-
-    NRF_LOG_INFO("SPI transfer (write) done.");    
 }
 
 int8_t PN532_SPI::readAckFrame()
 {
     const uint8_t PN532_ACK[] = {0, 0, 0xFF, 0, 0xFF, 0};
 
-    uint8_t ackBuf[sizeof(PN532_ACK)];
-
     nrf_gpio_pin_clear(PN532_SPI_SS);
     nrf_delay_ms(1);
-    write(DATA_READ);
 
-    for (uint8_t i = 0; i < sizeof(PN532_ACK); i++) {
-        ackBuf[i] = read();
+    uint8_t tx_buff[1];
+    memcpy(tx_buff, NULL, 1);
+    tx_buff[0] = DATA_READ;
+
+    write(tx_buff, sizeof(tx_buff));
+
+    uint8_t ackBuff[sizeof(PN532_ACK)];
+    memcpy(ackBuff, NULL, sizeof(PN532_ACK));
+    
+    g_spi_xfer_done = false;
+
+    APP_ERROR_CHECK(nrf_drv_spi_transfer(&g_spi, NULL, 0, ackBuff, sizeof(PN532_ACK)));
+
+    while (!g_spi_xfer_done)
+    {
+        //NRF_LOG_INFO("SPI transfer in progress...");
+        __WFE();
     }
 
     NRF_LOG_INFO("SPI ACK-Frame read:");
-    NRF_LOG_HEXDUMP_INFO(ackBuf, sizeof(PN532_ACK));
+    NRF_LOG_HEXDUMP_INFO(ackBuff, sizeof(PN532_ACK));
 
     nrf_gpio_pin_set(PN532_SPI_SS);
 
-    return memcmp(ackBuf, PN532_ACK, sizeof(PN532_ACK));
+    return memcmp(ackBuff, PN532_ACK, sizeof(PN532_ACK));
 }
 
-void PN532_SPI::write(uint8_t* p_data, uint8_t data_len) {
-  NRF_LOG_INFO("Write data to PN532");
+void PN532_SPI::write(uint8_t* p_data, uint8_t p_len) {
+  NRF_LOG_INFO("Write data to PN532...");
 
   g_spi_xfer_done = false;
-  uint8_t tx_buff[data_len];
-  uint8_t rx_buff[data_len];
-  memcpy(tx_buff, p_data, data_len);
 
   NRF_LOG_INFO("SPI writing data:");
-  NRF_LOG_HEXDUMP_INFO(tx_buff, data_len);
-  APP_ERROR_CHECK(nrf_drv_spi_transfer(&g_spi, tx_buff, data_len, rx_buff, data_len));
+  NRF_LOG_HEXDUMP_INFO(p_data, p_len);
+  APP_ERROR_CHECK(nrf_drv_spi_transfer(&g_spi, p_data, p_len, NULL, 0));
 
   while (!g_spi_xfer_done)
   {
-      NRF_LOG_INFO("SPI transfer (write) in progress...");
+      //NRF_LOG_INFO("SPI write in progress...");
       __WFE();
   }
   
-  NRF_LOG_INFO("SPI received data:");
-  NRF_LOG_HEXDUMP_INFO(rx_buff, data_len);
-
-  NRF_LOG_INFO("SPI transfer (write) done.");
+  NRF_LOG_INFO("SPI write done.");
 }
-
-void PN532_SPI::write(uint8_t data) {
-  NRF_LOG_INFO("Write data to PN532: %x", data);
-
-  g_spi_xfer_done = false;
-  uint8_t rx_buff;
-
-  if (sizeof(data) < 1) {
-      return;
-  }
-
-  APP_ERROR_CHECK(nrf_drv_spi_transfer(&g_spi, &data, 1, NULL, 0));
-
-  while (!g_spi_xfer_done)
-  {
-      //NRF_LOG_INFO("SPI transfer in progress...");
-      __WFE();
-  }
-};
-
-uint8_t PN532_SPI::read() {
-  NRF_LOG_INFO("Read data from PN532...");
-
-  g_spi_xfer_done = false;
-
-  uint8_t rx_buff;
-
-  APP_ERROR_CHECK(nrf_drv_spi_transfer(&g_spi, NULL, 0, &rx_buff, 1));
-
-  while (!g_spi_xfer_done)
-  {
-      //NRF_LOG_INFO("SPI transfer in progress...");
-      __WFE();
-  }
-
-  NRF_LOG_INFO("Received data from PN532: %x", rx_buff);
-  
-  return rx_buff;
-}; 

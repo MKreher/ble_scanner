@@ -80,8 +80,6 @@
 
 static const nrf_drv_spi_t spi0 = NRF_DRV_SPI_INSTANCE(0);
 
-static struct PN532* pn532;
-
 static void lfclk_config(void)
 {
     ret_code_t err_code;
@@ -94,9 +92,18 @@ static void lfclk_config(void)
 
 void test_pn532() {
   NRF_LOG_INFO("test_pn532()");
-  uint32_t versiondata = pn532_getFirmwareVersion(pn532);
+    PN532 *nfc = createPN532_SPI(spi0);
+    pn532_begin(nfc);
+    uint32_t versiondata = pn532_getFirmwareVersion(nfc);
+    NRF_LOG_INFO("NFC tag reader started. PN532 version data: %d", versiondata);
 
-  NRF_LOG_INFO("NFC tag reader started. PN532 version data: %d", versiondata);
+    NRF_LOG_INFO("Found chip PN5%02x", (versiondata >> 24) & 0xFF);
+    NRF_LOG_INFO("Firmware version %d.%d", (versiondata >> 16) & 0xFF,
+                                               (versiondata >> 8)  & 0xFF);
+
+    //pn532_SAMConfig(nfc);
+
+    destroyPN532(nfc);
 }
 
 void button1_scheduled_event_handler(void * p_event_data, uint16_t event_size)
@@ -138,16 +145,6 @@ void bsp_event_handler(bsp_event_t event)
     }
 }
 
-void init_pn532()
-{
-    pn532 = createPN532_SPI(spi0);
-    pn532_begin(pn532);
-    
-    uint32_t versiondata = pn532_getFirmwareVersion(pn532);
-
-    NRF_LOG_INFO("NFC tag reader started. PN532 version data: %d", versiondata);
-}
-
 /**
 
 /**
@@ -171,9 +168,7 @@ int main(void)
     ret_code_t err_code;
 
     utils_setup();
-
-    init_pn532();
-
+    
     NRF_LOG_INFO("Firmware initialization finshed.");
 
     while (true)

@@ -88,23 +88,16 @@ uint32_t PN532::getFirmwareVersion(void)
 
     pn532_packetbuffer[0] = PN532_COMMAND_GETFIRMWAREVERSION;
 
-    if (HAL(writeCommand)(pn532_packetbuffer, 1)) {
+    if (HAL(writeCommand)(pn532_packetbuffer, COMMAND_GETFIRMWAREVERSION_LENGTH)) {
         return 0;
     }
 
-    // read data packet
-    int16_t status = HAL(readResponse)(pn532_packetbuffer, sizeof(pn532_packetbuffer));
+    int16_t status = HAL(readResponse)(pn532_packetbuffer, REPLY_GETFIRMWAREVERSION_LENGTH);
     if (0 > status) {
         return 0;
     }
 
-    response = pn532_packetbuffer[0];
-    response <<= 8;
-    response |= pn532_packetbuffer[1];
-    response <<= 8;
-    response |= pn532_packetbuffer[2];
-    response <<= 8;
-    response |= pn532_packetbuffer[3];
+    response = uint32_big_decode(pn532_packetbuffer + PN532_DATA_OFFSET + 1);
 
     return response;
 }
