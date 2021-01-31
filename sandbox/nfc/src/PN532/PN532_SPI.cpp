@@ -90,6 +90,7 @@ int8_t PN532_SPI::writeCommand(const uint8_t *header, uint8_t hlen, const uint8_
     return 0;
 }
 
+/*
 int16_t PN532_SPI::readResponse(uint8_t buf[], uint8_t len, uint16_t timeout)
 {
     uint16_t time = 0;
@@ -167,6 +168,50 @@ int16_t PN532_SPI::readResponse(uint8_t buf[], uint8_t len, uint16_t timeout)
 
     return result;
 }
+*/
+
+
+int16_t PN532_SPI::readResponse(uint8_t rx_buff[], uint8_t len, uint16_t timeout)
+{
+    uint16_t time = 0;
+    while (!isReady()) {
+        nrf_delay_ms(1);
+        time++;
+        if (timeout > 0 && time > timeout) {
+            return PN532_TIMEOUT;
+        }
+    }
+
+    nrf_gpio_pin_clear(PN532_SPI_SS);
+    nrf_delay_ms(1);
+
+    NRF_LOG_INFO("Read data from PN532");
+
+    g_spi_xfer_done = false;
+    
+    uint8_t tx_buff[len];
+    memcpy(tx_buff, 0, len);
+    tx_buff[0] = DATA_READ;
+            
+    APP_ERROR_CHECK(nrf_drv_spi_transfer(&g_spi, tx_buff, len, rx_buff, len));
+
+    while (!g_spi_xfer_done)
+    {
+        NRF_LOG_INFO("SPI transfer (read) in progress...");
+        __WFE();
+    }
+  
+    NRF_LOG_INFO("SPI received data:");
+    NRF_LOG_HEXDUMP_INFO(rx_buff, len);
+
+    NRF_LOG_INFO("SPI transfer (write) done.");
+    
+    int16_t result = 0;
+
+    nrf_gpio_pin_set(PN532_SPI_SS);
+
+    return result;
+}
 
 bool PN532_SPI::isReady()
 {   
@@ -189,6 +234,7 @@ bool PN532_SPI::isReady()
     */
 }
 
+/*
 void PN532_SPI::writeFrame(const uint8_t *header, uint8_t hlen, const uint8_t *body, uint8_t blen)
 {
     nrf_gpio_pin_clear(PN532_SPI_SS);
@@ -229,6 +275,54 @@ void PN532_SPI::writeFrame(const uint8_t *header, uint8_t hlen, const uint8_t *b
 
     //NRF_LOG_INFO('\n');
 }
+*/
+
+void PN532_SPI::writeFrame(const uint8_t *header, uint8_t hlen, const uint8_t *body, uint8_t blen)
+{
+    nrf_gpio_pin_clear(PN532_SPI_SS);
+    nrf_delay_ms(2);               // wake up PN532
+
+    uint8_t tx_buff[64];
+    uint8_t l = 0;
+    tx_buff[l++] = DATA_WRITE;
+    tx_buff[l++] = PN532_PREAMBLE;
+    tx_buff[l++] = PN532_STARTCODE1;
+    tx_buff[l++] = PN532_STARTCODE2;
+
+    uint8_t length = hlen + blen + 1;   // length of data field: TFI + DATA
+    tx_buff[l++] = length;
+    tx_buff[l++] = (~length + 1);         // checksum of length
+
+    tx_buff[l++] = PN532_HOSTTOPN532;
+    uint8_t sum = PN532_HOSTTOPN532;    // sum of TFI + DATA
+
+    for (uint8_t i = 0; i < hlen; i++) {
+        tx_buff[l++] = header[i];
+        sum += header[i];
+    }
+    for (uint8_t i = 0; i < blen; i++) {
+        tx_buff[l++] = body[i];
+        sum += body[i];
+    }
+
+    uint8_t checksum = ~sum + 1;        // checksum of TFI + DATA
+    tx_buff[l++] = checksum;
+    tx_buff[l++] = PN532_POSTAMBLE;
+    
+    NRF_LOG_INFO("SPI writing data:");
+    NRF_LOG_HEXDUMP_INFO(tx_buff, l);
+    APP_ERROR_CHECK(nrf_drv_spi_transfer(&g_spi, tx_buff, l, NULL, 0));
+
+    while (!g_spi_xfer_done)
+    {
+        //NRF_LOG_INFO("SPI transfer (write) in progress...");
+        __WFE();
+    }
+  
+    nrf_gpio_pin_set(PN532_SPI_SS);
+
+    NRF_LOG_INFO("SPI transfer (write) done.");    
+}
 
 int8_t PN532_SPI::readAckFrame()
 {
@@ -244,9 +338,36 @@ int8_t PN532_SPI::readAckFrame()
         ackBuf[i] = read();
     }
 
+    NRF_LOG_INFO("SPI ACK-Frame read:");
+    NRF_LOG_HEXDUMP_INFO(ackBuf, sizeof(PN532_ACK));
+
     nrf_gpio_pin_set(PN532_SPI_SS);
 
     return memcmp(ackBuf, PN532_ACK, sizeof(PN532_ACK));
+}
+
+void PN532_SPI::write(uint8_t* p_data, uint8_t data_len) {
+  NRF_LOG_INFO("Write data to PN532");
+
+  g_spi_xfer_done = false;
+  uint8_t tx_buff[data_len];
+  uint8_t rx_buff[data_len];
+  memcpy(tx_buff, p_data, data_len);
+
+  NRF_LOG_INFO("SPI writing data:");
+  NRF_LOG_HEXDUMP_INFO(tx_buff, data_len);
+  APP_ERROR_CHECK(nrf_drv_spi_transfer(&g_spi, tx_buff, data_len, rx_buff, data_len));
+
+  while (!g_spi_xfer_done)
+  {
+      NRF_LOG_INFO("SPI transfer (write) in progress...");
+      __WFE();
+  }
+  
+  NRF_LOG_INFO("SPI received data:");
+  NRF_LOG_HEXDUMP_INFO(rx_buff, data_len);
+
+  NRF_LOG_INFO("SPI transfer (write) done.");
 }
 
 void PN532_SPI::write(uint8_t data) {

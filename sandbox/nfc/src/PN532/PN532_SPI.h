@@ -26,6 +26,7 @@ private:
     void writeFrame(const uint8_t *header, uint8_t hlen, const uint8_t *body = 0, uint8_t blen = 0);
     int8_t readAckFrame();        
     void write(uint8_t data);
+    void write(uint8_t* p_data, uint8_t data_len);
     uint8_t read(); 
 };
 

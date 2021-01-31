@@ -80,6 +80,8 @@
 
 static const nrf_drv_spi_t spi0 = NRF_DRV_SPI_INSTANCE(0);
 
+static struct PN532* pn532;
+
 static void lfclk_config(void)
 {
     ret_code_t err_code;
@@ -91,54 +93,16 @@ static void lfclk_config(void)
 }
 
 void test_pn532() {
-/*
-    nrf_gpio_cfg_output(PN532_SPI_SS);
+  NRF_LOG_INFO("test_pn532()");
+  uint32_t versiondata = pn532_getFirmwareVersion(pn532);
 
-    nrf_drv_spi_config_t spi_config = 
-      {
-        spi_config.sck_pin = SPI_SCK_PIN,
-        spi_config.mosi_pin = SPI_MOSI_PIN,
-        spi_config.miso_pin = SPI_MISO_PIN,
-        spi_config.ss_pin = PN532_SPI_SS,
-        spi_config.irq_priority = SPI_DEFAULT_CONFIG_IRQ_PRIORITY,
-        spi_config.orc = 0xFF,
-        spi_config.frequency = NRF_DRV_SPI_FREQ_8M,
-        spi_config.mode = NRF_DRV_SPI_MODE_0,
-        spi_config.bit_order = NRF_DRV_SPI_BIT_ORDER_MSB_FIRST
-      };
-
-    nrf_drv_spi_init(&spi, &spi_config, spi_event_handler, NULL);
-
-    nrf_gpio_pin_clear(PN532_SPI_SS);
-    nrf_delay_ms(2);
-    nrf_gpio_pin_set(PN532_SPI_SS);
-
-    spi_xfer_done = false;
-    uint8_t rx_buff;
-
-    APP_ERROR_CHECK(nrf_drv_spi_transfer(&spi, 1, 1, NULL, 0));
-
-    while (!spi_xfer_done)
-    {
-        NRF_LOG_INFO("SPI transfer in progress...");
-        __WFE();
-    }
-
-    NRF_LOG_INFO("NFC tag reader started. PN532 version data.");
-*/
-    struct PN532* pn532 = createPN532_SPI(spi0);
-    pn532_begin(pn532);
-    
-    uint32_t versiondata = pn532_getFirmwareVersion(pn532);
-
-    NRF_LOG_INFO("NFC tag reader started. PN532 version data: %d", versiondata);
+  NRF_LOG_INFO("NFC tag reader started. PN532 version data: %d", versiondata);
 }
 
 void button1_scheduled_event_handler(void * p_event_data, uint16_t event_size)
 {
     // execution in thread/main mode.
 
-    /*
     if (current_int_priority_get() == APP_IRQ_PRIORITY_THREAD)
     {
         NRF_LOG_INFO("button1_scheduled_event_handler() [executing in thread/main mode]");
@@ -147,13 +111,11 @@ void button1_scheduled_event_handler(void * p_event_data, uint16_t event_size)
     {
         NRF_LOG_INFO("button1_scheduled_event_handler() [executing in interrupt handler mode]");
     }
-    */
-
     
     test_pn532();
 }
 
-static void bsp_event_handler(bsp_event_t event)
+void bsp_event_handler(bsp_event_t event)
 {
     switch (event)
     {
@@ -176,6 +138,15 @@ static void bsp_event_handler(bsp_event_t event)
     }
 }
 
+void init_pn532()
+{
+    pn532 = createPN532_SPI(spi0);
+    pn532_begin(pn532);
+    
+    uint32_t versiondata = pn532_getFirmwareVersion(pn532);
+
+    NRF_LOG_INFO("NFC tag reader started. PN532 version data: %d", versiondata);
+}
 
 /**
 
@@ -201,14 +172,16 @@ int main(void)
 
     utils_setup();
 
+    init_pn532();
+
     NRF_LOG_INFO("Firmware initialization finshed.");
 
     while (true)
-    {        
-        __WFE();
-        app_sched_execute();
-        //nrf_pwr_mgmt_run();
-        NRF_LOG_FLUSH();        
+    {      
+      __WFE();
+      app_sched_execute();
+      //nrf_pwr_mgmt_run();
+      NRF_LOG_FLUSH();
     }
 }
 
