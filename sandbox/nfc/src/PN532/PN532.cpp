@@ -7,17 +7,18 @@
 /**************************************************************************/
 
 #include "PN532.h"
+#include "PN532_SPI.h"
 #include <string.h>
 
 extern "C" {
   #include "nrf_log.h"
 }
 
-PN532Interface *m_pn532_hal;
+//PN532Interface *m_pn532_hal;
 
-PN532::PN532(PN532Interface *interface)
+PN532::PN532(nrf_drv_spi_t p_spi)
 {
-    m_pn532_hal = interface;
+    m_pn532_hal = new PN532_SPI(p_spi);
 }
 
 /**************************************************************************/

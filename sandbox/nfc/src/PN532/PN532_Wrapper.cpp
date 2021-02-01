@@ -1,13 +1,11 @@
 #include "PN532.h"
-#include "PN532_SPI.h"
 #include "PN532_Wrapper.h"
 
 extern "C" {
 
-PN532* createPN532_SPI(nrf_drv_spi_t p_spi)
+PN532* createPN532(nrf_drv_spi_t p_spi)
 {
-  PN532_SPI pn532spi(p_spi);
-  return new PN532(&pn532spi);
+  return new PN532(p_spi);
 }
 
 void destroyPN532(PN532* pn532)

@@ -9,7 +9,7 @@ extern "C" {
 
 typedef struct PN532 PN532;
 
-PN532* createPN532_SPI(nrf_drv_spi_t p_spi);
+PN532* createPN532(nrf_drv_spi_t p_spi);
 void destroyPN532(PN532* pn532);
 
 void pn532_begin(PN532* pn532);

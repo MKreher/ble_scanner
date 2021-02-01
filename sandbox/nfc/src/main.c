@@ -92,7 +92,7 @@ static void lfclk_config(void)
 
 void test_pn532() {
   NRF_LOG_INFO("test_pn532()");
-  PN532 *nfc = createPN532_SPI(spi0);
+  PN532 *nfc = createPN532(spi0);
   pn532_begin(nfc);
 
   uint32_t versiondata = pn532_getFirmwareVersion(nfc);

@@ -12,6 +12,10 @@
 #include <stdint.h>
 #include "PN532Interface.h"
 
+extern "C" {
+  #include "nrf_drv_spi.h"
+}
+
 #define PN532_HEADER_SEQUENCE_LENGTH        6
 #define PN532_CHECKSUM_SEQUENCE_LENGTH      2
 #define PN532_FRAME_OVERHEAD                (PN532_HEADER_SEQUENCE_LENGTH + PN532_CHECKSUM_SEQUENCE_LENGTH)
@@ -144,7 +148,7 @@
 class PN532
 {
 public:
-    PN532(PN532Interface *interface);
+    PN532(nrf_drv_spi_t p_spi);
 
     void begin(void);
 
@@ -220,7 +224,7 @@ private:
 
     uint8_t pn532_packetbuffer[64];
 
-    //PN532Interface *m_pn532_hal;
+    PN532Interface *m_pn532_hal;
 };
 
 #endif

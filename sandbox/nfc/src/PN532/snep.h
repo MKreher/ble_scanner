@@ -15,7 +15,7 @@
 
 class SNEP {
 public:
-	SNEP(PN532Interface *interface) : llcp(interface) {
+	SNEP(nrf_drv_spi_t p_spi) : llcp(p_spi) {
 		headerBuf = llcp.getHeaderBuffer(&headerBufLen);
 	};
 

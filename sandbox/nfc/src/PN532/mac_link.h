@@ -7,7 +7,7 @@
 
 class MACLink {
 public:
-    MACLink(PN532Interface *interface) : pn532(interface) {
+    MACLink(nrf_drv_spi_t p_spi) : pn532(p_spi) {
 
     };
     

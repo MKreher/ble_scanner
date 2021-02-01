@@ -1,7 +1,6 @@
 #ifndef NfcAdapter_h
 #define NfcAdapter_h
 
-#include <PN532Interface.h>
 #include <PN532.h>
 #include <NfcTag.h>
 #include <Ndef.h>
@@ -9,6 +8,10 @@
 // Drivers
 #include <MifareClassic.h>
 #include <MifareUltralight.h>
+
+extern "C" {
+  #include "nrf_drv_spi.h"
+}
 
 #define TAG_TYPE_MIFARE_CLASSIC (0)
 #define TAG_TYPE_1 (1)
@@ -22,7 +25,7 @@
 
 class NfcAdapter {
     public:
-        NfcAdapter(PN532Interface *interface);
+        NfcAdapter(nrf_drv_spi_t p_spi);
 
         ~NfcAdapter(void);
         void begin(boolean verbose=true);
