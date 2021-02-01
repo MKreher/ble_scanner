@@ -10,7 +10,7 @@
 
 class LLCP {
 public:
-	LLCP(PN532Interface &interface) : link(interface) {
+	LLCP(PN532Interface *interface) : link(interface) {
         headerBuf = link.getHeaderBuffer(&headerBufLen);
         ns = 0;
         nr = 0;

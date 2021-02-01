@@ -7,7 +7,7 @@
 
 class MACLink {
 public:
-    MACLink(PN532Interface &interface) : pn532(interface) {
+    MACLink(PN532Interface *interface) : pn532(interface) {
 
     };
     

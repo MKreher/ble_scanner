@@ -92,18 +92,18 @@ static void lfclk_config(void)
 
 void test_pn532() {
   NRF_LOG_INFO("test_pn532()");
-    PN532 *nfc = createPN532_SPI(spi0);
-    pn532_begin(nfc);
-    uint32_t versiondata = pn532_getFirmwareVersion(nfc);
-    NRF_LOG_INFO("NFC tag reader started. PN532 version data: %d", versiondata);
+  PN532 *nfc = createPN532_SPI(spi0);
+  pn532_begin(nfc);
 
-    NRF_LOG_INFO("Found chip PN5%02x", (versiondata >> 24) & 0xFF);
-    NRF_LOG_INFO("Firmware version %d.%d", (versiondata >> 16) & 0xFF,
-                                               (versiondata >> 8)  & 0xFF);
+  uint32_t versiondata = pn532_getFirmwareVersion(nfc);
 
-    //pn532_SAMConfig(nfc);
+  NRF_LOG_INFO("Found chip PN5%02x", (versiondata >> 24) & 0xFF);
+  NRF_LOG_INFO("Firmware version %d.%d", (versiondata >> 16) & 0xFF,
+                                             (versiondata >> 8)  & 0xFF);
 
-    destroyPN532(nfc);
+  pn532_SAMConfig(nfc);
+
+  destroyPN532(nfc);
 }
 
 void button1_scheduled_event_handler(void * p_event_data, uint16_t event_size)
