@@ -52,7 +52,7 @@ void PN532_SPI::begin()
       spi_config.ss_pin = SPI_SS_PIN_PN532,
       spi_config.irq_priority = SPI_DEFAULT_CONFIG_IRQ_PRIORITY,
       spi_config.orc = 0xFF,
-      spi_config.frequency = NRF_DRV_SPI_FREQ_4M,
+      spi_config.frequency = NRF_DRV_SPI_FREQ_2M, //NRF_DRV_SPI_FREQ_4M,
       spi_config.mode = NRF_DRV_SPI_MODE_0,
       spi_config.bit_order = NRF_DRV_SPI_BIT_ORDER_LSB_FIRST // PN532 uses LSB !!!
     };
@@ -147,11 +147,11 @@ bool PN532_SPI::isReady()
 {   
     if (nrf_gpio_pin_read(PN532_IRQ_PIN) == 0)
     {
-      NRF_LOG_INFO("PN532 IRQ is LOW (INTERUPT!!!)");
+      //NRF_LOG_INFO("PN532 IRQ is LOW (INTERUPT!!!)");
       return true;
     }
     
-    NRF_LOG_INFO("PN532 IRQ is HIGH");
+    //NRF_LOG_INFO("PN532 IRQ is HIGH");
     return false;
     
     /* wenn der IRO Pin gespart werden soll,

@@ -282,7 +282,6 @@ int main(void)
 
     g_read_nfc = true;
 
-    /*
     while (g_read_nfc == true)
     {
       read_mifare_tag();
@@ -291,7 +290,6 @@ int main(void)
       //nrf_pwr_mgmt_run();
       NRF_LOG_FLUSH();
     }
-    */
 
     while (true)
     {      
