@@ -87,9 +87,9 @@ enum {
 /** @brief Structure for the configuration of the TWI master driver instance. */
 typedef struct
 {
+    nrf_twi_frequency_t frequency;          ///< TWI frequency.
     uint32_t            scl;                ///< SCL pin number.
     uint32_t            sda;                ///< SDA pin number.
-    nrf_twi_frequency_t frequency;          ///< TWI frequency.
     uint8_t             interrupt_priority; ///< Interrupt priority.
     bool                hold_bus_uninit;    ///< Hold pull up state on GPIO pins after uninit.
 } nrfx_twi_config_t;

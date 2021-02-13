@@ -80,6 +80,9 @@
 
 static const nrf_drv_spi_t spi0 = NRF_DRV_SPI_INSTANCE(0);
 
+static bool g_read_nfc = false;
+static PN532 *nfc;
+
 static void lfclk_config(void)
 {
     ret_code_t err_code;
@@ -90,9 +93,9 @@ static void lfclk_config(void)
     nrf_drv_clock_lfclk_request(NULL);
 }
 
-void test_pn532() {
-  NRF_LOG_INFO("test_pn532()");
-  PN532 *nfc = createPN532(spi0);
+void init_pn532() {
+  NRF_LOG_INFO("init_pn532()");
+  nfc = createPN532(spi0);
   pn532_begin(nfc);
 
   uint32_t versiondata = pn532_getFirmwareVersion(nfc);
@@ -104,6 +107,110 @@ void test_pn532() {
   pn532_SAMConfig(nfc);
 
   destroyPN532(nfc);
+}
+
+
+void read_mifare_tag()
+{
+  NRF_LOG_INFO("read_mifare_tag()");
+
+  uint8_t success;
+  uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned UID
+  uint8_t uidLength;                        // Length of the UID (4 or 7 bytes depending on ISO14443A card type)
+    
+  // Wait for an ISO14443A type cards (Mifare, etc.).  When one is found
+  // 'uid' will be populated with the UID, and uidLength will indicate
+  // if the uid is 4 bytes (Mifare Classic) or 7 bytes (Mifare Ultralight)
+  //success = pn532_readPassiveTargetID(nfc, PN532_MIFARE_ISO14443A_BAUD, uid, &uidLength, 1000);
+  success = pn532_readPassiveTargetID(nfc, 0x00, uid, &uidLength, 1000);
+  
+  if (success) {
+    // Display some basic information about the card
+    NRF_LOG_INFO("Found an ISO14443A card");
+    NRF_LOG_INFO("  UID Length: %d bytes", uidLength);
+    NRF_LOG_INFO("  UID Value: ");
+    pn532_PrintHex(nfc, uid, uidLength);
+    
+    if (uidLength == 4)
+    {
+      // We probably have a Mifare Classic card ... 
+      NRF_LOG_INFO("Seems to be a Mifare Classic card (4 byte UID)");
+	  
+      // Now we need to try to authenticate it for read/write access
+      // Try with the factory default KeyA: 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF
+      NRF_LOG_INFO("Trying to authenticate block 4 with default KEYA value");
+      uint8_t keya[6] = { 0xD3, 0xF7, 0xD3, 0xF7, 0xD3, 0xF7 };
+      //uint8_t keya[6] = { 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5 };
+      //uint8_t keya[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+	  
+      // Start with block 4 (the first block of sector 1) since sector 0
+      // contains the manufacturer data and it's probably better just
+      // to leave it alone unless you know what you're doing
+      success = pn532_mifareclassic_AuthenticateBlock(nfc, uid, uidLength, 4, 0, keya);
+	  
+      if (success)
+      {
+        NRF_LOG_INFO("Sector 1 (Blocks 4..7) has been authenticated");
+        uint8_t data[16];
+		
+        // If you want to write something to block 4 to test with, uncomment
+        // the following line and this text should be read back in a minute
+        // data = { 'a', 'd', 'a', 'f', 'r', 'u', 'i', 't', '.', 'c', 'o', 'm', 0, 0, 0, 0};
+        // success = nfc.mifareclassic_WriteDataBlock (4, data);
+
+        // Try to read the contents of block 4
+        NRF_LOG_INFO("Reading block 4");
+        success = pn532_mifareclassic_ReadDataBlock(nfc, 4, data);
+		
+        if (success)
+        {
+          // Data seems to have been read ... spit it out
+          NRF_LOG_INFO("Card content:");
+          pn532_PrintHex(nfc, data, 16);
+		  
+          // Wait a bit before reading the card again
+          nrf_delay_ms(3000);
+        }
+        else
+        {
+          NRF_LOG_INFO("Ooops ... unable to read the requested block.  Try another key?");
+          nrf_delay_ms(3000);
+        }
+      }
+      else
+      {
+        NRF_LOG_INFO("Ooops ... authentication failed: Try another key?");
+        nrf_delay_ms(3000);
+      }
+    } //if (uidLength == 4)
+  
+    if (uidLength == 7)
+    {
+      // We probably have a Mifare Ultralight card ...
+      NRF_LOG_INFO("Seems to be a Mifare Ultralight tag (7 byte UID)");
+	  
+      // Try to read the first general-purpose user page (#4)
+      NRF_LOG_INFO("Reading page 4");
+      uint8_t data[32];
+      success = pn532_mifareultralight_ReadPage (nfc, 4, data);
+      if (success)
+      {
+        NRF_LOG_INFO("Card content:");
+        // Data seems to have been read ... spit it out
+        pn532_PrintHex(nfc, data, 4);
+                
+        // Wait a bit before reading the card again
+        nrf_delay_ms(3000);
+      }
+      else
+      {
+        NRF_LOG_INFO("Ooops ... unable to read the requested page!?");
+        nrf_delay_ms(3000);
+      }
+    } //if (uidLength == 7)
+
+  } // if (success)
+
 }
 
 void button1_scheduled_event_handler(void * p_event_data, uint16_t event_size)
@@ -119,7 +226,6 @@ void button1_scheduled_event_handler(void * p_event_data, uint16_t event_size)
         NRF_LOG_INFO("button1_scheduled_event_handler() [executing in interrupt handler mode]");
     }
     
-    test_pn532();
 }
 
 void bsp_event_handler(bsp_event_t event)
@@ -132,6 +238,7 @@ void bsp_event_handler(bsp_event_t event)
         break;
     case BSP_EVENT_KEY_1:
         NRF_LOG_INFO("Button 2.");
+        g_read_nfc = false;
         bsp_board_led_invert(BSP_BOARD_LED_0);
         break;
     case BSP_EVENT_KEY_2:
@@ -168,8 +275,23 @@ int main(void)
     ret_code_t err_code;
 
     utils_setup();
+
+    init_pn532();
     
     NRF_LOG_INFO("Firmware initialization finshed.");
+
+    g_read_nfc = true;
+
+    /*
+    while (g_read_nfc == true)
+    {
+      read_mifare_tag();
+      __WFE();
+      app_sched_execute();
+      //nrf_pwr_mgmt_run();
+      NRF_LOG_FLUSH();
+    }
+    */
 
     while (true)
     {      

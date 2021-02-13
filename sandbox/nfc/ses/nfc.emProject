@@ -98,18 +98,6 @@
       <file file_name="../../../nRF5_SDK_16.0.0/modules/nrfx/mdk/ses_startup_nrf_common.s" />
       <file file_name="../../../nRF5_SDK_16.0.0/modules/nrfx/mdk/system_nrf52840.c" />
     </folder>
-    <folder Name="nRF_NFC">
-      <file file_name="../../../nRF5_SDK_16.0.0/components/nfc/ndef/generic/message/nfc_ndef_msg.c" />
-      <file file_name="../../../nRF5_SDK_16.0.0/components/nfc/ndef/parser/message/nfc_ndef_msg_parser.c" />
-      <file file_name="../../../nRF5_SDK_16.0.0/components/nfc/ndef/parser/message/nfc_ndef_msg_parser_local.c" />
-      <file file_name="../../../nRF5_SDK_16.0.0/components/nfc/ndef/generic/record/nfc_ndef_record.c" />
-      <file file_name="../../../nRF5_SDK_16.0.0/components/nfc/ndef/parser/record/nfc_ndef_record_parser.c" />
-      <file file_name="../../../nRF5_SDK_16.0.0/components/nfc/t2t_parser/nfc_t2t_parser.c" />
-      <file file_name="../../../nRF5_SDK_16.0.0/components/nfc/t4t_parser/apdu/nfc_t4t_apdu.c" />
-      <file file_name="../../../nRF5_SDK_16.0.0/components/nfc/t4t_parser/cc_file/nfc_t4t_cc_file.c" />
-      <file file_name="../../../nRF5_SDK_16.0.0/components/nfc/t4t_parser/hl_detection_procedure/nfc_t4t_hl_detection_procedures.c" />
-      <file file_name="../../../nRF5_SDK_16.0.0/components/nfc/t4t_parser/tlv/nfc_t4t_tlv_block.c" />
-    </folder>
     <folder Name="NDEF">
       <file file_name="../src/NDEF/MifareClassic.cpp" />
       <file file_name="../src/NDEF/MifareClassic.h" />
@@ -130,8 +118,6 @@
       <file file_name="../src/NDEF/WString.h" />
     </folder>
     <folder Name="PN532">
-      <file file_name="../src/PN532/test_c_w_cpp.cpp" />
-      <file file_name="../src/PN532/test_c_w_cpp.h" />
       <file file_name="../src/PN532/emulatetag.cpp" />
       <file file_name="../src/PN532/emulatetag.h" />
       <file file_name="../src/PN532/llcp.cpp" />
@@ -141,8 +127,6 @@
       <file file_name="../src/PN532/PN532.h" />
       <file file_name="../src/PN532/snep.cpp" />
       <file file_name="../src/PN532/snep.h" />
-      <file file_name="../src/PN532/test_c_w_cpp___WRAPPER.cpp" />
-      <file file_name="../src/PN532/test_c_w_cpp___WRAPPER.h" />
       <file file_name="../src/PN532/PN532_Wrapper.h" />
       <file file_name="../src/PN532/PN532_Wrapper.cpp" />
       <file file_name="../src/PN532/PN532Interface.h" />

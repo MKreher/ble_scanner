@@ -38,15 +38,6 @@
  *
  */
 
-
-#ifndef PN532_SPI_SS
-#define PN532_SPI_SS 27
-#endif
-
-#ifndef PN532_IRQ_PIN
-#define PN532_IRQ_PIN 2
-#endif
-
 #ifndef SDK_CONFIG_H
 #define SDK_CONFIG_H
 // <<< Use Configuration Wizard in Context Menu >>>\n
@@ -81,193 +72,6 @@
 #define TAG_TYPE_2_DATA_BUFFER_SIZE 1024
 #endif
 
-// </h> 
-//==========================================================
-
-// <h> Third Parties 
-
-//==========================================================
-// <e> ADAFRUIT_PN532_ENABLED - adafruit_pn532 - Adafruit PN532 implementation for nRF5x
-//==========================================================
-#ifndef ADAFRUIT_PN532_ENABLED
-#define ADAFRUIT_PN532_ENABLED 1
-#endif
-// <o> PN532_IRQ  
-#ifndef PN532_IRQ
-#define PN532_IRQ 42
-#endif
-
-// <o> PN532_RESET  
-#ifndef PN532_RESET
-#define PN532_RESET 43
-#endif
-
-// <o> PN532_CONFIG_SCL  - Pin number
- 
-// <0=> 0 (P0.0) 
-// <1=> 1 (P0.1) 
-// <2=> 2 (P0.2) 
-// <3=> 3 (P0.3) 
-// <4=> 4 (P0.4) 
-// <5=> 5 (P0.5) 
-// <6=> 6 (P0.6) 
-// <7=> 7 (P0.7) 
-// <8=> 8 (P0.8) 
-// <9=> 9 (P0.9) 
-// <10=> 10 (P0.10) 
-// <11=> 11 (P0.11) 
-// <12=> 12 (P0.12) 
-// <13=> 13 (P0.13) 
-// <14=> 14 (P0.14) 
-// <15=> 15 (P0.15) 
-// <16=> 16 (P0.16) 
-// <17=> 17 (P0.17) 
-// <18=> 18 (P0.18) 
-// <19=> 19 (P0.19) 
-// <20=> 20 (P0.20) 
-// <21=> 21 (P0.21) 
-// <22=> 22 (P0.22) 
-// <23=> 23 (P0.23) 
-// <24=> 24 (P0.24) 
-// <25=> 25 (P0.25) 
-// <26=> 26 (P0.26) 
-// <27=> 27 (P0.27) 
-// <28=> 28 (P0.28) 
-// <29=> 29 (P0.29) 
-// <30=> 30 (P0.30) 
-// <31=> 31 (P0.31) 
-// <32=> 32 (P1.0) 
-// <33=> 33 (P1.1) 
-// <34=> 34 (P1.2) 
-// <35=> 35 (P1.3) 
-// <36=> 36 (P1.4) 
-// <37=> 37 (P1.5) 
-// <38=> 38 (P1.6) 
-// <39=> 39 (P1.7) 
-// <40=> 40 (P1.8) 
-// <41=> 41 (P1.9) 
-// <42=> 42 (P1.10) 
-// <43=> 43 (P1.11) 
-// <44=> 44 (P1.12) 
-// <45=> 45 (P1.13) 
-// <46=> 46 (P1.14) 
-// <47=> 47 (P1.15) 
-// <4294967295=> Not connected 
-
-#ifndef PN532_CONFIG_SCL
-#define PN532_CONFIG_SCL 27
-#endif
-
-// <o> PN532_CONFIG_SDA  - Pin number
- 
-// <0=> 0 (P0.0) 
-// <1=> 1 (P0.1) 
-// <2=> 2 (P0.2) 
-// <3=> 3 (P0.3) 
-// <4=> 4 (P0.4) 
-// <5=> 5 (P0.5) 
-// <6=> 6 (P0.6) 
-// <7=> 7 (P0.7) 
-// <8=> 8 (P0.8) 
-// <9=> 9 (P0.9) 
-// <10=> 10 (P0.10) 
-// <11=> 11 (P0.11) 
-// <12=> 12 (P0.12) 
-// <13=> 13 (P0.13) 
-// <14=> 14 (P0.14) 
-// <15=> 15 (P0.15) 
-// <16=> 16 (P0.16) 
-// <17=> 17 (P0.17) 
-// <18=> 18 (P0.18) 
-// <19=> 19 (P0.19) 
-// <20=> 20 (P0.20) 
-// <21=> 21 (P0.21) 
-// <22=> 22 (P0.22) 
-// <23=> 23 (P0.23) 
-// <24=> 24 (P0.24) 
-// <25=> 25 (P0.25) 
-// <26=> 26 (P0.26) 
-// <27=> 27 (P0.27) 
-// <28=> 28 (P0.28) 
-// <29=> 29 (P0.29) 
-// <30=> 30 (P0.30) 
-// <31=> 31 (P0.31) 
-// <32=> 32 (P1.0) 
-// <33=> 33 (P1.1) 
-// <34=> 34 (P1.2) 
-// <35=> 35 (P1.3) 
-// <36=> 36 (P1.4) 
-// <37=> 37 (P1.5) 
-// <38=> 38 (P1.6) 
-// <39=> 39 (P1.7) 
-// <40=> 40 (P1.8) 
-// <41=> 41 (P1.9) 
-// <42=> 42 (P1.10) 
-// <43=> 43 (P1.11) 
-// <44=> 44 (P1.12) 
-// <45=> 45 (P1.13) 
-// <46=> 46 (P1.14) 
-// <47=> 47 (P1.15) 
-// <4294967295=> Not connected 
-
-#ifndef PN532_CONFIG_SDA
-#define PN532_CONFIG_SDA 26
-#endif
-
-// <o> PN532_CONFIG_TWI_INSTANCE  - TWI instance to be used
- 
-// <0=> 0 
-// <1=> 1 
-// <2=> 2 
-
-#ifndef PN532_CONFIG_TWI_INSTANCE
-#define PN532_CONFIG_TWI_INSTANCE 0
-#endif
-
-// <e> ADAFRUIT_PN532_LOG_ENABLED - Enables logging in the module.
-//==========================================================
-#ifndef ADAFRUIT_PN532_LOG_ENABLED
-#define ADAFRUIT_PN532_LOG_ENABLED 0
-#endif
-// <o> ADAFRUIT_PN532_LOG_LEVEL  - Default Severity level
- 
-// <0=> Off 
-// <1=> Error 
-// <2=> Warning 
-// <3=> Info 
-// <4=> Debug 
-
-#ifndef ADAFRUIT_PN532_LOG_LEVEL
-#define ADAFRUIT_PN532_LOG_LEVEL 3
-#endif
-
-// <o> ADAFRUIT_PN532_INFO_COLOR  - ANSI escape code prefix.
- 
-// <0=> Default 
-// <1=> Black 
-// <2=> Red 
-// <3=> Green 
-// <4=> Yellow 
-// <5=> Blue 
-// <6=> Magenta 
-// <7=> Cyan 
-// <8=> White 
-
-#ifndef ADAFRUIT_PN532_INFO_COLOR
-#define ADAFRUIT_PN532_INFO_COLOR 0
-#endif
-
-// </e>
-
-// <o> PN532_PACKBUFF_SIZE - Size of the buffer used for sending commands and storing responses. 
-#ifndef PN532_PACKBUFF_SIZE
-#define PN532_PACKBUFF_SIZE 256
-#endif
-
-// </e>
-
-// </h> 
-
 //==========================================================
 // <h> SPI_CONFIGURATION - Spi configuration
 
@@ -299,12 +103,18 @@
 
 // <o> SPI_SS_PIN  - Pin number
 #ifndef SPI_SS_PIN_DISPLAY
-#define SPI_SS_PIN_DISPLAY 26
+#define SPI_SS_PIN_DISPLAY 28
+#endif
+
+#ifndef SPI_SS_PIN_PN532
+#define SPI_SS_PIN_PN532 4
+#endif
+
+#ifndef PN532_IRQ_PIN
+#define PN532_IRQ_PIN 3
 #endif
 
 // <o> SPI_IRQ_PRIORITY  - Interrupt priority
-
-
 // <i> Priorities 0,2 (nRF51) and 0,1,4,5 (nRF52) are reserved for SoftDevice
 // <0=> 0 (highest)
 // <1=> 1

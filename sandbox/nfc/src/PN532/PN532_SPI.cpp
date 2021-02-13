@@ -40,7 +40,7 @@ PN532_SPI::PN532_SPI(nrf_drv_spi_t p_spi)
 
 void PN532_SPI::begin()
 {
-  nrf_gpio_cfg_output(PN532_SPI_SS);
+  nrf_gpio_cfg_output(SPI_SS_PIN_PN532);
   nrf_gpio_cfg_input(PN532_IRQ_PIN, NRF_GPIO_PIN_NOPULL);
        
   // regarding spi config see page 25 in pn532 datasheet
@@ -49,7 +49,7 @@ void PN532_SPI::begin()
       spi_config.sck_pin = SPI_SCK_PIN,
       spi_config.mosi_pin = SPI_MOSI_PIN,
       spi_config.miso_pin = SPI_MISO_PIN,
-      spi_config.ss_pin = PN532_SPI_SS,
+      spi_config.ss_pin = SPI_SS_PIN_PN532,
       spi_config.irq_priority = SPI_DEFAULT_CONFIG_IRQ_PRIORITY,
       spi_config.orc = 0xFF,
       spi_config.frequency = NRF_DRV_SPI_FREQ_4M,
@@ -62,9 +62,9 @@ void PN532_SPI::begin()
 
 void PN532_SPI::wakeup()
 {    
-    nrf_gpio_pin_clear(PN532_SPI_SS);
+    nrf_gpio_pin_clear(SPI_SS_PIN_PN532);
     nrf_delay_ms(2);
-    nrf_gpio_pin_set(PN532_SPI_SS);
+    nrf_gpio_pin_set(SPI_SS_PIN_PN532);
 }
 
 
@@ -80,7 +80,7 @@ int8_t PN532_SPI::writeCommand(const uint8_t *header, uint8_t hlen, const uint8_
         timeout--;
         if (0 == timeout) {
             NRF_LOG_INFO("Time out when waiting for ACK");
-            return -2;
+            return PN532_TIMEOUT;
         }
     }
     if (readAckFrame()) {
@@ -93,7 +93,7 @@ int8_t PN532_SPI::writeCommand(const uint8_t *header, uint8_t hlen, const uint8_
 int16_t PN532_SPI::readResponse(uint8_t *p_resp_buff, uint8_t p_resp_len, uint16_t p_timeout)
 {
     // Die zu lesende Byte-Anzahl ist um eins größer als das eigentliche Response-Array des jeweiligen Commands,
-    // da als ersten DATA_READ gesendet werden muss.
+    // da als erstes das DATA_READ byte gesendet werden muss.
     uint8_t read_len = p_resp_len + 1;
 
     uint16_t time = 0;
@@ -106,7 +106,7 @@ int16_t PN532_SPI::readResponse(uint8_t *p_resp_buff, uint8_t p_resp_len, uint16
         }
     }
 
-    nrf_gpio_pin_clear(PN532_SPI_SS);
+    nrf_gpio_pin_clear(SPI_SS_PIN_PN532);
     nrf_delay_ms(1);
 
     NRF_LOG_INFO("Read response from PN532");
@@ -115,7 +115,7 @@ int16_t PN532_SPI::readResponse(uint8_t *p_resp_buff, uint8_t p_resp_len, uint16
     
     uint8_t tx_buff[read_len];
     memcpy(tx_buff, NULL, read_len);
-    tx_buff[0] = DATA_READ; // DATA_READ Byte als erstes sendens
+    tx_buff[0] = DATA_READ; // DATA_READ Byte als erstes senden
     
     uint8_t rx_buff[read_len];
             
@@ -127,8 +127,8 @@ int16_t PN532_SPI::readResponse(uint8_t *p_resp_buff, uint8_t p_resp_len, uint16
         __WFE();
     }
   
-    NRF_LOG_INFO("SPI Response read:");
-    NRF_LOG_HEXDUMP_INFO(rx_buff, read_len);
+    //NRF_LOG_INFO("SPI Response read:");
+    //NRF_LOG_HEXDUMP_INFO(rx_buff, read_len);
 
     // Das empfangene Byte Array enthällt als erstes Element das Response-Byte auf das DATA_READ Byte.
     // Das Byte Array umkopieren auf des Response Array und dabei dieses erste Byte weglassen.
@@ -138,7 +138,7 @@ int16_t PN532_SPI::readResponse(uint8_t *p_resp_buff, uint8_t p_resp_len, uint16
 
     int16_t result = 0;
 
-    nrf_gpio_pin_set(PN532_SPI_SS);
+    nrf_gpio_pin_set(SPI_SS_PIN_PN532);
 
     return result;
 }
@@ -168,7 +168,7 @@ bool PN532_SPI::isReady()
 
 void PN532_SPI::writeFrame(const uint8_t *header, uint8_t hlen, const uint8_t *body, uint8_t blen)
 {
-    nrf_gpio_pin_clear(PN532_SPI_SS);
+    nrf_gpio_pin_clear(SPI_SS_PIN_PN532);
     nrf_delay_ms(2); // wake up PN532
 
     uint8_t tx_buff[64];
@@ -200,14 +200,14 @@ void PN532_SPI::writeFrame(const uint8_t *header, uint8_t hlen, const uint8_t *b
 
     write(tx_buff, len);
     
-    nrf_gpio_pin_set(PN532_SPI_SS);
+    nrf_gpio_pin_set(SPI_SS_PIN_PN532);
 }
 
 int8_t PN532_SPI::readAckFrame()
 {
     const uint8_t PN532_ACK[] = {0, 0, 0xFF, 0, 0xFF, 0};
 
-    nrf_gpio_pin_clear(PN532_SPI_SS);
+    nrf_gpio_pin_clear(SPI_SS_PIN_PN532);
     nrf_delay_ms(1);
 
     uint8_t tx_buff[1];
@@ -232,7 +232,7 @@ int8_t PN532_SPI::readAckFrame()
     NRF_LOG_INFO("SPI ACK-Frame read:");
     NRF_LOG_HEXDUMP_INFO(ackBuff, sizeof(PN532_ACK));
 
-    nrf_gpio_pin_set(PN532_SPI_SS);
+    nrf_gpio_pin_set(SPI_SS_PIN_PN532);
 
     return memcmp(ackBuff, PN532_ACK, sizeof(PN532_ACK));
 }
@@ -244,6 +244,7 @@ void PN532_SPI::write(uint8_t* p_data, uint8_t p_len) {
 
   NRF_LOG_INFO("SPI writing data:");
   NRF_LOG_HEXDUMP_INFO(p_data, p_len);
+
   APP_ERROR_CHECK(nrf_drv_spi_transfer(&g_spi, p_data, p_len, NULL, 0));
 
   while (!g_spi_xfer_done)

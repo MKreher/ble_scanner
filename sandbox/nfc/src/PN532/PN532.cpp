@@ -42,10 +42,7 @@ void PN532::begin()
 /**************************************************************************/
 void PN532::PrintHex(const uint8_t *data, const uint32_t numBytes)
 {
-    for (uint8_t i = 0; i < numBytes; i++) {
-        NRF_LOG_INFO(" %2X", data[i]);
-    }
-    NRF_LOG_INFO("\n");
+    NRF_LOG_HEXDUMP_INFO(data, numBytes);
 }
 
 /**************************************************************************/
@@ -267,10 +264,10 @@ bool PN532::SAMConfig(void)
 
     NRF_LOG_INFO("SAMConfig\n");
 
-    if (m_pn532_hal->writeCommand(pn532_packetbuffer, 4))
+    if (m_pn532_hal->writeCommand(pn532_packetbuffer, COMMAND_SAMCONFIGURATION_LENGTH))
         return false;
 
-    return (0 < m_pn532_hal->readResponse(pn532_packetbuffer, sizeof(pn532_packetbuffer)));
+    return (0 < m_pn532_hal->readResponse(pn532_packetbuffer, REPLY_SAMCONFIGURATION_LENGTH));
 }
 
 /**************************************************************************/
@@ -333,7 +330,7 @@ bool PN532::setRFField(uint8_t autoRFCA, uint8_t rFOnOff)
 /*!
     Waits for an ISO14443A target to enter the field
 
-    @param  cardBaudRate  Baud rate of the card
+    @param  cardBaudRate  Baud rate of the caSrd
     @param  uid           Pointer to the array that will be populated
                           with the card's UID (up to 7 bytes)
     @param  uidLength     Pointer to the variable that will hold the
@@ -348,12 +345,14 @@ bool PN532::readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid, uint8_t *uid
     pn532_packetbuffer[1] = 1;  // max 1 cards at once (we can set this to 2 later)
     pn532_packetbuffer[2] = cardbaudrate;
 
-    if (m_pn532_hal->writeCommand(pn532_packetbuffer, 3)) {
+    if (m_pn532_hal->writeCommand(pn532_packetbuffer, COMMAND_INLISTPASSIVETARGET_BASE_LENGTH))
+    {
         return 0x0;  // command failed
     }
 
     // read data packet
-    if (m_pn532_hal->readResponse(pn532_packetbuffer, sizeof(pn532_packetbuffer), timeout) < 0) {
+    if (m_pn532_hal->readResponse(pn532_packetbuffer, REPLY_INLISTPASSIVETARGET_106A_TARGET_LENGTH, timeout) < 0)
+    {
         return 0x0;
     }
 
@@ -370,22 +369,28 @@ bool PN532::readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid, uint8_t *uid
       b6..NFCIDLen    NFCID
     */
 
-    if (pn532_packetbuffer[0] != 1)
+
+    uint8_t response_data[pn532_packetbuffer[3]];
+    memcpy(response_data, &pn532_packetbuffer[PN532_DATA_OFFSET+1], pn532_packetbuffer[3]);
+
+    NRF_LOG_HEXDUMP_INFO(response_data, sizeof(response_data));
+
+    if (response_data[0] != 1)
         return 0;
 
-    uint16_t sens_res = pn532_packetbuffer[2];
+    uint16_t sens_res = response_data[2];
     sens_res <<= 8;
-    sens_res |= pn532_packetbuffer[3];
+    sens_res |= response_data[3];
 
     NRF_LOG_INFO("ATQA: 0x%X", sens_res);
-    NRF_LOG_INFO("SAK: 0x%X", pn532_packetbuffer[4]);
+    NRF_LOG_INFO("SAK: 0x%X", response_data[4]);
     NRF_LOG_INFO("\n");
 
     /* Card appears to be Mifare Classic */
-    *uidLength = pn532_packetbuffer[5];
+    *uidLength = response_data[5];
 
-    for (uint8_t i = 0; i < pn532_packetbuffer[5]; i++) {
-        uid[i] = pn532_packetbuffer[6 + i];
+    for (uint8_t i = 0; i < response_data[5]; i++) {
+        uid[i] = response_data[6 + i];
     }
 
     return 1;
@@ -463,7 +468,7 @@ uint8_t PN532::mifareclassic_AuthenticateBlock (uint8_t *uid, uint8_t uidLen, ui
 
     if (m_pn532_hal->writeCommand(pn532_packetbuffer, 10 + _uidLen))
         return 0;
-
+    
     // Read the response packet
     m_pn532_hal->readResponse(pn532_packetbuffer, sizeof(pn532_packetbuffer));
 

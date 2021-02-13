@@ -270,7 +270,7 @@ boolean MifareClassic::formatNDEF(byte * uid, unsigned int uidLength)
 #ifdef NDEF_USE_SERIAL
                 Serial.print(F("Unable to authenticate block "));Serial.println(i);
 #endif
-                _nfcShield->readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, (uint8_t*)&iii);
+                _nfcShield->readPassiveTargetID(PN532_MIFARE_ISO14443A_BAUD, uid, (uint8_t*)&iii);
             }
         }
     }

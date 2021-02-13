@@ -21,8 +21,13 @@ extern "C" {
 #define PN532_FRAME_OVERHEAD                (PN532_HEADER_SEQUENCE_LENGTH + PN532_CHECKSUM_SEQUENCE_LENGTH)
 
 // Lengths and offsets for specific commands and responses.
-#define COMMAND_GETFIRMWAREVERSION_LENGTH   1
-#define REPLY_GETFIRMWAREVERSION_LENGTH     (5 + PN532_FRAME_OVERHEAD)
+#define COMMAND_GETFIRMWAREVERSION_LENGTH               1
+#define REPLY_GETFIRMWAREVERSION_LENGTH                 (5 + PN532_FRAME_OVERHEAD)
+#define COMMAND_SAMCONFIGURATION_LENGTH                 4
+#define REPLY_SAMCONFIGURATION_LENGTH                   (1 + PN532_FRAME_OVERHEAD)
+#define COMMAND_INLISTPASSIVETARGET_BASE_LENGTH         3
+#define REPLY_INLISTPASSIVETARGET_106A_TARGET_LENGTH    (17 + PN532_FRAME_OVERHEAD)
+
 
 #define PN532_PREAMBLE_OFFSET               0
 #define PN532_STARTCODE1_OFFSET             1
@@ -71,7 +76,7 @@ extern "C" {
 #define PN532_RESPONSE_INLISTPASSIVETARGET  (0x4B)
 
 
-#define PN532_MIFARE_ISO14443A              (0x00)
+#define PN532_MIFARE_ISO14443A_BAUD         (0x00)   // identifying the baud rate for the ISO14443A (NFC-A) card type
 
 // Mifare Commands
 #define MIFARE_CMD_AUTH_A                   (0x60)

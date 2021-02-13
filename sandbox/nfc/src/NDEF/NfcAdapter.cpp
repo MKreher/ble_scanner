@@ -43,11 +43,11 @@ boolean NfcAdapter::tagPresent(unsigned long timeout)
 
     if (timeout == 0)
     {
-        success = shield->readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, (uint8_t*)&uidLength);
+        success = shield->readPassiveTargetID(PN532_MIFARE_ISO14443A_BAUD, uid, (uint8_t*)&uidLength);
     }
     else
     {
-        success = shield->readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, (uint8_t*)&uidLength, timeout);
+        success = shield->readPassiveTargetID(PN532_MIFARE_ISO14443A_BAUD, uid, (uint8_t*)&uidLength, timeout);
     }
     return success;
 }
