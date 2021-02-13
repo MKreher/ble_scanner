@@ -470,12 +470,12 @@ uint8_t PN532::mifareclassic_AuthenticateBlock (uint8_t *uid, uint8_t uidLen, ui
         return 0;
     
     // Read the response packet
-    m_pn532_hal->readResponse(pn532_packetbuffer, sizeof(pn532_packetbuffer));
+    m_pn532_hal->readResponse(pn532_packetbuffer, REPLY_INDATAEXCHANGE_BASE_LENGTH);
 
     // Check if the response is valid and we are authenticated???
     // for an auth success it should be bytes 5-7: 0xD5 0x41 0x00
-    // Mifare auth error is technically byte 7: 0x14 but anything other and 0x00 is not good
-    if (pn532_packetbuffer[0] != 0x00) {
+    // Mifare auth error is technically byte 7: 0x14 but anything other than 0x00 is not good
+    if (pn532_packetbuffer[PN532_DATA_OFFSET + 1] != 0x00) {
         NRF_LOG_INFO("Authentification failed\n");
         return 0;
     }
