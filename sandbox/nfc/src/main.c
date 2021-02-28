@@ -142,6 +142,17 @@ void read_mifare_tag()
       uint8_t keya[6] = { 0xD3, 0xF7, 0xD3, 0xF7, 0xD3, 0xF7 };
       //uint8_t keya[6] = { 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5 };
       //uint8_t keya[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+      /* Other common "default" keys
+          0XFF 0XFF 0XFF 0XFF 0XFF 0XFF
+          0XD3 0XF7 0XD3 0XF7 0XD3 0XF7
+          0XA0 0XA1 0XA2 0XA3 0XA4 0XA5
+          0XB0 0XB1 0XB2 0XB3 0XB4 0XB5
+          0X4D 0X3A 0X99 0XC3 0X51 0XDD
+          0X1A 0X98 0X2C 0X7E 0X45 0X9A
+          0XAA 0XBB 0XCC 0XDD 0XEE 0XFF
+          0X00 0X00 0X00 0X00 0X00 0X00
+          0XAB 0XCD 0XEF 0X12 0X34 0X56
+      */
 	  
       // Start with block 4 (the first block of sector 1) since sector 0
       // contains the manufacturer data and it's probably better just

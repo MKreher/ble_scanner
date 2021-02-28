@@ -4,8 +4,6 @@
  <Breakpoints groups="Breakpoints" active_group="Breakpoints">
   <BreakpointListItem trigger="" line="1604" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="../src/PN532/PN532.cpp" useHWbreakpoint="false"/>
   <BreakpointListItem trigger="" line="1616" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="../src/PN532/PN532.cpp" useHWbreakpoint="false"/>
-  <BreakpointListItem trigger="" line="473" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="2" filename="../src/PN532/PN532.cpp" useHWbreakpoint="false"/>
-  <BreakpointListItem trigger="" line="478" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="2" filename="../src/PN532/PN532.cpp" useHWbreakpoint="false"/>
   <Exceptions set="Reset;MemManage;UsageFault_Coprocessor;UsageFault_CheckingError;UsageFault_StateError;BusFault;ExceptionEntryReturnFault;HardFault"/>
  </Breakpoints>
  <ExecutionProfileWindow/>
@@ -67,18 +65,11 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="273" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/main.c" selected="0" top="273" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="933" useTextEdit="1" openedFrom="C:/Work/ble_scanner/sandbox/nfc/src/PN532/PN532_Wrapper.cpp" useBinaryEdit="0" left="0" path="../src/PN532/PN532.cpp" selected="0" top="913" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="229" useTextEdit="1" openedFrom="C:/Work/ble_scanner/sandbox/nfc/src/PN532/PN532.cpp" useBinaryEdit="0" left="0" path="../src/PN532/PN532.h" selected="0" top="210" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="141" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/NDEF/NfcAdapter.cpp" selected="0" top="137" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="71" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/PN532/PN532_Wrapper.h" selected="0" top="49" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="15" useTextEdit="1" openedFrom="C:/Work/ble_scanner/sandbox/nfc/src/PN532/PN532_SPI.cpp" useBinaryEdit="0" left="0" path="../src/pn532/PN532Interface.h" selected="0" top="15" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="111" useTextEdit="1" openedFrom="C:/Work/ble_scanner/sandbox/nfc/src/NDEF/NfcAdapter.cpp" useBinaryEdit="0" left="0" path="../src/NDEF/MifareClassic.cpp" selected="0" top="111" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="C:/Work/ble_scanner/sandbox/nfc/src/NDEF/NfcAdapter.cpp" useBinaryEdit="0" left="0" path="../src/NDEF/NfcAdapter.h" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="12" useTextEdit="1" openedFrom="C:/Work/ble_scanner/sandbox/nfc/src/PN532/PN532.cpp" useBinaryEdit="0" left="0" path="../src/PN532/PN532_SPI.cpp" selected="1" top="6" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="25" useTextEdit="1" openedFrom="C:/Work/ble_scanner/sandbox/nfc/src/main.c" useBinaryEdit="0" left="0" path="../src/PN532/PN532_Wrapper.cpp" selected="0" top="8" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="83" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/sdk_config.h" selected="0" top="79" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="168" useTextEdit="1" openedFrom="C:/Work/ble_scanner/sandbox/nfc/src/PN532/PN532_SPI.cpp" useBinaryEdit="0" left="0" path="../../../nRF5_SDK_16.0.0/integration/nrfx/legacy/nrf_drv_spi.h" selected="0" top="149" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="142" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/main.c" selected="1" top="127" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="34" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/PN532/PN532_SPI.cpp" selected="0" top="34" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="160" useTextEdit="1" openedFrom="C:/Work/ble_scanner/sandbox/nfc/src/PN532/PN532_SPI.cpp" useBinaryEdit="0" left="0" path="../../../nRF5_SDK_16.0.0/integration/nrfx/legacy/nrf_drv_spi.h" selected="0" top="160" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="477" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/PN532/PN532.cpp" selected="0" top="477" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="30" useTextEdit="1" openedFrom="C:/Work/ble_scanner/sandbox/nfc/src/PN532/PN532.cpp" useBinaryEdit="0" left="0" path="../src/pn532/PN532.h" selected="0" top="30" codecName="Default"/>
  </Files>
- <ARMCrossStudioWindow activeProject="nfc" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="C:/Work/ble_scanner/sandbox/nfc/src/PN532" debugSearchPath="" autoConnectCapabilities="3199"/>
+ <ARMCrossStudioWindow activeProject="nfc" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="C:/Work/ble_scanner/sandbox/nfc/src/PN532" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>
