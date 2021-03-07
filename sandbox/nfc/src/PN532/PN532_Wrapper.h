@@ -69,7 +69,6 @@ int8_t pn532_felica_Release(PN532* pn532);
 
 // Help functions to display formatted text
 void pn532_PrintHex(PN532* pn532, const uint8_t *data, const uint32_t numBytes);
-void pn532_PrintHexChar(PN532* pn532, const uint8_t *pbtData, const uint32_t numBytes);
 
 uint8_t *pn532_getBuffer(PN532* pn532, uint8_t *len);
 

@@ -30,9 +30,7 @@ class NdefMessage
         NdefRecord getRecord(int index);
         NdefRecord operator[](int index);
 
-#ifdef NDEF_USE_SERIAL
         void print();
-#endif
     private:
         NdefRecord _records[MAX_NDEF_RECORDS];
         unsigned int _recordCount;

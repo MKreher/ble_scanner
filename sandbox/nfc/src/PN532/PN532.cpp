@@ -47,34 +47,6 @@ void PN532::PrintHex(const uint8_t *data, const uint32_t numBytes)
 
 /**************************************************************************/
 /*!
-    @brief  Prints a hexadecimal value in plain characters, along with
-            the char equivalents in the following format
-
-            00 00 00 00 00 00  ......
-
-    @param  data      Pointer to the data
-    @param  numBytes  Data length in bytes
-*/
-/**************************************************************************/
-void PN532::PrintHexChar(const uint8_t *data, const uint32_t numBytes)
-{
-    for (uint8_t i = 0; i < numBytes; i++) {
-        NRF_LOG_INFO(" %2X", data[i]);
-    }
-    NRF_LOG_INFO("    ");
-    for (uint8_t i = 0; i < numBytes; i++) {
-        char c = data[i];
-        if (c <= 0x1f || c > 0x7f) {
-            NRF_LOG_INFO(".");
-        } else {
-            NRF_LOG_INFO("%c", c);
-        }
-        NRF_LOG_INFO("\n");
-    }
-}
-
-/**************************************************************************/
-/*!
     @brief  Checks the firmware version of the PN5xx chip
 
     @returns  The chip's firmware version and ID
@@ -518,10 +490,13 @@ uint8_t PN532::mifareclassic_ReadDataBlock (uint8_t blockNumber, uint8_t *data)
     if (pn532_packetbuffer[0] != 0x00) {
         return 0;
     }
-
+    
     /* Copy the 16 data bytes to the output buffer        */
     /* Block content starts at byte 9 of a valid response */
-    memcpy (data, pn532_packetbuffer + 1, 16);
+    memcpy (&data[0], &pn532_packetbuffer[9-1], 16);
+
+    //NRF_LOG_INFO("Data of block %d:", blockNumber);
+    //NRF_LOG_HEXDUMP_INFO(data, 16);
 
     return 1;
 }

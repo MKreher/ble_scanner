@@ -1,5 +1,9 @@
 #include <NfcTag.h>
 
+extern "C" {
+  #include "nrf_log.h"
+}
+
 NfcTag::NfcTag()
 {
     _uid = 0;
@@ -101,23 +105,21 @@ boolean NfcTag::hasNdefMessage()
     return (_ndefMessage != NULL);
 }
 
-NdefMessage NfcTag::getNdefMessage()
+NdefMessage* NfcTag::getNdefMessage()
 {
-    return *_ndefMessage;
+    return _ndefMessage;
 }
-#ifdef NDEF_USE_SERIAL
 
 void NfcTag::print()
 {
-    Serial.print(F("NFC Tag - "));Serial.println(_tagType);
-    Serial.print(F("UID "));Serial.println(getUidString());
+    String uid = getUidString();
+    NRF_LOG_INFO("NFC Tag: type=%s , uid=%s", _tagType.c_str(), uid.c_str());
     if (_ndefMessage == NULL)
     {
-        Serial.println(F("\nNo NDEF Message"));
+        NRF_LOG_INFO("No NDEF Message");
     }
     else
     {
         _ndefMessage->print();
     }
 }
-#endif

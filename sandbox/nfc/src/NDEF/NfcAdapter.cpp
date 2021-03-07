@@ -1,5 +1,9 @@
 #include <NfcAdapter.h>
 
+extern "C" {
+  #include "nrf_log.h"
+}
+
 NfcAdapter::NfcAdapter(nrf_drv_spi_t p_spi)
 {
     shield = new PN532(p_spi);
@@ -10,7 +14,7 @@ NfcAdapter::~NfcAdapter(void)
     delete shield;
 }
 
-void NfcAdapter::begin(boolean verbose)
+boolean NfcAdapter::begin(boolean verbose)
 {
     shield->begin();
 
@@ -18,22 +22,18 @@ void NfcAdapter::begin(boolean verbose)
 
     if (! versiondata)
     {
-#ifdef NDEF_USE_SERIAL
-        Serial.print(F("Didn't find PN53x board"));
-#endif
-        while (1); // halt
+        NRF_LOG_INFO("Didn't find PN53x board");
+        return false;
     }
 
     if (verbose)
     {
-#ifdef NDEF_USE_SERIAL
-        Serial.print(F("Found chip PN5")); Serial.println((versiondata>>24) & 0xFF, HEX);
-        Serial.print(F("Firmware ver. ")); Serial.print((versiondata>>16) & 0xFF, DEC);
-        Serial.print('.'); Serial.println((versiondata>>8) & 0xFF, DEC);
-#endif
+        NRF_LOG_INFO("Found chip PN5%02x", (versiondata >> 24) & 0xFF);
+        NRF_LOG_INFO("Firmware version %d.%d", (versiondata >> 16) & 0xFF, (versiondata >> 8)  & 0xFF);
     }
     // configure board to read RFID tags
     shield->SAMConfig();
+    return true;
 }
 
 boolean NfcAdapter::tagPresent(unsigned long timeout)
@@ -62,18 +62,14 @@ boolean NfcAdapter::erase()
 boolean NfcAdapter::format()
 {
     boolean success;
-#ifdef NDEF_SUPPORT_MIFARE_CLASSIC
     if (uidLength == 4)
     {
         MifareClassic mifareClassic = MifareClassic(*shield);
         success = mifareClassic.formatNDEF(uid, uidLength);
     }
     else
-#endif
     {
-#ifdef NDEF_USE_SERIAL
-        Serial.print(F("Unsupported Tag."));
-#endif
+        NRF_LOG_INFO("Unsupported Tag.");
         success = false;
     }
     return success;
@@ -83,71 +79,53 @@ boolean NfcAdapter::clean()
 {
     uint8_t type = guessTagType();
 
-#ifdef NDEF_SUPPORT_MIFARE_CLASSIC
     if (type == TAG_TYPE_MIFARE_CLASSIC)
     {
-        #ifdef NDEF_DEBUG
-        Serial.println(F("Cleaning Mifare Classic"));
-        #endif
+        NRF_LOG_INFO("Cleaning Mifare Classic");
         MifareClassic mifareClassic = MifareClassic(*shield);
         return mifareClassic.formatMifare(uid, uidLength);
     }
-    else
-#endif
-    if (type == TAG_TYPE_2)
+    else if (type == TAG_TYPE_2)
     {
-        #ifdef NDEF_DEBUG
-        Serial.println(F("Cleaning Mifare Ultralight"));
-        #endif
+        NRF_LOG_INFO("Cleaning Mifare Ultralight");
         MifareUltralight ultralight = MifareUltralight(*shield);
         return ultralight.clean();
     }
     else
     {
-#ifdef NDEF_USE_SERIAL
-        Serial.print(F("No driver for card type "));Serial.println(type);
-#endif
+        NRF_LOG_INFO("No driver for card type %d", type);
         return false;
     }
 
 }
 
 
-NfcTag NfcAdapter::read()
+NfcTag* NfcAdapter::read()
 {
     uint8_t type = guessTagType();
 
-#ifdef NDEF_SUPPORT_MIFARE_CLASSIC
     if (type == TAG_TYPE_MIFARE_CLASSIC)
     {
-        #ifdef NDEF_DEBUG
-        Serial.println(F("Reading Mifare Classic"));
-        #endif
+        NRF_LOG_INFO("Reading Mifare Classic");
         MifareClassic mifareClassic = MifareClassic(*shield);
         return mifareClassic.read(uid, uidLength);
     }
-    else
-#endif
-    if (type == TAG_TYPE_2)
+    else if (type == TAG_TYPE_2)
     {
-        #ifdef NDEF_DEBUG
-        Serial.println(F("Reading Mifare Ultralight"));
-        #endif
+        NRF_LOG_INFO("Reading Mifare Ultralight");
         MifareUltralight ultralight = MifareUltralight(*shield);
         return ultralight.read(uid, uidLength);
     }
     else if (type == TAG_TYPE_UNKNOWN)
     {
-#ifdef NDEF_USE_SERIAL
-        Serial.print(F("Can not determine tag type"));
-#endif
-        return NfcTag(uid, uidLength);
+        NRF_LOG_INFO("Can not determine tag type");
+        return new NfcTag(uid, uidLength);
     }
     else
     {
-        // Serial.print(F("No driver for card type "));Serial.println(type);
+        NRF_LOG_INFO("No driver for card type %d", type);
         // TODO should set type here
-        return NfcTag(uid, uidLength);
+        return new NfcTag(uid, uidLength);
     }
 
 }
@@ -157,37 +135,26 @@ boolean NfcAdapter::write(NdefMessage& ndefMessage)
     boolean success;
     uint8_t type = guessTagType();
 
-#ifdef NDEF_SUPPORT_MIFARE_CLASSIC
     if (type == TAG_TYPE_MIFARE_CLASSIC)
     {
-        #ifdef NDEF_DEBUG
-        Serial.println(F("Writing Mifare Classic"));
-        #endif
+        NRF_LOG_INFO("Writing Mifare Classic");
         MifareClassic mifareClassic = MifareClassic(*shield);
         success = mifareClassic.write(ndefMessage, uid, uidLength);
     }
-    else
-#endif
-    if (type == TAG_TYPE_2)
+    else if (type == TAG_TYPE_2)
     {
-        #ifdef NDEF_DEBUG
-        Serial.println(F("Writing Mifare Ultralight"));
-        #endif
+        NRF_LOG_INFO("Writing Mifare Ultralight");
         MifareUltralight mifareUltralight = MifareUltralight(*shield);
         success = mifareUltralight.write(ndefMessage, uid, uidLength);
     }
     else if (type == TAG_TYPE_UNKNOWN)
     {
-#ifdef NDEF_USE_SERIAL
-        Serial.print(F("Can not determine tag type"));
-#endif
+        NRF_LOG_INFO("Can not determine tag type");
         success = false;
     }
     else
     {
-#ifdef NDEF_USE_SERIAL
-        Serial.print(F("No driver for card type "));Serial.println(type);
-#endif
+        NRF_LOG_INFO("No driver for card type %d", type);
         success = false;
     }
 

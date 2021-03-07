@@ -1,7 +1,6 @@
 #ifndef NdefRecord_h
 #define NdefRecord_h
 
-#include <Due.h>
 #include <Ndef.h>
 
 #define TNF_EMPTY 0x0
@@ -42,9 +41,7 @@ class NdefRecord
         void setPayload(const byte *payload, const int numBytes);
         void setId(const byte *id, const unsigned int numBytes);
 
-#ifdef NDEF_USE_SERIAL
         void print();
-#endif
     private:
         byte getTnfByte(bool firstRecord, bool lastRecord);
         byte _tnf; // 3 bit

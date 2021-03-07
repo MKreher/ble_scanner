@@ -16,7 +16,7 @@ class MifareClassic
     public:
         MifareClassic(PN532& nfcShield);
         ~MifareClassic();
-        NfcTag read(byte *uid, unsigned int uidLength);
+        NfcTag* read(byte *uid, unsigned int uidLength);
         boolean write(NdefMessage& ndefMessage, byte *uid, unsigned int uidLength);
         boolean formatNDEF(byte * uid, unsigned int uidLength);
         boolean formatMifare(byte * uid, unsigned int uidLength);

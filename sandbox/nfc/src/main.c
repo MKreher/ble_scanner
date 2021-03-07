@@ -74,6 +74,7 @@
 #include "nrf_log_default_backends.h"
 
 #include "PN532_Wrapper.h"
+#include "NDEF_Wrapper.h"
 
 #define SCHED_MAX_EVENT_DATA_SIZE 16 // Maximum size of scheduler events
 #define SCHED_QUEUE_SIZE 196         // Maximum number of events in the scheduler queue
@@ -82,6 +83,7 @@ static const nrf_drv_spi_t spi0 = NRF_DRV_SPI_INSTANCE(0);
 
 static bool g_read_nfc = false;
 static PN532 *nfc;
+static NfcAdapter *g_nfc;
 
 static void lfclk_config(void)
 {
@@ -91,6 +93,34 @@ static void lfclk_config(void)
     APP_ERROR_CHECK(err_code);
 
     nrf_drv_clock_lfclk_request(NULL);
+}
+
+void init_nfc() {
+  NRF_LOG_INFO("init_nfc()");
+  g_nfc = create_nfc_adapter(spi0);
+  nfc_begin(g_nfc, true);
+
+  //destroy_nfc_adapter(g_nfc);
+}
+
+void read_mifare_tag()
+{
+  NRF_LOG_INFO("* read_mifare_tag()");
+  if (nfc_tag_present(g_nfc, 0))
+  {
+    NRF_LOG_INFO("**Tag detected.");
+    NfcTag* tag = nfc_read(g_nfc);
+    if (nfc_tag_has_ndef_message(tag))
+    {
+      NRF_LOG_INFO("***Tag %s has NDEF message.", nfc_tag_get_uid(tag));
+      nfc_tag_print(tag);
+    }
+    else
+    {
+      NRF_LOG_INFO("***Tag %s has no NDEF message.", nfc_tag_get_uid(tag));
+    }
+    destroy_nfc_tag(tag);
+  }
 }
 
 void init_pn532() {
@@ -109,8 +139,7 @@ void init_pn532() {
   destroyPN532(nfc);
 }
 
-
-void read_mifare_tag()
+void read_mifare_tag_pn532()
 {
   NRF_LOG_INFO("read_mifare_tag()");
 
@@ -142,17 +171,16 @@ void read_mifare_tag()
       uint8_t keya[6] = { 0xD3, 0xF7, 0xD3, 0xF7, 0xD3, 0xF7 };
       //uint8_t keya[6] = { 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5 };
       //uint8_t keya[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-      /* Other common "default" keys
-          0XFF 0XFF 0XFF 0XFF 0XFF 0XFF
-          0XD3 0XF7 0XD3 0XF7 0XD3 0XF7
-          0XA0 0XA1 0XA2 0XA3 0XA4 0XA5
-          0XB0 0XB1 0XB2 0XB3 0XB4 0XB5
-          0X4D 0X3A 0X99 0XC3 0X51 0XDD
-          0X1A 0X98 0X2C 0X7E 0X45 0X9A
-          0XAA 0XBB 0XCC 0XDD 0XEE 0XFF
-          0X00 0X00 0X00 0X00 0X00 0X00
-          0XAB 0XCD 0XEF 0X12 0X34 0X56
-      */
+      // Other common "default" keys
+      //    0XFF 0XFF 0XFF 0XFF 0XFF 0XFF
+      //    0XD3 0XF7 0XD3 0XF7 0XD3 0XF7
+      //    0XA0 0XA1 0XA2 0XA3 0XA4 0XA5
+      //    0XB0 0XB1 0XB2 0XB3 0XB4 0XB5
+      //    0X4D 0X3A 0X99 0XC3 0X51 0XDD
+      //    0X1A 0X98 0X2C 0X7E 0X45 0X9A
+      //    0XAA 0XBB 0XCC 0XDD 0XEE 0XFF
+      //    0X00 0X00 0X00 0X00 0X00 0X00
+      //    0XAB 0XCD 0XEF 0X12 0X34 0X56
 	  
       // Start with block 4 (the first block of sector 1) since sector 0
       // contains the manufacturer data and it's probably better just
@@ -287,7 +315,8 @@ int main(void)
 
     utils_setup();
 
-    init_pn532();
+    //init_pn532();
+    init_nfc();
     
     NRF_LOG_INFO("Firmware initialization finshed.");
 
@@ -295,11 +324,14 @@ int main(void)
 
     while (g_read_nfc == true)
     {
+      
+      //read_mifare_tag_pn532();
       read_mifare_tag();
       __WFE();
       app_sched_execute();
       //nrf_pwr_mgmt_run();
       NRF_LOG_FLUSH();
+      nrf_delay_ms(2000);
     }
 
     while (true)

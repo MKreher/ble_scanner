@@ -200,11 +200,6 @@ void pn532_PrintHex(PN532* pn532, const uint8_t *data, const uint32_t numBytes)
   pn532->PrintHex(data, numBytes);
 }
 
-void pn532_PrintHexChar(PN532* pn532, const uint8_t *pbtData, const uint32_t numBytes)
-{
-  pn532->PrintHexChar(pbtData, numBytes);
-}
-
 uint8_t *pn532_getBuffer(PN532* pn532, uint8_t *len)
 {
   return pn532->getBuffer(len);

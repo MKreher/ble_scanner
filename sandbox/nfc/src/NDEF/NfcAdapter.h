@@ -28,9 +28,9 @@ class NfcAdapter {
         NfcAdapter(nrf_drv_spi_t p_spi);
 
         ~NfcAdapter(void);
-        void begin(boolean verbose=true);
+        boolean begin(boolean verbose=true);
         boolean tagPresent(unsigned long timeout=0); // tagAvailable
-        NfcTag read();
+        NfcTag* read();
         boolean write(NdefMessage& ndefMessage);
         // erase tag by writing an empty NDEF record
         boolean erase();

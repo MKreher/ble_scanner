@@ -1,5 +1,9 @@
 #include "NdefRecord.h"
 
+extern "C" {
+  #include "nrf_log.h"
+}
+
 NdefRecord::NdefRecord()
 {
     //Serial.println("NdefRecord Constructor 1");
@@ -292,6 +296,8 @@ void NdefRecord::getId(byte *id)
 
 void NdefRecord::setId(const byte * id, const unsigned int numBytes)
 {
+    NRF_LOG_INFO("*********** setId() id=%s numBytes=%d", id,numBytes);
+    NRF_LOG_HEXDUMP_INFO(id, numBytes);
     if (_idLength)
     {
         free(_id);
@@ -301,54 +307,48 @@ void NdefRecord::setId(const byte * id, const unsigned int numBytes)
     memcpy(_id, id, numBytes);
     _idLength = numBytes;
 }
-#ifdef NDEF_USE_SERIAL
 
 void NdefRecord::print()
 {
-    Serial.println(F("  NDEF Record"));
-    Serial.print(F("    TNF 0x"));Serial.print(_tnf, HEX);Serial.print(" ");
+    NRF_LOG_INFO("  NDEF Record");
+    NRF_LOG_INFO("    TNF 0x%X", _tnf);
     switch (_tnf) {
     case TNF_EMPTY:
-        Serial.println(F("Empty"));
+        NRF_LOG_INFO("Empty");
         break;
     case TNF_WELL_KNOWN:
-        Serial.println(F("Well Known"));
+        NRF_LOG_INFO("Well Known");
         break;
     case TNF_MIME_MEDIA:
-        Serial.println(F("Mime Media"));
+        NRF_LOG_INFO("Mime Media");
         break;
     case TNF_ABSOLUTE_URI:
-        Serial.println(F("Absolute URI"));
+        NRF_LOG_INFO("Absolute URI");
         break;
     case TNF_EXTERNAL_TYPE:
-        Serial.println(F("External"));
+        NRF_LOG_INFO("External");
         break;
     case TNF_UNKNOWN:
-        Serial.println(F("Unknown"));
+        NRF_LOG_INFO("Unknown");
         break;
     case TNF_UNCHANGED:
-        Serial.println(F("Unchanged"));
+        NRF_LOG_INFO("Unchanged");
         break;
     case TNF_RESERVED:
-        Serial.println(F("Reserved"));
+        NRF_LOG_INFO("Reserved");
         break;
     default:
-        Serial.println();
+        NRF_LOG_INFO("Unknown TNF");
     }
-    Serial.print(F("    Type Length 0x"));Serial.print(_typeLength, HEX);Serial.print(" ");Serial.println(_typeLength);
-    Serial.print(F("    Payload Length 0x"));Serial.print(_payloadLength, HEX);;Serial.print(" ");Serial.println(_payloadLength);
+    NRF_LOG_INFO("    Type Length 0x%X %d", _typeLength, _typeLength);
+    NRF_LOG_INFO("    Payload Length 0x%X %d", _payloadLength, _payloadLength);
     if (_idLength)
     {
-        Serial.print(F("    Id Length 0x"));Serial.println(_idLength, HEX);
+        NRF_LOG_INFO("    Id Length 0x%X", _idLength);
     }
-    Serial.print(F("    Type "));PrintHexChar(_type, _typeLength);
-    // TODO chunk large payloads so this is readable
-    Serial.print(F("    Payload "));PrintHexChar(_payload, _payloadLength);
-    if (_idLength)
-    {
-        Serial.print(F("    Id "));PrintHexChar(_id, _idLength);
-    }
-    Serial.print(F("    Record is "));Serial.print(getEncodedSize());Serial.println(" bytes");
-
+    NRF_LOG_INFO("    Type:");
+    NRF_LOG_HEXDUMP_INFO(_type, _typeLength);
+    NRF_LOG_INFO("    Payload:");
+    NRF_LOG_HEXDUMP_INFO(_payload, _payloadLength);
+    NRF_LOG_INFO("    Record is %d bytes", getEncodedSize());
 }
-#endif
