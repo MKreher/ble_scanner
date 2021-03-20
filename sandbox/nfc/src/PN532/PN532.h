@@ -152,6 +152,13 @@ extern "C" {
 #define FELICA_WRITE_MAX_BLOCK_NUM          10 // for typical FeliCa card
 #define FELICA_REQ_SERVICE_MAX_NODE_NUM     32
 
+// NFC tag error codes
+#define NFCTAG_NO_ERROR                     0
+#define NFCTAG_NOT_NDEF_FORMATTED           1
+#define NFCTAG_AUTHENTICATION_FAILED        2
+#define NFCTAG_READ_FAILED                  3
+#define NFCTAG_OTHER_ERROR                  9
+
 class PN532
 {
 public:

@@ -69,19 +69,19 @@ NfcTag* create_nfc_tag()
 
 NfcTag* create_nfc_tag2(uint8_t *uid, unsigned int uidLength)
 {
-  return new NfcTag(uid, uidLength);
+  return new NfcTag(uid, uidLength, NFCTAG_NO_ERROR);
 }
 
 NfcTag* create_nfc_tag3(uint8_t *uid, unsigned int uidLength, const char* tagType)
 {
   String* tagTypeStr = new String(tagType);
-  return new NfcTag(uid, uidLength, *tagTypeStr);
+  return new NfcTag(uid, uidLength, *tagTypeStr, NFCTAG_NO_ERROR);
 }
 
 NfcTag* create_nfc_tag4(uint8_t *uid, unsigned int uidLength, const char* tagType, NdefMessage* ndefMessage)
 {
   String* tagTypeStr = new String(tagType);
-  return new NfcTag(uid, uidLength, *tagTypeStr, *ndefMessage);
+  return new NfcTag(uid, uidLength, *tagTypeStr, *ndefMessage, NFCTAG_NO_ERROR);
 }
 
 void destroy_nfc_tag(NfcTag* nfcTag)
@@ -118,6 +118,11 @@ NdefMessage* nfc_tag_get_ndef_message(NfcTag* nfcTag)
 {
   g_NdefMessage = nfcTag->getNdefMessage();
   return g_NdefMessage;
+}
+
+uint8_t nfc_tag_get_error_code(NfcTag* nfcTag)
+{
+  return nfcTag->getErrorCode();
 }
 
 void nfc_tag_print(NfcTag* nfcTag)

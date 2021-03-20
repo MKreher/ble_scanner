@@ -27,7 +27,7 @@ bool nfc_clean(NfcAdapter* nfcAdapter);
 
 
 // ===================================================================
-// NDEF-Tag functions
+// NFC-Tag functions
 // ===================================================================
 NfcTag* create_nfc_tag();
 NfcTag* create_nfc_tag2(uint8_t* uid, unsigned int uidLength);
@@ -40,6 +40,7 @@ const char* nfc_tag_get_uid(NfcTag* nfcTag);
 const char* nfc_tag_get_tag_type(NfcTag* nfcTag);
 bool nfc_tag_has_ndef_message(NfcTag* nfcTag);
 NdefMessage* nfc_tag_get_ndef_message(NfcTag* nfcTag);
+uint8_t nfc_tag_get_error_code(NfcTag* nfcTag);
 void nfc_tag_print(NfcTag* nfcTag);
 
 

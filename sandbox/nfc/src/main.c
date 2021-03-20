@@ -45,7 +45,8 @@
  */
 
 /**
- * @defgroup nfc_adafruit_tag_reader_example This example presents combined use of the Adafruit tag reader
+ * @defgroup nfc_adafruit_tag_reader_example This example presents combined use of the Adafruit tag
+ reader
  *      (@ref adafruit_pn532) library with Type 2 Tag parser (@ref nfc_type_2_tag_parser).
 
  */
@@ -53,20 +54,20 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "boards.h"
-#include "app_util_platform.h"
-#include "app_timer.h"
 #include "app_scheduler.h"
-#include "nrf_pwr_mgmt.h"
+#include "app_timer.h"
+#include "app_util_platform.h"
+#include "boards.h"
 #include "nrf_drv_clock.h"
+#include "nrf_pwr_mgmt.h"
 //#include "nrf_spi_mngr.h"
 #include "app_error.h"
 #include "bsp.h"
 #include "hardfault.h"
 #include "nrf_delay.h"
-#include "sdk_macros.h"
-#include "sdk_config.h"
 #include "nrf_drv_gpiote.h"
+#include "sdk_config.h"
+#include "sdk_macros.h"
 
 
 #include "nrf_log.h"
@@ -81,7 +82,7 @@
 static const nrf_drv_spi_t spi0 = NRF_DRV_SPI_INSTANCE(0);
 
 static bool g_read_nfc = false;
-static NfcAdapter *g_nfc;
+static NfcAdapter * g_nfc;
 
 static void lfclk_config(void)
 {
@@ -93,32 +94,58 @@ static void lfclk_config(void)
     nrf_drv_clock_lfclk_request(NULL);
 }
 
-void init_nfc() {
-  NRF_LOG_INFO("init_nfc()");
-  g_nfc = create_nfc_adapter(spi0);
-  nfc_begin(g_nfc, true);
+void init_nfc()
+{
+    NRF_LOG_INFO("init_nfc()");
+    g_nfc = create_nfc_adapter(spi0);
+    nfc_begin(g_nfc, true);
 
-  //destroy_nfc_adapter(g_nfc);
+    // destroy_nfc_adapter(g_nfc);
 }
 
 void read_mifare_tag()
 {
-  NRF_LOG_INFO("* read_mifare_tag()");
-  if (nfc_tag_present(g_nfc, 0))
-  {
-    NRF_LOG_INFO("**Tag detected.");
-    NfcTag* tag = nfc_read(g_nfc);
-    if (nfc_tag_has_ndef_message(tag))
+    NRF_LOG_INFO("* read_mifare_tag()");
+    if (nfc_tag_present(g_nfc, 0))
     {
-      NRF_LOG_INFO("***Tag %d has NDEF message.", nfc_tag_get_uid(tag));
-      nfc_tag_print(tag);
+        NRF_LOG_INFO("**Tag detected.");
+        NfcTag * tag = nfc_read(g_nfc);
+
+        uint8_t nfc_error_code = nfc_tag_get_error_code(tag);
+
+        if (nfc_error_code != 0)
+        {
+            switch (nfc_error_code)
+            {
+                case 1: // NFCTAG_NOT_NDEF_FORMATTED
+                    NRF_LOG_ERROR("NFC tag not NDEF formatted.");
+                    break;
+                case 2: // NFCTAG_AUTHENTICATION_FAILED
+                    NRF_LOG_ERROR("NFC tag authentication error.");
+                    break;
+                case 3: // NFCTAG_READ_FAILED
+                    NRF_LOG_ERROR("NFC tag read failed.");
+                    break;
+                case 9: // NFCTAG_OTHER_ERROR
+                    NRF_LOG_ERROR("NFC tag other error.");
+                    break;
+            }
+        }
+        else
+        {
+            if (nfc_tag_has_ndef_message(tag))
+            {
+                NRF_LOG_INFO("***Tag %d has NDEF message.", nfc_tag_get_uid(tag));
+                nfc_tag_print(tag);
+            }
+            else
+            {
+                NRF_LOG_INFO("***Tag %d has no NDEF message.", nfc_tag_get_uid(tag));
+            }
+        }
+
+        destroy_nfc_tag(tag);
     }
-    else
-    {
-      NRF_LOG_INFO("***Tag %d has no NDEF message.", nfc_tag_get_uid(tag));
-    }
-    destroy_nfc_tag(tag);
-  }
 }
 
 void button1_scheduled_event_handler(void * p_event_data, uint16_t event_size)
@@ -133,30 +160,29 @@ void button1_scheduled_event_handler(void * p_event_data, uint16_t event_size)
     {
         NRF_LOG_INFO("button1_scheduled_event_handler() [executing in interrupt handler mode]");
     }
-    
 }
 
 void bsp_event_handler(bsp_event_t event)
 {
     switch (event)
     {
-    case BSP_EVENT_KEY_0:
-        NRF_LOG_INFO("Button 1.");
-        app_sched_event_put(NULL, 0, button1_scheduled_event_handler);
-        break;
-    case BSP_EVENT_KEY_1:
-        NRF_LOG_INFO("Button 2.");
-        g_read_nfc = false;
-        bsp_board_led_invert(BSP_BOARD_LED_0);
-        break;
-    case BSP_EVENT_KEY_2:
-        NRF_LOG_INFO("Button 3.");
-        break;
-    case BSP_EVENT_KEY_3:
-        NRF_LOG_INFO("Button 4.");
-        break;
-    default:
-        break;
+        case BSP_EVENT_KEY_0:
+            NRF_LOG_INFO("Button 1.");
+            app_sched_event_put(NULL, 0, button1_scheduled_event_handler);
+            break;
+        case BSP_EVENT_KEY_1:
+            NRF_LOG_INFO("Button 2.");
+            g_read_nfc = false;
+            bsp_board_led_invert(BSP_BOARD_LED_0);
+            break;
+        case BSP_EVENT_KEY_2:
+            NRF_LOG_INFO("Button 3.");
+            break;
+        case BSP_EVENT_KEY_3:
+            NRF_LOG_INFO("Button 4.");
+            break;
+        default:
+            break;
     }
 }
 
@@ -185,30 +211,29 @@ int main(void)
     utils_setup();
 
     init_nfc();
-    
+
     NRF_LOG_INFO("Firmware initialization finshed.");
 
     g_read_nfc = true;
 
     while (g_read_nfc == true)
     {
-      read_mifare_tag();
-      __WFE();
-      app_sched_execute();
-      //nrf_pwr_mgmt_run();
-      NRF_LOG_FLUSH();
-      nrf_delay_ms(2000);
+        read_mifare_tag();
+        __WFE();
+        app_sched_execute();
+        // nrf_pwr_mgmt_run();
+        NRF_LOG_FLUSH();
+        nrf_delay_ms(2000);
     }
 
     while (true)
-    {      
-      __WFE();
-      app_sched_execute();
-      //nrf_pwr_mgmt_run();
-      NRF_LOG_FLUSH();
+    {
+        __WFE();
+        app_sched_execute();
+        // nrf_pwr_mgmt_run();
+        NRF_LOG_FLUSH();
     }
 }
 
 
 /** @} */ /* End of group nfc_adafruit_tag_reader_example */
-

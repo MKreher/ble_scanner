@@ -10,39 +10,44 @@ NfcTag::NfcTag()
     _uidLength = 0;
     _tagType = "Unknown";
     _ndefMessage = (NdefMessage*)NULL;
+    _errorCode = 0;
 }
 
-NfcTag::NfcTag(byte *uid, unsigned int uidLength)
+NfcTag::NfcTag(byte *uid, unsigned int uidLength, uint8_t errorCode)
 {
     _uid = uid;
     _uidLength = uidLength;
     _tagType = "Unknown";
     _ndefMessage = (NdefMessage*)NULL;
+    _errorCode = errorCode;
 }
 
-NfcTag::NfcTag(byte *uid, unsigned int  uidLength, String tagType)
+NfcTag::NfcTag(byte *uid, unsigned int  uidLength, String tagType, uint8_t errorCode)
 {
     _uid = uid;
     _uidLength = uidLength;
     _tagType = tagType;
     _ndefMessage = (NdefMessage*)NULL;
+    _errorCode = errorCode;
 }
 
-NfcTag::NfcTag(byte *uid, unsigned int  uidLength, String tagType, NdefMessage& ndefMessage)
+NfcTag::NfcTag(byte *uid, unsigned int  uidLength, String tagType, NdefMessage& ndefMessage, uint8_t errorCode)
 {
     _uid = uid;
     _uidLength = uidLength;
     _tagType = tagType;
     _ndefMessage = new NdefMessage(ndefMessage);
+    _errorCode = errorCode;
 }
 
 // I don't like this version, but it will use less memory
-NfcTag::NfcTag(byte *uid, unsigned int uidLength, String tagType, const byte *ndefData, const int ndefDataLength)
+NfcTag::NfcTag(byte *uid, unsigned int uidLength, String tagType, const byte *ndefData, const int ndefDataLength, uint8_t errorCode)
 {
     _uid = uid;
     _uidLength = uidLength;
     _tagType = tagType;
     _ndefMessage = new NdefMessage(ndefData, ndefDataLength);
+    _errorCode = errorCode;
 }
 
 NfcTag::~NfcTag()
@@ -108,6 +113,11 @@ boolean NfcTag::hasNdefMessage()
 NdefMessage* NfcTag::getNdefMessage()
 {
     return _ndefMessage;
+}
+
+uint8_t NfcTag::getErrorCode()
+{
+    return _errorCode;
 }
 
 void NfcTag::print()

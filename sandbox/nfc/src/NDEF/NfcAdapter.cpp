@@ -119,13 +119,12 @@ NfcTag* NfcAdapter::read()
     else if (type == TAG_TYPE_UNKNOWN)
     {
         NRF_LOG_INFO("Can not determine tag type");
-        return new NfcTag(uid, uidLength);
+        return new NfcTag(uid, uidLength, NFCTAG_OTHER_ERROR);
     }
     else
     {
         NRF_LOG_INFO("No driver for card type %d", type);
-        // TODO should set type here
-        return new NfcTag(uid, uidLength);
+        return new NfcTag(uid, uidLength, NFCTAG_OTHER_ERROR);
     }
 
 }

@@ -45,20 +45,19 @@ NfcTag* MifareClassic::read(byte *uid, unsigned int uidLength)
         if (success)
         {
             if (!decodeTlv(data, messageLength, messageStartIndex)) {
-                return new NfcTag(uid, uidLength, "ERROR"); // TODO should the error message go in NfcTag?
+                return new NfcTag(uid, uidLength, NFCTAG_READ_FAILED);
             }
         }
         else
         {
             NRF_LOG_INFO("Error. Failed read block %d", currentBlock);
-            return new NfcTag(uid, uidLength, MIFARE_CLASSIC);
+            return new NfcTag(uid, uidLength, MIFARE_CLASSIC, NFCTAG_READ_FAILED);
         }
     }
     else
     {
-        NRF_LOG_INFO("Tag is not NDEF formatted.");
-        // TODO set tag.isFormatted = false
-        return new NfcTag(uid, uidLength, MIFARE_CLASSIC);
+        NRF_LOG_INFO("Tag authentication failed.");
+        return new NfcTag(uid, uidLength, MIFARE_CLASSIC, NFCTAG_AUTHENTICATION_FAILED);
     }
 
     // this should be nested in the message length loop
@@ -82,7 +81,7 @@ NfcTag* MifareClassic::read(byte *uid, unsigned int uidLength)
             if (!success)
             {
                 NRF_LOG_INFO("Error. Block Authentication failed for %d", currentBlock);
-                return new NfcTag(uid, uidLength, MIFARE_CLASSIC);
+                return new NfcTag(uid, uidLength, MIFARE_CLASSIC, NFCTAG_AUTHENTICATION_FAILED);
             }
         }
 
@@ -96,7 +95,7 @@ NfcTag* MifareClassic::read(byte *uid, unsigned int uidLength)
         else
         {
             NRF_LOG_INFO("Read failed %d", currentBlock);
-            return new NfcTag(uid, uidLength, MIFARE_CLASSIC);
+            return new NfcTag(uid, uidLength, MIFARE_CLASSIC, NFCTAG_READ_FAILED);
         }
 
         index += BLOCK_SIZE;
@@ -110,7 +109,7 @@ NfcTag* MifareClassic::read(byte *uid, unsigned int uidLength)
         }
     }
      
-    return new NfcTag(uid, uidLength, MIFARE_CLASSIC, &buffer[messageStartIndex], messageLength);
+    return new NfcTag(uid, uidLength, MIFARE_CLASSIC, &buffer[messageStartIndex], messageLength, NFCTAG_NO_ERROR);
 }
 
 int MifareClassic::getBufferSize(int messageLength)
