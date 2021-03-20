@@ -14,11 +14,11 @@ class MifareUltralight
         boolean write(NdefMessage& ndefMessage, byte *uid, unsigned int uidLength);
         boolean clean();
     private:
-        PN532* nfc;
-        unsigned int tagCapacity;
-        unsigned int messageLength;
-        unsigned int bufferSize;
-        unsigned int ndefStartIndex;
+        PN532* _nfcShield;
+        unsigned int _tagCapacity;
+        unsigned int _messageLength;
+        unsigned int _bufferSize;
+        unsigned int _ndefStartIndex;
         boolean isUnformatted();
         void readCapabilityContainer();
         void findNdefMessage();

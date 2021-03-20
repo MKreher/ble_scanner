@@ -26,6 +26,7 @@
   <ProjectSessionItem path="nfc;nfc;Application"/>
   <ProjectSessionItem path="nfc;nfc;NDEF"/>
   <ProjectSessionItem path="nfc;nfc;nRF_Libraries"/>
+  <ProjectSessionItem path="nfc;nfc;nRF_Log"/>
   <ProjectSessionItem path="nfc;nfc;PN532"/>
   <ProjectSessionItem path="nfc;nfc;Third Parties"/>
  </Project>
@@ -63,13 +64,13 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="312" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/main.c" selected="0" top="298" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="66" useTextEdit="1" openedFrom="C:/Work/ble_scanner/sandbox/nfc/src/NDEF/NfcTag.cpp" useBinaryEdit="0" left="0" path="../src/NDEF/NdefMessage.cpp" selected="1" top="47" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="21" y="6" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/NDEF/NdefMessage.h" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="19" y="50" useTextEdit="1" openedFrom="C:/Work/ble_scanner/sandbox/nfc/src/NDEF/NdefRecord.cpp" useBinaryEdit="0" left="0" path="../src/NDEF/NdefRecord.h" selected="0" top="18" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="22" y="296" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/NDEF/NdefRecord.cpp" selected="0" top="284" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="C:/Work/ble_scanner/sandbox/nfc/src/NDEF/NfcAdapter.cpp" useBinaryEdit="0" left="0" path="../src/NDEF/MifareClassic.cpp" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="50" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../nRF5_SDK_16.0.0/components/libraries/hardfault/nrf52/handler/hardfault_handler_gcc.c" selected="0" top="31" codecName=""/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="312" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/main.c" selected="1" top="279" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="25" useTextEdit="1" openedFrom="C:/Work/ble_scanner/sandbox/nfc/src/NDEF/NfcTag.cpp" useBinaryEdit="0" left="0" path="../src/NDEF/NdefMessage.cpp" selected="0" top="3" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="6" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/NDEF/NdefMessage.h" selected="0" top="6" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="50" useTextEdit="1" openedFrom="C:/Work/ble_scanner/sandbox/nfc/src/NDEF/NdefRecord.cpp" useBinaryEdit="0" left="0" path="../src/NDEF/NdefRecord.h" selected="0" top="50" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="296" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/NDEF/NdefRecord.cpp" selected="0" top="296" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="28" y="35" useTextEdit="1" openedFrom="C:/Work/ble_scanner/sandbox/nfc/src/NDEF/NfcAdapter.cpp" useBinaryEdit="0" left="0" path="../src/NDEF/MifareClassic.cpp" selected="0" top="18" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="38" y="433" useTextEdit="1" openedFrom="C:/Work/ble_scanner/sandbox/nfc/src/NDEF/MifareClassic.cpp" useBinaryEdit="0" left="0" path="../src/PN532/PN532.cpp" selected="0" top="416" codecName="Default"/>
  </Files>
  <ARMCrossStudioWindow activeProject="nfc" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="C:/Work/ble_scanner/sandbox/nfc/src/NDEF" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>

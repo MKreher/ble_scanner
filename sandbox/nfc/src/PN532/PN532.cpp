@@ -487,7 +487,7 @@ uint8_t PN532::mifareclassic_ReadDataBlock (uint8_t blockNumber, uint8_t *data)
     m_pn532_hal->readResponse(pn532_packetbuffer, sizeof(pn532_packetbuffer));
 
     /* If byte 8 isn't 0x00 we probably have an error */
-    if (pn532_packetbuffer[0] != 0x00) {
+    if (pn532_packetbuffer[PN532_DATA_OFFSET + 1] != 0x00) {
         return 0;
     }
     
@@ -671,14 +671,14 @@ uint8_t PN532::mifareultralight_ReadPage (uint8_t page, uint8_t *buffer)
     /* Read the response packet */
     m_pn532_hal->readResponse(pn532_packetbuffer, sizeof(pn532_packetbuffer));
 
-    /* If byte 8 isn't 0x00 we probably have an error */
-    if (pn532_packetbuffer[0] == 0x00) {
+    /* If statuy byte (byte 8) isn't 0x00 we probably have an error */
+    if (pn532_packetbuffer[PN532_DATA_OFFSET + 1] == 0x00) {
         /* Copy the 4 data bytes to the output buffer         */
         /* Block content starts at byte 9 of a valid response */
         /* Note that the command actually reads 16 bytes or 4  */
         /* pages at a time ... we simply discard the last 12  */
         /* bytes                                              */
-        memcpy (buffer, pn532_packetbuffer + 1, 4);
+        memcpy (buffer, pn532_packetbuffer + PN532_DATA_OFFSET + 2, 4);
     } else {
         return 0;
     }

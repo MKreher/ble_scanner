@@ -2,6 +2,7 @@
 
 extern "C" {
   #include "nrf_log.h"
+  #include "nrf_delay.h"
 }
 
 #define BLOCK_SIZE 16
@@ -10,10 +11,7 @@ extern "C" {
 
 #define MIFARE_CLASSIC ("Mifare Classic")
 
-MifareClassic::MifareClassic(PN532& nfcShield)
-{
-  _nfcShield = &nfcShield;
-}
+MifareClassic::MifareClassic(PN532 & nfcShield) { _nfcShield = &nfcShield; }
 
 MifareClassic::~MifareClassic()
 {
@@ -21,25 +19,26 @@ MifareClassic::~MifareClassic()
 
 NfcTag* MifareClassic::read(byte *uid, unsigned int uidLength)
 {
-    uint8_t key[6] = { 0xD3, 0xF7, 0xD3, 0xF7, 0xD3, 0xF7 };
-    // Other common "default" keys
-    //    0XFF 0XFF 0XFF 0XFF 0XFF 0XFF
-    //    0XD3 0XF7 0XD3 0XF7 0XD3 0XF7
-    //    0XA0 0XA1 0XA2 0XA3 0XA4 0XA5
-    //    0XB0 0XB1 0XB2 0XB3 0XB4 0XB5
-    //    0X4D 0X3A 0X99 0XC3 0X51 0XDD
-    //    0X1A 0X98 0X2C 0X7E 0X45 0X9A
-    //    0XAA 0XBB 0XCC 0XDD 0XEE 0XFF
-    //    0X00 0X00 0X00 0X00 0X00 0X00
-    //    0XAB 0XCD 0XEF 0X12 0X34 0X56
-
+    uint8_t default_keys[9][6] = {
+                                    { 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF },
+                                    { 0XD3, 0XF7, 0XD3, 0XF7, 0XD3, 0XF7 },
+                                    { 0XA0, 0XA1, 0XA2, 0XA3, 0XA4, 0XA5 },
+                                    { 0XB0, 0XB1, 0XB2, 0XB3, 0XB4, 0XB5 },
+                                    { 0X4D, 0X3A, 0X99, 0XC3, 0X51, 0XDD },
+                                    { 0X1A, 0X98, 0X2C, 0X7E, 0X45, 0X9A },
+                                    { 0XAA, 0XBB, 0XCC, 0XDD, 0XEE, 0XFF },
+                                    { 0X00, 0X00, 0X00, 0X00, 0X00, 0X00 },
+                                    { 0XAB, 0XCD, 0XEF, 0X12, 0X34, 0X56 }
+                                  };
+    int key_idx = 1;
     int currentBlock = 4;
     int messageStartIndex = 0;
     int messageLength = 0;
     byte data[BLOCK_SIZE];
+    uint8_t success = 0;
 
     // read first block to get message length
-    int success = _nfcShield->mifareclassic_AuthenticateBlock(uid, uidLength, currentBlock, 0, key);
+    success = _nfcShield->mifareclassic_AuthenticateBlock(uid, uidLength, currentBlock, 0, default_keys[key_idx]);
     if (success)
     {
         success = _nfcShield->mifareclassic_ReadDataBlock(currentBlock, data);
@@ -77,11 +76,13 @@ NfcTag* MifareClassic::read(byte *uid, unsigned int uidLength)
         if (_nfcShield->mifareclassic_IsFirstBlock(currentBlock))
         {
             NRF_LOG_INFO("First data block %d.", currentBlock);
-            success = _nfcShield->mifareclassic_AuthenticateBlock(uid, uidLength, currentBlock, 0, key);
+
+            success = _nfcShield->mifareclassic_AuthenticateBlock(uid, uidLength, currentBlock, 0, default_keys[key_idx]);
+            
             if (!success)
             {
                 NRF_LOG_INFO("Error. Block Authentication failed for %d", currentBlock);
-                // TODO error handling
+                return new NfcTag(uid, uidLength, MIFARE_CLASSIC);
             }
         }
 
@@ -95,7 +96,7 @@ NfcTag* MifareClassic::read(byte *uid, unsigned int uidLength)
         else
         {
             NRF_LOG_INFO("Read failed %d", currentBlock);
-            // TODO handle errors here
+            return new NfcTag(uid, uidLength, MIFARE_CLASSIC);
         }
 
         index += BLOCK_SIZE;
