@@ -148,6 +148,42 @@ void read_mifare_tag()
     }
 }
 
+void clean_mifare_tag()
+{
+    NRF_LOG_INFO("* clean_mifare_tag()");
+    if (nfc_tag_present(g_nfc, 0))
+    {
+        NRF_LOG_INFO("**Tag detected.");
+        bool success = nfc_clean(g_nfc);
+        if (success)
+        {
+          NRF_LOG_INFO("***Tag cleaned.");
+        }
+        else
+        {
+          NRF_LOG_ERROR("***Tag clean failed.");
+        }
+    }
+}
+
+void erase_mifare_tag()
+{
+    NRF_LOG_INFO("* clean_mifare_tag()");
+    if (nfc_tag_present(g_nfc, 0))
+    {
+        NRF_LOG_INFO("**Tag detected.");
+        bool success = nfc_erase(g_nfc);
+        if (success)
+        {
+          NRF_LOG_INFO("***Tag erased.");
+        }
+        else
+        {
+          NRF_LOG_ERROR("***Tag erased failed.");
+        }
+    }
+}
+
 void button1_scheduled_event_handler(void * p_event_data, uint16_t event_size)
 {
     // execution in thread/main mode.
@@ -219,6 +255,7 @@ int main(void)
     while (g_read_nfc == true)
     {
         read_mifare_tag();
+        //erase_mifare_tag();
         __WFE();
         app_sched_execute();
         // nrf_pwr_mgmt_run();
