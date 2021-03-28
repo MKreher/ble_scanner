@@ -7,11 +7,11 @@ extern "C" {
 
 uint8_t TestCWithCpp::doSomething(uint16_t timeout)
 {
-    NRF_LOG_INFO("TestCWithCpp::doSomething() - START");
+    NRF_LOG_DEBUG("TestCWithCpp::doSomething() - START");
     
     nrf_delay_ms(timeout);
 
-    NRF_LOG_INFO("TestCWithCpp::doSomething() - END");
+    NRF_LOG_DEBUG("TestCWithCpp::doSomething() - END");
 
     return 0;
 }

@@ -11,8 +11,8 @@ NdefMessage::NdefMessage(void)
 
 NdefMessage::NdefMessage(const byte * data, const int numBytes)
 {
-    NRF_LOG_INFO("Decoding %d bytes", numBytes);
-    NRF_LOG_HEXDUMP_INFO(data, numBytes);
+    NRF_LOG_DEBUG("Decoding %d bytes", numBytes);
+    NRF_LOG_HEXDUMP_DEBUG(data, numBytes);
 
     _recordCount = 0;
 
@@ -158,7 +158,7 @@ boolean NdefMessage::addRecord(NdefRecord& record)
     }
     else
     {
-        NRF_LOG_INFO("WARNING: Too many records. Increase MAX_NDEF_RECORDS.");
+        NRF_LOG_DEBUG("WARNING: Too many records. Increase MAX_NDEF_RECORDS.");
         return false;
     }
 }

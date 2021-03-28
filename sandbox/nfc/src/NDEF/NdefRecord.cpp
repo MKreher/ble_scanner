@@ -296,8 +296,8 @@ void NdefRecord::getId(byte *id)
 
 void NdefRecord::setId(const byte * id, const unsigned int numBytes)
 {
-    NRF_LOG_INFO("*********** setId() id=%s numBytes=%d", id,numBytes);
-    NRF_LOG_HEXDUMP_INFO(id, numBytes);
+    NRF_LOG_DEBUG("*********** setId() id=%s numBytes=%d", id,numBytes);
+    NRF_LOG_HEXDUMP_DEBUG(id, numBytes);
     if (_idLength)
     {
         free(_id);
@@ -310,45 +310,45 @@ void NdefRecord::setId(const byte * id, const unsigned int numBytes)
 
 void NdefRecord::print()
 {
-    NRF_LOG_INFO("  NDEF Record");
-    NRF_LOG_INFO("    TNF 0x%X", _tnf);
+    NRF_LOG_DEBUG("  NDEF Record");
+    NRF_LOG_DEBUG("    TNF 0x%X", _tnf);
     switch (_tnf) {
     case TNF_EMPTY:
-        NRF_LOG_INFO("Empty");
+        NRF_LOG_DEBUG("Empty");
         break;
     case TNF_WELL_KNOWN:
-        NRF_LOG_INFO("Well Known");
+        NRF_LOG_DEBUG("Well Known");
         break;
     case TNF_MIME_MEDIA:
-        NRF_LOG_INFO("Mime Media");
+        NRF_LOG_DEBUG("Mime Media");
         break;
     case TNF_ABSOLUTE_URI:
-        NRF_LOG_INFO("Absolute URI");
+        NRF_LOG_DEBUG("Absolute URI");
         break;
     case TNF_EXTERNAL_TYPE:
-        NRF_LOG_INFO("External");
+        NRF_LOG_DEBUG("External");
         break;
     case TNF_UNKNOWN:
-        NRF_LOG_INFO("Unknown");
+        NRF_LOG_DEBUG("Unknown");
         break;
     case TNF_UNCHANGED:
-        NRF_LOG_INFO("Unchanged");
+        NRF_LOG_DEBUG("Unchanged");
         break;
     case TNF_RESERVED:
-        NRF_LOG_INFO("Reserved");
+        NRF_LOG_DEBUG("Reserved");
         break;
     default:
-        NRF_LOG_INFO("Unknown TNF");
+        NRF_LOG_DEBUG("Unknown TNF");
     }
-    NRF_LOG_INFO("    Type Length 0x%X %d", _typeLength, _typeLength);
-    NRF_LOG_INFO("    Payload Length 0x%X %d", _payloadLength, _payloadLength);
+    NRF_LOG_DEBUG("    Type Length 0x%X %d", _typeLength, _typeLength);
+    NRF_LOG_DEBUG("    Payload Length 0x%X %d", _payloadLength, _payloadLength);
     if (_idLength)
     {
-        NRF_LOG_INFO("    Id Length 0x%X", _idLength);
+        NRF_LOG_DEBUG("    Id Length 0x%X", _idLength);
     }
-    NRF_LOG_INFO("    Type:");
-    NRF_LOG_HEXDUMP_INFO(_type, _typeLength);
-    NRF_LOG_INFO("    Payload:");
-    NRF_LOG_HEXDUMP_INFO(_payload, _payloadLength);
-    NRF_LOG_INFO("    Record is %d bytes", getEncodedSize());
+    NRF_LOG_DEBUG("    Type:");
+    NRF_LOG_HEXDUMP_DEBUG(_type, _typeLength);
+    NRF_LOG_DEBUG("    Payload:");
+    NRF_LOG_HEXDUMP_DEBUG(_payload, _payloadLength);
+    NRF_LOG_DEBUG("    Record is %d bytes", getEncodedSize());
 }

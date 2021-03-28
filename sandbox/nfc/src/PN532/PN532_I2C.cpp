@@ -18,7 +18,7 @@ PN532_I2C::PN532_I2C(const nrf_drv_twi_t twi_master)
 
 void PN532_I2C::begin()
 {
-   NRF_LOG_INFO("Creating I2C");
+   NRF_LOG_DEBUG("Creating I2C");
 
    nrf_drv_twi_config_t twi_config = NRF_DRV_TWI_DEFAULT_CONFIG;
    twi_config.scl = PN532_CONFIG_SCL;
@@ -27,7 +27,7 @@ void PN532_I2C::begin()
    ret_code_t ret = nrf_drv_twi_init(&m_twi_master, &twi_config, NULL, NULL);
    if (ret != NRF_SUCCESS)
    {
-       NRF_LOG_INFO("Failed to initialize TWI, err_code = %d", ret);
+       NRF_LOG_DEBUG("Failed to initialize TWI, err_code = %d", ret);
        APP_ERROR_HANDLER(ret);
    }
    
@@ -55,15 +55,15 @@ int8_t PN532_I2C::writeCommand(const uint8_t *header, uint8_t hlen, const uint8_
     write(PN532_HOSTTOPN532);
     uint8_t sum = PN532_HOSTTOPN532;    // sum of TFI + DATA
     
-    NRF_LOG_INFO("write: ");
+    NRF_LOG_DEBUG("write: ");
        
     for (uint8_t i = 0; i < hlen; i++) {
         if (write(header[i])) {
             sum += header[i];
             
-            NRF_LOG_INFO("0x%X", header[i]);
+            NRF_LOG_DEBUG("0x%X", header[i]);
         } else {
-            NRF_LOG_INFO("\nToo many data to send, I2C doesn't support such a big packet\n");     // I2C max packet: 32 bytes
+            NRF_LOG_DEBUG("\nToo many data to send, I2C doesn't support such a big packet\n");     // I2C max packet: 32 bytes
             return PN532_INVALID_FRAME;
         }
     }
@@ -72,9 +72,9 @@ int8_t PN532_I2C::writeCommand(const uint8_t *header, uint8_t hlen, const uint8_
         if (write(body[i])) {
             sum += body[i];
             
-            NRF_LOG_INFO("0x%X", body[i]);
+            NRF_LOG_DEBUG("0x%X", body[i]);
         } else {
-            NRF_LOG_INFO("\nToo many data to send, I2C doesn't support such a big packet\n");     // I2C max packet: 32 bytes
+            NRF_LOG_DEBUG("\nToo many data to send, I2C doesn't support such a big packet\n");     // I2C max packet: 32 bytes
             return PN532_INVALID_FRAME;
         }
     }
@@ -85,7 +85,7 @@ int8_t PN532_I2C::writeCommand(const uint8_t *header, uint8_t hlen, const uint8_
     
     //_wire->endTransmission(); TODO: MKR ???
     
-    NRF_LOG_INFO("\n");
+    NRF_LOG_DEBUG("\n");
 
     return readAckFrame();
 }
@@ -174,21 +174,21 @@ int16_t PN532_I2C::readResponse(uint8_t buf[], uint8_t len, uint16_t timeout)
         return PN532_NO_SPACE;  // not enough space
     }
     
-    NRF_LOG_INFO("read:  ");
-    NRF_LOG_INFO("0x%X", cmd);
+    NRF_LOG_DEBUG("read:  ");
+    NRF_LOG_DEBUG("0x%X", cmd);
     
     uint8_t sum = PN532_PN532TOHOST + cmd;
     for (uint8_t i = 0; i < length; i++) {
         buf[i] = read();
         sum += buf[i];
         
-        NRF_LOG_INFO("0x%X", buf[i]);
+        NRF_LOG_DEBUG("0x%X", buf[i]);
     }
-    NRF_LOG_INFO("\n");
+    NRF_LOG_DEBUG("\n");
     
     uint8_t checksum = read();
     if (0 != (uint8_t)(sum + checksum)) {
-        NRF_LOG_INFO("checksum is not ok\n");
+        NRF_LOG_DEBUG("checksum is not ok\n");
         return PN532_INVALID_FRAME;
     }
     read();         // POSTAMBLE
@@ -201,8 +201,8 @@ int8_t PN532_I2C::readAckFrame()
     const uint8_t PN532_ACK[] = {0, 0, 0xFF, 0, 0xFF, 0};
     uint8_t ackBuf[sizeof(PN532_ACK)];
     
-    NRF_LOG_INFO("wait for ack at");
-    NRF_LOG_INFO("\n");
+    NRF_LOG_DEBUG("wait for ack at");
+    NRF_LOG_DEBUG("\n");
     
     uint16_t time = 0;
     do {
@@ -215,13 +215,13 @@ int8_t PN532_I2C::readAckFrame()
         nrf_delay_ms(1);
         time++;
         if (time > PN532_ACK_WAIT_TIME) {
-            NRF_LOG_INFO("Time out when waiting for ACK\n");
+            NRF_LOG_DEBUG("Time out when waiting for ACK\n");
             return PN532_TIMEOUT;
         }
     } while (1); 
     
-    NRF_LOG_INFO("ready after %d millis", time);
-    NRF_LOG_INFO("\n");
+    NRF_LOG_DEBUG("ready after %d millis", time);
+    NRF_LOG_DEBUG("\n");
     
 
     for (uint8_t i = 0; i < sizeof(PN532_ACK); i++) {
@@ -229,7 +229,7 @@ int8_t PN532_I2C::readAckFrame()
     }
     
     if (memcmp(ackBuf, PN532_ACK, sizeof(PN532_ACK))) {
-        NRF_LOG_INFO("Invalid ACK\n");
+        NRF_LOG_DEBUG("Invalid ACK\n");
         return PN532_INVALID_ACK;
     }
     

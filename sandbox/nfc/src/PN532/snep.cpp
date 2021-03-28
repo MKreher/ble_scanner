@@ -8,12 +8,12 @@ extern "C" {
 int8_t SNEP::write(const uint8_t *buf, uint8_t len, uint16_t timeout)
 {
 	if (0 >= llcp.activate(timeout)) {
-		NRF_LOG_INFO("failed to activate PN532 as a target\n");
+		NRF_LOG_DEBUG("failed to activate PN532 as a target\n");
 		return -1;
 	}
 
 	if (0 >= llcp.connect(timeout)) {
-		NRF_LOG_INFO("failed to set up a connection\n");
+		NRF_LOG_DEBUG("failed to set up a connection\n");
 		return -2;
 	}
 
@@ -35,14 +35,14 @@ int8_t SNEP::write(const uint8_t *buf, uint8_t len, uint16_t timeout)
 
 	// check SNEP version
 	if (SNEP_DEFAULT_VERSION != rbuf[0]) {
-		NRF_LOG_INFO("The received SNEP message's major version is different\n");
+		NRF_LOG_DEBUG("The received SNEP message's major version is different\n");
 		// To-do: send Unsupported Version response
 		return -4;
 	}
 
 	// expect a put request
 	if (SNEP_RESPONSE_SUCCESS != rbuf[1]) {
-		NRF_LOG_INFO("Expect a success response\n");
+		NRF_LOG_DEBUG("Expect a success response\n");
 		return -4;
 	}
 
@@ -54,12 +54,12 @@ int8_t SNEP::write(const uint8_t *buf, uint8_t len, uint16_t timeout)
 int16_t SNEP::read(uint8_t *buf, uint8_t len, uint16_t timeout)
 {
 	if (0 >= llcp.activate(timeout)) {
-		NRF_LOG_INFO("failed to activate PN532 as a target\n");
+		NRF_LOG_DEBUG("failed to activate PN532 as a target\n");
 		return -1;
 	}
 
 	if (0 >= llcp.waitForConnection(timeout)) {
-		NRF_LOG_INFO("failed to set up a connection\n");
+		NRF_LOG_DEBUG("failed to set up a connection\n");
 		return -2;
 	}
 
@@ -71,14 +71,14 @@ int16_t SNEP::read(uint8_t *buf, uint8_t len, uint16_t timeout)
 
 	// check SNEP version
 	if (SNEP_DEFAULT_VERSION != buf[0]) {
-		NRF_LOG_INFO("The received SNEP message's major version is different\n");
+		NRF_LOG_DEBUG("The received SNEP message's major version is different\n");
 		// To-do: send Unsupported Version response
 		return -4;
 	}
 
 	// expect a put request
 	if (SNEP_REQUEST_PUT != buf[1]) {
-		NRF_LOG_INFO("Expect a put request\n");
+		NRF_LOG_DEBUG("Expect a put request\n");
 		return -4;
 	}
 
@@ -86,8 +86,8 @@ int16_t SNEP::read(uint8_t *buf, uint8_t len, uint16_t timeout)
 	uint32_t length = (buf[2] << 24) + (buf[3] << 16) + (buf[4] << 8) + buf[5];
 	// length should not be more than 244 (header + body < 255, header = 6 + 3 + 2)
 	if (length > (status - 6)) {
-		NRF_LOG_INFO("The SNEP message is too large: %d %d", length, status - 6);
-		NRF_LOG_INFO("\n");
+		NRF_LOG_DEBUG("The SNEP message is too large: %d %d", length, status - 6);
+		NRF_LOG_DEBUG("\n");
 		return -4;
 	}
 	for (uint8_t i = 0; i < length; i++) {

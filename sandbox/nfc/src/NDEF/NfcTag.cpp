@@ -123,10 +123,10 @@ uint8_t NfcTag::getErrorCode()
 void NfcTag::print()
 {
     String uid = getUidString();
-    NRF_LOG_INFO("NFC Tag: type=%s , uid=%s", _tagType.c_str(), uid.c_str());
+    NRF_LOG_DEBUG("NFC Tag: type=%s , uid=%s", _tagType.c_str(), uid.c_str());
     if (_ndefMessage == NULL)
     {
-        NRF_LOG_INFO("No NDEF Message");
+        NRF_LOG_DEBUG("No NDEF Message");
     }
     else
     {

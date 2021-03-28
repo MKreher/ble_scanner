@@ -30,7 +30,7 @@ NfcTag * MifareUltralight::read(byte * uid, unsigned int uidLength)
     if (isUnformatted())
     {
         // tag is not NDEF formatted
-        NRF_LOG_INFO("Tag is not NDEF formatted.");
+        NRF_LOG_DEBUG("Tag is not NDEF formatted.");
         return new NfcTag(uid, uidLength, NFC_FORUM_TAG_TYPE_2, NFCTAG_NOT_NDEF_FORMATTED);
     }
 
@@ -58,12 +58,12 @@ NfcTag * MifareUltralight::read(byte * uid, unsigned int uidLength)
         success = _nfcShield->mifareultralight_ReadPage(page, &buffer[index]);
         if (success)
         {
-            NRF_LOG_INFO("Page  %d", page);
+            NRF_LOG_DEBUG("Page  %d", page);
             _nfcShield->PrintHex(&buffer[index], ULTRALIGHT_PAGE_SIZE);
         }
         else
         {
-            NRF_LOG_INFO("Read failed %d", page);
+            NRF_LOG_DEBUG("Read failed %d", page);
             _messageLength = 0;
             return new NfcTag(uid, uidLength, NFC_FORUM_TAG_TYPE_2, NFCTAG_READ_FAILED);
         }
@@ -91,7 +91,7 @@ boolean MifareUltralight::isUnformatted()
     }
     else
     {
-        NRF_LOG_INFO("Error. Failed read page %d", page);
+        NRF_LOG_DEBUG("Error. Failed read page %d", page);
         return false;
     }
 }
@@ -105,7 +105,7 @@ void MifareUltralight::readCapabilityContainer()
     {
         // See AN1303 - different rules for Mifare Family byte2 = (additional data + 48)/8
         _tagCapacity = data[2] * 8;
-        NRF_LOG_INFO("Tag capacity %d bytes", _tagCapacity);
+        NRF_LOG_DEBUG("Tag capacity %d bytes", _tagCapacity);
 
         // TODO future versions should get lock information
     }
@@ -123,7 +123,7 @@ void MifareUltralight::findNdefMessage()
     for (page = 4; page < 6; page++)
     {
         success = success && _nfcShield->mifareultralight_ReadPage(page, data_ptr);
-        NRF_LOG_INFO("Page %d", page);
+        NRF_LOG_DEBUG("Page %d", page);
         _nfcShield->PrintHex(data_ptr, 4);
         data_ptr += ULTRALIGHT_PAGE_SIZE;
     }
@@ -143,8 +143,8 @@ void MifareUltralight::findNdefMessage()
         }
     }
 
-    NRF_LOG_INFO("messageLength %d", _messageLength);
-    NRF_LOG_INFO("ndefStartIndex %d", _ndefStartIndex);
+    NRF_LOG_DEBUG("messageLength %d", _messageLength);
+    NRF_LOG_DEBUG("ndefStartIndex %d", _ndefStartIndex);
 }
 
 // buffer is larger than the message, need to handle some data before and after
@@ -165,7 +165,7 @@ boolean MifareUltralight::write(NdefMessage & m, byte * uid, unsigned int uidLen
 {
     if (isUnformatted())
     {
-        NRF_LOG_INFO("Tag is not formatted.");
+        NRF_LOG_DEBUG("Tag is not formatted.");
         return false;
     }
     readCapabilityContainer(); // meta info for tag
@@ -176,7 +176,7 @@ boolean MifareUltralight::write(NdefMessage & m, byte * uid, unsigned int uidLen
 
     if (_bufferSize > _tagCapacity)
     {
-        NRF_LOG_INFO("Encoded Message length exceeded tag Capacity %d", _tagCapacity);
+        NRF_LOG_DEBUG("Encoded Message length exceeded tag Capacity %d", _tagCapacity);
         return false;
     }
 
@@ -205,8 +205,8 @@ boolean MifareUltralight::write(NdefMessage & m, byte * uid, unsigned int uidLen
         _bufferSize - _ndefStartIndex - _messageLength);
     encoded[_ndefStartIndex + _messageLength] = 0xFE; // terminator
 
-    NRF_LOG_INFO("messageLength %d", _messageLength);
-    NRF_LOG_INFO("Tag Capacity %d", _tagCapacity);
+    NRF_LOG_DEBUG("messageLength %d", _messageLength);
+    NRF_LOG_DEBUG("Tag Capacity %d", _tagCapacity);
     _nfcShield->PrintHex(encoded, _bufferSize);
 
     while (position < _bufferSize){ //bufferSize is always times pagesize so no "last chunk" check
@@ -215,7 +215,7 @@ boolean MifareUltralight::write(NdefMessage & m, byte * uid, unsigned int uidLen
         {
             return false;
         }
-        NRF_LOG_INFO("Wrote page %d", page);
+        NRF_LOG_DEBUG("Wrote page %d", page);
         page++;
         src += ULTRALIGHT_PAGE_SIZE;
         position += ULTRALIGHT_PAGE_SIZE;
@@ -236,7 +236,7 @@ boolean MifareUltralight::clean()
 
     for (int i = ULTRALIGHT_DATA_START_PAGE; i < pages; i++)
     {
-        NRF_LOG_INFO("Wrote page %d", i);
+        NRF_LOG_DEBUG("Wrote page %d", i);
         _nfcShield->PrintHex(data, ULTRALIGHT_PAGE_SIZE);
         if (!_nfcShield->mifareultralight_WritePage(i, data))
         {

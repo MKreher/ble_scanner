@@ -26,9 +26,9 @@ inline void pn532_irq_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t ac
 {
     if (pin = PN532_IRQ_PIN)
     {
-        NRF_LOG_INFO("PN532 IRQ: %d", action);
+        NRF_LOG_DEBUG("PN532 IRQ: %d", action);
     } else {
-        NRF_LOG_INFO("Unknow pin: %d", pin);
+        NRF_LOG_DEBUG("Unknow pin: %d", pin);
     }
 }
 
@@ -79,12 +79,12 @@ int8_t PN532_SPI::writeCommand(const uint8_t *header, uint8_t hlen, const uint8_
         nrf_delay_ms(1);
         timeout--;
         if (0 == timeout) {
-            NRF_LOG_INFO("Time out when waiting for ACK");
+            NRF_LOG_DEBUG("Time out when waiting for ACK");
             return PN532_TIMEOUT;
         }
     }
     if (readAckFrame()) {
-        NRF_LOG_INFO("Invalid ACK");
+        NRF_LOG_DEBUG("Invalid ACK");
         return PN532_INVALID_ACK;
     }
     return 0;
@@ -109,7 +109,7 @@ int16_t PN532_SPI::readResponse(uint8_t *p_resp_buff, uint8_t p_resp_len, uint16
     nrf_gpio_pin_clear(SPI_SS_PIN_PN532);
     nrf_delay_ms(1);
 
-    NRF_LOG_INFO("Read response from PN532");
+    NRF_LOG_DEBUG("Read response from PN532");
 
     g_spi_xfer_done = false;
     
@@ -123,18 +123,18 @@ int16_t PN532_SPI::readResponse(uint8_t *p_resp_buff, uint8_t p_resp_len, uint16
 
     while (!g_spi_xfer_done)
     {
-        //NRF_LOG_INFO("SPI read in progress...");
+        //NRF_LOG_DEBUG("SPI read in progress...");
         __WFE();
     }
   
-    //NRF_LOG_INFO("SPI Response read:");
-    //NRF_LOG_HEXDUMP_INFO(rx_buff, read_len);
+    //NRF_LOG_DEBUG("SPI Response read:");
+    //NRF_LOG_HEXDUMP_DEBUG(rx_buff, read_len);
 
     // Das empfangene Byte Array enthällt als erstes Element das Response-Byte auf das DATA_READ Byte.
     // Das Byte Array umkopieren auf des Response Array und dabei dieses erste Byte weglassen.
     memcpy(p_resp_buff, rx_buff+1, p_resp_len);
-    NRF_LOG_INFO("PN532 Response:");
-    NRF_LOG_HEXDUMP_INFO(p_resp_buff, p_resp_len);
+    NRF_LOG_DEBUG("PN532 Response:");
+    NRF_LOG_HEXDUMP_DEBUG(p_resp_buff, p_resp_len);
 
     int16_t result = 0;
 
@@ -147,11 +147,11 @@ bool PN532_SPI::isReady()
 {   
     if (nrf_gpio_pin_read(PN532_IRQ_PIN) == 0)
     {
-      //NRF_LOG_INFO("PN532 IRQ is LOW (INTERUPT!!!)");
+      //NRF_LOG_DEBUG("PN532 IRQ is LOW (INTERUPT!!!)");
       return true;
     }
     
-    //NRF_LOG_INFO("PN532 IRQ is HIGH");
+    //NRF_LOG_DEBUG("PN532 IRQ is HIGH");
     return false;
     
     /* wenn der IRO Pin gespart werden soll,
@@ -225,12 +225,12 @@ int8_t PN532_SPI::readAckFrame()
 
     while (!g_spi_xfer_done)
     {
-        //NRF_LOG_INFO("SPI transfer in progress...");
+        //NRF_LOG_DEBUG("SPI transfer in progress...");
         __WFE();
     }
 
-    NRF_LOG_INFO("SPI ACK-Frame read:");
-    NRF_LOG_HEXDUMP_INFO(ackBuff, sizeof(PN532_ACK));
+    NRF_LOG_DEBUG("SPI ACK-Frame read:");
+    NRF_LOG_HEXDUMP_DEBUG(ackBuff, sizeof(PN532_ACK));
 
     nrf_gpio_pin_set(SPI_SS_PIN_PN532);
 
@@ -238,20 +238,20 @@ int8_t PN532_SPI::readAckFrame()
 }
 
 void PN532_SPI::write(uint8_t* p_data, uint8_t p_len) {
-  NRF_LOG_INFO("Write data to PN532...");
+  NRF_LOG_DEBUG("Write data to PN532...");
 
   g_spi_xfer_done = false;
 
-  NRF_LOG_INFO("SPI writing data:");
-  NRF_LOG_HEXDUMP_INFO(p_data, p_len);
+  NRF_LOG_DEBUG("SPI writing data:");
+  NRF_LOG_HEXDUMP_DEBUG(p_data, p_len);
 
   APP_ERROR_CHECK(nrf_drv_spi_transfer(&g_spi, p_data, p_len, NULL, 0));
 
   while (!g_spi_xfer_done)
   {
-      //NRF_LOG_INFO("SPI write in progress...");
+      //NRF_LOG_DEBUG("SPI write in progress...");
       __WFE();
   }
   
-  NRF_LOG_INFO("SPI write done.");
+  NRF_LOG_DEBUG("SPI write done.");
 }

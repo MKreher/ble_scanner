@@ -105,10 +105,10 @@ void init_nfc()
 
 void read_mifare_tag()
 {
-    NRF_LOG_INFO("* read_mifare_tag()");
+    NRF_LOG_INFO("read_mifare_tag()");
     if (nfc_tag_present(g_nfc, 0))
     {
-        NRF_LOG_INFO("**Tag detected.");
+        NRF_LOG_DEBUG("Tag detected.");
         NfcTag * tag = nfc_read(g_nfc);
 
         uint8_t nfc_error_code = nfc_tag_get_error_code(tag);
@@ -135,7 +135,7 @@ void read_mifare_tag()
         {
             if (nfc_tag_has_ndef_message(tag))
             {
-                NRF_LOG_INFO("***Tag %d has NDEF message.", nfc_tag_get_uid(tag));
+                NRF_LOG_DEBUG("Tag %d has NDEF message.", nfc_tag_get_uid(tag));
                 NdefMessage* ndef_message = nfc_tag_get_ndef_message(tag);                
                 ndef_message_print(ndef_message);
                 uint8_t record_cnt = ndef_message_get_record_count(ndef_message);
@@ -143,7 +143,7 @@ void read_mifare_tag()
                     NdefRecord* ndef_record = ndef_message_get_record(ndef_message, i);
                     uint8_t payload_length = ndef_record_get_payload_length(ndef_record);
                     uint8_t payload[payload_length];
-                    ndef_record_get_payload(ndef_record, &payload);
+                    ndef_record_get_payload(ndef_record, payload);
                     NRF_LOG_INFO("Tag-Payload: %s", payload);
                 }
 
@@ -151,7 +151,7 @@ void read_mifare_tag()
             }
             else
             {
-                NRF_LOG_INFO("***Tag %d has no NDEF message.", nfc_tag_get_uid(tag));
+                NRF_LOG_ERROR("Tag %d has no NDEF message.", nfc_tag_get_uid(tag));
             }
         }
 
@@ -161,14 +161,14 @@ void read_mifare_tag()
 
 void erase_mifare_tag()
 {
-    NRF_LOG_INFO("* erase_mifare_tag()");
+    NRF_LOG_INFO("erase_mifare_tag()");
     if (nfc_tag_present(g_nfc, 0))
     {
-        NRF_LOG_INFO("**Tag detected.");
+        NRF_LOG_DEBUG("Tag detected.");
         bool success = nfc_erase(g_nfc);
         if (success)
         {
-          NRF_LOG_INFO("***Tag erased.");
+          NRF_LOG_INFO("Tag erased successfully.");
         }
         else
         {
@@ -179,10 +179,10 @@ void erase_mifare_tag()
 
 void write_mifare_tag()
 {
-    NRF_LOG_INFO("* write_mifare_tag()");
+    NRF_LOG_INFO("write_mifare_tag()");
     if (nfc_tag_present(g_nfc, 0))
     {
-        NRF_LOG_INFO("**Tag detected.");
+        NRF_LOG_DEBUG("Tag detected.");
         NdefMessage* ndef_message = create_ndef_message();
         char* text = "Das Pferd frisst doch Gurkensalat!";
         char* encoding = "en";
@@ -190,11 +190,11 @@ void write_mifare_tag()
         bool success = nfc_write(g_nfc, ndef_message);
         if (success)
         {
-          NRF_LOG_INFO("***Tag written.");
+          NRF_LOG_INFO("Tag written successfully.");
         }
         else
         {
-          NRF_LOG_ERROR("***Tag write failed.");
+          NRF_LOG_ERROR("Tag write failed.");
         }
 
         destroy_ndef_message(ndef_message);
@@ -285,7 +285,7 @@ int main(void)
     {
         __WFE();
         app_sched_execute();
-        // nrf_pwr_mgmt_run();
+        //nrf_pwr_mgmt_run();
         NRF_LOG_FLUSH();
     }
 }
