@@ -60,10 +60,13 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="1079" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/main.c" selected="1" top="1062" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="1079" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/main.c" selected="1" top="1060" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/waveshare_epd.h" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="287" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/waveshare_epd.c" selected="0" top="287" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="112" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/sdk_config.h" selected="0" top="87" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="42" y="287" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/waveshare_epd.c" selected="0" top="264" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="30" y="64" useTextEdit="1" openedFrom="C:/Work/ble_scanner/barcode_scanner_device/src/waveshare_epd.c" useBinaryEdit="0" left="0" path="../src/sdk_config.h" selected="0" top="39" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="19" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/em3000h.c" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/em3000h.h" selected="0" top="3" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="86" useTextEdit="1" openedFrom="C:/Work/ble_scanner/barcode_scanner_device/src/main.c" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/boards/pca10056.h" selected="0" top="66" codecName="Default"/>
  </Files>
  <ARMCrossStudioWindow activeProject="barcode_scanner" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="C:/Work/ble_scanner/barcode_scanner_device/src" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>

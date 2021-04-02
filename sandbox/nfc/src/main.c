@@ -105,7 +105,7 @@ void init_nfc()
 
 void read_mifare_tag()
 {
-    NRF_LOG_INFO("read_mifare_tag()");
+    NRF_LOG_INFO("read_mifare_tag()" );
     if (nfc_tag_present(g_nfc, 0))
     {
         NRF_LOG_DEBUG("Tag detected.");
@@ -208,6 +208,19 @@ void button1_scheduled_event_handler(void * p_event_data, uint16_t event_size)
     if (current_int_priority_get() == APP_IRQ_PRIORITY_THREAD)
     {
         NRF_LOG_INFO("button1_scheduled_event_handler() [executing in thread/main mode]");
+        g_read_nfc = true;
+        while (g_read_nfc == true)
+        {
+            read_mifare_tag();
+            //erase_mifare_tag();
+            //write_mifare_tag();
+            nrf_delay_ms(2000);
+            __WFE();
+            app_sched_execute();
+            // nrf_pwr_mgmt_run();
+            NRF_LOG_FLUSH();
+            //nrf_delay_ms(2000);
+        }
     }
     else
     {
@@ -267,8 +280,8 @@ int main(void)
 
     NRF_LOG_INFO("Firmware initialization finshed.");
 
+    /*
     g_read_nfc = true;
-
     while (g_read_nfc == true)
     {
         read_mifare_tag();
@@ -280,6 +293,7 @@ int main(void)
         NRF_LOG_FLUSH();
         nrf_delay_ms(2000);
     }
+    */
 
     while (true)
     {

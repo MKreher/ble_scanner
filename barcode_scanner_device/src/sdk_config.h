@@ -50,27 +50,31 @@
 
 // Waveshare ePaper Display
 #ifndef WSEPD_DC_PIN
-#define WSEPD_DC_PIN        28
+#define WSEPD_DC_PIN        27
 #endif
 
 #ifndef WSEPD_RST_PIN
-#define WSEPD_RST_PIN       4
+#define WSEPD_RST_PIN       26
 #endif
 
 #ifndef WSEPD_BUSY_PIN
-#define WSEPD_BUSY_PIN      3
+#define WSEPD_BUSY_PIN      2
 #endif
 
-#ifndef WSEPD_WIDTH
-#define WSEPD_WIDTH     200
-#endif
-
-#ifndef WSEPD_HEIGHT
-#define WSEPD_HEIGHT     200
+#ifndef WSEPD_SPI_SS_PIN
+#define WSEPD_SPI_SS_PIN    28
 #endif
 
 #ifndef WSEPD_SPI_INSTANCE
 #define WSEPD_SPI_INSTANCE  0
+#endif
+
+#ifndef WSEPD_WIDTH
+#define WSEPD_WIDTH         200
+#endif
+
+#ifndef WSEPD_HEIGHT
+#define WSEPD_HEIGHT        200
 #endif
 
 // <h> Application
@@ -107,11 +111,6 @@
 // <o> SPI_SCK_PIN  - Pin number
 #ifndef SPI_SCK_PIN
 #define SPI_SCK_PIN 29
-#endif
-
-// <o> SPI_SS_PIN  - Pin number
-#ifndef SPI_SS_PIN_DISPLAY
-#define SPI_SS_PIN_DISPLAY 26
 #endif
 
 // <o> SPI_IRQ_PRIORITY  - Interrupt priority

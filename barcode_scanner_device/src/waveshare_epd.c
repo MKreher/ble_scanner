@@ -90,17 +90,17 @@ static inline void spi_write(uint8_t * data, size_t size)
 static inline void write_command(uint8_t c)
 {
     nrf_gpio_pin_clear(WSEPD_DC_PIN);
-    nrf_gpio_pin_clear(SPI_SS_PIN_DISPLAY);
+    nrf_gpio_pin_clear(WSEPD_SPI_SS_PIN);
     spi_write(&c, sizeof(c));
-    nrf_gpio_pin_set(SPI_SS_PIN_DISPLAY);
+    nrf_gpio_pin_set(WSEPD_SPI_SS_PIN);
 }
 
 static inline void write_data(uint8_t c)
 {
     nrf_gpio_pin_set(WSEPD_DC_PIN);
-    nrf_gpio_pin_clear(SPI_SS_PIN_DISPLAY);
+    nrf_gpio_pin_clear(WSEPD_SPI_SS_PIN);
     spi_write(&c, sizeof(c));
-    nrf_gpio_pin_set(SPI_SS_PIN_DISPLAY);
+    nrf_gpio_pin_set(WSEPD_SPI_SS_PIN);
 }
 
 static void set_cursor(uint16_t x, uint16_t y)
@@ -132,7 +132,7 @@ static void wait_until_idle(void)
 {
     NRF_LOG_INFO("epd busy\r\n");
     while(nrf_gpio_pin_read(WSEPD_BUSY_PIN) == 1) {      //LOW: idle, HIGH: busy        
-        //NRF_LOG_INFO("epd is busy...\r\n");
+        //NRF_LOG_DEBUG("epd is busy...\r\n");
         //app_sched_execute();  // prevent overflow of the app scheduler queue (NRF_ERROR_NO_MEM)
         non_blocking_delay_ms(5);
     }
@@ -285,7 +285,7 @@ static ret_code_t hardware_init(void)
       spi_config.sck_pin = SPI_SCK_PIN,
       spi_config.mosi_pin = SPI_MOSI_PIN,
       spi_config.miso_pin = NRF_DRV_SPI_PIN_NOT_USED,
-      spi_config.ss_pin = SPI_SS_PIN_DISPLAY,
+      spi_config.ss_pin = WSEPD_SPI_SS_PIN,
       spi_config.irq_priority = SPI_DEFAULT_CONFIG_IRQ_PRIORITY,
       spi_config.orc = 0xFF,
       spi_config.frequency = NRF_DRV_SPI_FREQ_8M,
