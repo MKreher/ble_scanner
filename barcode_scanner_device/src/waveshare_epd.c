@@ -35,9 +35,6 @@
 #define SET_RAM_Y_ADDRESS_COUNTER                   0x4F
 #define TERMINATE_FRAME_READ_WRITE                  0xFF
 
-#define WSEPD_HEIGHT      200
-#define WSEPD_WIDTH       200
-
 const unsigned char lut_full_update[] = {
     0x02, 0x02, 0x01, 0x11, 0x12, 0x12, 0x22, 0x22,
     0x66, 0x69, 0x69, 0x59, 0x58, 0x99, 0x99, 0x88,
@@ -57,7 +54,7 @@ static lcd_cb_t wsepd154_cb = {
     .width = WSEPD_WIDTH,
 };
 
-static const nrf_drv_spi_t spi = NRF_DRV_SPI_INSTANCE(WSEPD_SPI_INSTANCE);
+static const nrf_drv_spi_t spi_wsepd = NRF_DRV_SPI_INSTANCE(WSEPD_SPI_INSTANCE);
 static volatile bool spi_xfer_done;  /**< Flag used to indicate that SPI instance completed the transfer. */
 
 uint8_t screen_buffer[((WSEPD_WIDTH % 8 == 0)? (WSEPD_WIDTH / 8 ): (WSEPD_WIDTH / 8 + 1)) * WSEPD_HEIGHT];
@@ -77,7 +74,7 @@ static inline void spi_write(uint8_t * data, size_t size)
     }
     
     //NRF_LOG_INFO("spi_write: data=%x , size=%d", data, size);
-    APP_ERROR_CHECK(nrf_drv_spi_transfer(&spi, data, size, NULL, 0));
+    APP_ERROR_CHECK(nrf_drv_spi_transfer(&spi_wsepd, data, size, NULL, 0));
 
     while (!spi_xfer_done)
     {
@@ -282,8 +279,8 @@ static ret_code_t hardware_init(void)
 
   nrf_drv_spi_config_t spi_config = 
     {
-      spi_config.sck_pin = SPI_SCK_PIN,
-      spi_config.mosi_pin = SPI_MOSI_PIN,
+      spi_config.sck_pin = WSEPD_SPI_SCK_PIN,
+      spi_config.mosi_pin = WSEPD_SPI_MOSI_PIN,
       spi_config.miso_pin = NRF_DRV_SPI_PIN_NOT_USED,
       spi_config.ss_pin = WSEPD_SPI_SS_PIN,
       spi_config.irq_priority = SPI_DEFAULT_CONFIG_IRQ_PRIORITY,
@@ -293,7 +290,7 @@ static ret_code_t hardware_init(void)
       spi_config.bit_order = NRF_DRV_SPI_BIT_ORDER_MSB_FIRST
     };
 
-    return nrf_drv_spi_init(&spi, &spi_config, spi_event_handler, NULL);
+    return nrf_drv_spi_init(&spi_wsepd, &spi_config, spi_event_handler, NULL);
 }
 
 static ret_code_t wsepd154_init(void)
@@ -316,7 +313,7 @@ static void wsepd154_uninit(void)
 {
     write_command(DEEP_SLEEP_MODE);
     write_data(0x01);
-    nrf_drv_spi_uninit(&spi);
+    nrf_drv_spi_uninit(&spi_wsepd);
 }
 
 

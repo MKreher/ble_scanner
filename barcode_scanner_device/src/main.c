@@ -73,6 +73,7 @@
 #include "waveshare_epd.h"
 #include "ImageData.h"
 #include "em3000h.h"
+#include "NDEF_Wrapper.h"
 
 // Waveshare ePaper
 static uint8_t epaper_pending;
@@ -107,7 +108,7 @@ static const nrf_gfx_font_desc_t * p_font = &orkney_24ptFontInfo;
 #define APP_ENABLE_LOGS 1 // Enable logs in the application
 
 #if (APP_ENABLE_LOGS == 1)
-#define APPL_LOG NRF_LOG_INFO
+#define APPL_LOG  NRF_LOG_INFO
 #define APPL_DUMP NRF_LOG_RAW_HEXDUMP_INFO
 #define APPL_ADDR IPV6_ADDRESS_LOG
 #else // APP_ENABLE_LOGS
@@ -156,6 +157,20 @@ NRF_SERIAL_UART_DEF(m_serial_uart, 0);
 APP_TIMER_DEF(m_serial_receive_timer_id);
 APP_TIMER_DEF(m_feedback_timer_id);
 
+// PN532
+static const nrf_drv_spi_t spi_pn532 = NRF_DRV_SPI_INSTANCE(PN532_SPI_INSTANCE);
+static NfcAdapter * m_nfc;
+static bool m_read_nfc = false;
+
+static struct payload_record
+{
+    char      type[1];
+    char      encoding[2];
+    char      payload[1024];
+    uint16_t  payload_length;
+} *m_payload_records;
+
+//static struct payload_record[] *m_payload_records;
 
 void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 {
@@ -614,13 +629,76 @@ static void process_barcode(const char* m_scan_engine_inbound_barcode)
     //epaper_demo_text(m_scan_engine_inbound_barcode);
 }    
 
-
-
-
-void process_barcode_scheduled(void * p_event_data, uint16_t event_size)
+bool read_mifare_tag(uint8_t p_payload[], uint8_t *p_payload_length)
 {
-    process_barcode((const char *) m_scan_engine_inbound_barcode);
+    NRF_LOG_INFO("read_mifare_tag()" );
+    if (nfc_tag_present(m_nfc, 0))
+    {
+        NRF_LOG_DEBUG("Tag detected.");
+        NfcTag * tag = nfc_read(m_nfc);
+
+        uint8_t nfc_error_code = nfc_tag_get_error_code(tag);
+
+        if (nfc_error_code != 0)
+        {
+            switch (nfc_error_code)
+            {
+                case 1: // NFCTAG_NOT_NDEF_FORMATTED
+                    NRF_LOG_ERROR("NFC tag not NDEF formatted.");
+                    break;
+                case 2: // NFCTAG_AUTHENTICATION_FAILED
+                    NRF_LOG_ERROR("NFC tag authentication error.");
+                    break;
+                case 3: // NFCTAG_READ_FAILED
+                    NRF_LOG_ERROR("NFC tag read failed.");
+                    break;
+                case 9: // NFCTAG_OTHER_ERROR
+                    NRF_LOG_ERROR("NFC tag other error.");
+                    break;
+            }
+        }
+        else
+        {
+            if (nfc_tag_has_ndef_message(tag))
+            {
+                NRF_LOG_DEBUG("Tag %d has NDEF message.", nfc_tag_get_uid(tag));
+                NdefMessage* ndef_message = nfc_tag_get_ndef_message(tag);                
+                ndef_message_print(ndef_message);
+                uint8_t record_cnt = ndef_message_get_record_count(ndef_message);
+                // reserve m_payload_records
+                m_payload_records = malloc(sizeof(struct payload_record) * record_cnt);                
+                for (uint8_t i = 0; i<record_cnt; i++) {
+                    NdefRecord* ndef_record = ndef_message_get_record(ndef_message, i);
+                    uint8_t payload_length = ndef_record_get_payload_length(ndef_record);
+                    uint8_t payload[payload_length];
+                    ndef_record_get_payload(ndef_record, payload);
+                    NRF_LOG_INFO("Tag-Payload (%d bytes): %s", payload_length, payload);
+                    //TODO: Mehrere Records als Array zurückgeben
+                    struct payload_record new_payload_record;
+                    strcpy(new_payload_record.type, "t");
+                    strcpy(new_payload_record.encoding, "en");
+                    strcpy(new_payload_record.payload,  payload);
+                    new_payload_record.payload_length = payload_length;
+                    m_payload_records[i] = new_payload_record;
+                    memcpy(p_payload, &payload, payload_length);
+                    memcpy(p_payload_length, &payload_length, 1);
+                }
+                
+                destroy_nfc_tag(tag);
+                return true;
+            }
+            else
+            {
+                NRF_LOG_ERROR("Tag %d has no NDEF message.", nfc_tag_get_uid(tag));
+            }
+        }
+
+        destroy_nfc_tag(tag);        
+    }
+
+    return false;
 }
+
 
 /**@brief Button 1 handler function to be called by the scheduler.
  */
@@ -665,12 +743,13 @@ void button1_scheduled_event_handler(void * p_event_data, uint16_t event_size)
             }
 
             if (m_is_new_barcode_from_scan_engine) {
-                
+                // Here we have received successfully a barcode from the scan engine
                 NRF_LOG_INFO("******************************");
                 NRF_LOG_INFO("*** Processing BARCODE: %s ***", m_scan_engine_inbound_barcode);
                 NRF_LOG_INFO("******************************");                
                 m_is_new_barcode_from_scan_engine = false;
-                m_scan_engine_comm_state = IDLE;                
+                m_scan_engine_comm_state = IDLE;
+                
                 process_barcode(m_scan_engine_inbound_barcode);
             }
             if (NRF_LOG_PROCESS() == false)
@@ -682,11 +761,6 @@ void button1_scheduled_event_handler(void * p_event_data, uint16_t event_size)
     }
     else if (button_action == APP_BUTTON_RELEASE)
     {
-        /*
-        strcpy(m_scan_engine_inbound_barcode[0], "4711-ABC01099");
-        app_sched_event_put(m_scan_engine_inbound_barcode, sizeof(m_scan_engine_inbound_barcode), process_barcode_scheduled);
-        */
-
         NRF_LOG_INFO("Button_1 released");
 
         print_state();
@@ -711,16 +785,24 @@ void button1_scheduled_event_handler(void * p_event_data, uint16_t event_size)
  */
 void button2_scheduled_event_handler(void * p_event_data, uint16_t event_size)
 {
-    uint8_t button_action = *((uint8_t*) p_event_data);
-
-    if (button_action == APP_BUTTON_PUSH)
+    NRF_LOG_INFO("Button_2 pushed");
+    m_read_nfc = true;
+    uint8_t payload[128];
+    uint8_t payload_length;
+    while (m_read_nfc == true)
     {
-        NRF_LOG_INFO("Button_2 pushed");
-    }
-    else if (button_action == APP_BUTTON_RELEASE)
-    {
-        NRF_LOG_INFO("Button_2 released");
-        barcode_module_init();
+        bool read_success = read_mifare_tag(payload, &payload_length);
+        if (read_success)
+        {
+          m_read_nfc = false;
+          //TODO: handle read success
+          NRF_LOG_INFO("NFC read successfully:");
+          NRF_LOG_INFO("Read from %d bytes from NFC: %s", payload_length, payload);
+          NRF_LOG_INFO("Stop NFC polling.");
+          return;
+        }
+        //app_sched_execute();
+        nrf_pwr_mgmt_run();
     }
 }
 
@@ -788,6 +870,16 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
     switch (pin_no)
     {
         case BUTTON_1:
+
+            /* TODO: Prevent subsequent invocations of the handler functions: dont call the handle functions if the function still working
+            if (nrf_atomic_flag_set_fetch(g_functiony_xy_is_busy))
+            {
+                return NRF_ERROR_BUSY;
+            }
+            // in the function call...
+                UNUSED_RETURN_VALUE(nrf_atomic_flag_clear(g_functiony_xy_is_busy));
+              when finished.
+            */
             NRF_LOG_INFO("Button_1 handle");
             if (button_action == APP_BUTTON_PUSH)
             {
@@ -814,7 +906,18 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
             break;
         case BUTTON_2:
             NRF_LOG_INFO("Button_2 handle");
-            app_sched_event_put(&button_action, sizeof(button_action), button2_scheduled_event_handler);            
+            if (button_action == APP_BUTTON_PUSH)
+            {
+                // start NFC polling
+                NRF_LOG_INFO("Start NFC polling...");
+                app_sched_event_put(&button_action, sizeof(button_action), button2_scheduled_event_handler);            
+            }
+            else if (button_action == APP_BUTTON_RELEASE) 
+            {
+                // stop NFC reading
+                NRF_LOG_INFO("Stop NFC polling.");
+                m_read_nfc = false;
+            }
             break;
         case BUTTON_3:
             NRF_LOG_INFO("Button_3 handle");
@@ -1074,9 +1177,20 @@ static void display_init()
   epaper_demo_clear();
 }
 
+void nfc_init()
+{
+    NRF_LOG_INFO("nfc_init()");
+    m_nfc = create_nfc_adapter(spi_pn532);
+    nfc_begin(m_nfc, true);
+
+    // destroy_nfc_adapter(g_nfc);
+}
+
+
 
 /**@brief Function for application main entry.
  */
+
   int main(void) {
     // Initialize.
     log_init();
@@ -1091,6 +1205,7 @@ static void display_init()
     timers_create();
     utils_init();
     coap_ipv6_init();
+    nfc_init();
     display_init();
     
     // Test if non-blocking delay works in main(). Remove it later.

@@ -50,19 +50,27 @@
 
 // Waveshare ePaper Display
 #ifndef WSEPD_DC_PIN
-#define WSEPD_DC_PIN        27
+#define WSEPD_DC_PIN        37
 #endif
 
 #ifndef WSEPD_RST_PIN
-#define WSEPD_RST_PIN       26
+#define WSEPD_RST_PIN       36
 #endif
 
 #ifndef WSEPD_BUSY_PIN
-#define WSEPD_BUSY_PIN      2
+#define WSEPD_BUSY_PIN      35
+#endif
+
+#ifndef WSEPD_SPI_MOSI_PIN
+#define WSEPD_SPI_MOSI_PIN  40
+#endif
+
+#ifndef WSEPD_SPI_SCK_PIN
+#define WSEPD_SPI_SCK_PIN   39
 #endif
 
 #ifndef WSEPD_SPI_SS_PIN
-#define WSEPD_SPI_SS_PIN    28
+#define WSEPD_SPI_SS_PIN    38
 #endif
 
 #ifndef WSEPD_SPI_INSTANCE
@@ -75,6 +83,31 @@
 
 #ifndef WSEPD_HEIGHT
 #define WSEPD_HEIGHT        200
+#endif
+
+// PN532 NFC device
+#ifndef PN532_SPI_MOSI_PIN
+#define PN532_SPI_MOSI_PIN  31
+#endif
+
+#ifndef PN532_SPI_MISO_PIN
+#define PN532_SPI_MISO_PIN  30
+#endif
+
+#ifndef PN532_SPI_SCK_PIN
+#define PN532_SPI_SCK_PIN   29
+#endif
+
+#ifndef PN532_SPI_SS_PIN
+#define PN532_SPI_SS_PIN    28
+#endif
+
+#ifndef PN532_SPI_INSTANCE
+#define PN532_SPI_INSTANCE  1
+#endif
+
+#ifndef PN532_IRQ_PIN
+#define PN532_IRQ_PIN       4
 #endif
 
 // <h> Application
@@ -3821,7 +3854,7 @@
  
 
 #ifndef NRFX_SPI1_ENABLED
-#define NRFX_SPI1_ENABLED 0
+#define NRFX_SPI1_ENABLED 1
 #endif
 
 // <q> NRFX_SPI2_ENABLED  - Enable SPI2 instance
@@ -5686,7 +5719,7 @@
 // <e> SPI1_ENABLED - Enable SPI1 instance
 //==========================================================
 #ifndef SPI1_ENABLED
-#define SPI1_ENABLED 0
+#define SPI1_ENABLED 1
 #endif
 // <q> SPI1_USE_EASY_DMA  - Use EasyDMA
  
