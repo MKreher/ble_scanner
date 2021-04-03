@@ -2,6 +2,7 @@
 <session>
  <Bookmarks/>
  <Breakpoints groups="Breakpoints" active_group="Breakpoints">
+  <BreakpointListItem trigger="" line="683" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="2" filename="../src/main.c" useHWbreakpoint="false"/>
   <Exceptions set="MemManage;UsageFault_Coprocessor;UsageFault_CheckingError;UsageFault_StateError;BusFault;ExceptionEntryReturnFault;HardFault"/>
  </Breakpoints>
  <ExecutionProfileWindow/>
@@ -24,8 +25,6 @@
   <ProjectSessionItem path="barcode_scanner"/>
   <ProjectSessionItem path="barcode_scanner;barcode_scanner"/>
   <ProjectSessionItem path="barcode_scanner;barcode_scanner;Application"/>
-  <ProjectSessionItem path="barcode_scanner;barcode_scanner;NDEF"/>
-  <ProjectSessionItem path="barcode_scanner;barcode_scanner;PN532"/>
  </Project>
  <Register1>
   <RegisterWindow visibleNodes="CPU - Current Context/r0;CPU - Current Context/r1;CPU - Current Context/r2;CPU - Current Context/r3;CPU - Current Context/r4;CPU - Current Context/r5;CPU - Current Context/r6;CPU - Current Context/r7;CPU - Current Context/r8;CPU - Current Context/r9;CPU - Current Context/r10;CPU - Current Context/r11;CPU - Current Context/r12;CPU - Current Context/sp(r13);CPU - Current Context/lr(r14);CPU - Current Context/pc(r15);CPU - Current Context/apsr;CPU/r0;CPU/r1;CPU/r2;CPU/r3;CPU/r4;CPU/r5;CPU/r6;CPU/r7;CPU/r8;CPU/r9;CPU/r10;CPU/r11;CPU/r12;CPU/sp(r13);CPU/lr(r14);CPU/pc(r15);CPU/xpsr;CPU/msp;CPU/psp;CPU/cfbp;CPU/internal" binaryNodes="" asciiNodes="" openNodes="CPU - Current Context" name="barcode_scanner" decimalNodes="" octalNodes="" unsignedNodes=""/>
@@ -46,7 +45,9 @@
   <Trace enabled="Yes"/>
  </TraceWindow>
  <Watch1>
-  <Watches active="1" update="Never"/>
+  <Watches active="1" update="Never">
+   <Watchpoint expression="m_payload_records" name="m_payload_records" radix="-1" linenumber="682" filename="../src/main.c"/>
+  </Watches>
  </Watch1>
  <Watch2>
   <Watches active="0" update="Never"/>
@@ -58,9 +59,7 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="671" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/main.c" selected="1" top="657" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="116" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/pn532/PN532_SPI.cpp" selected="0" top="99" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="352" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/pn532/PN532.cpp" selected="0" top="335" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="3" y="43" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/main.c" selected="1" top="27" codecName="Default"/>
  </Files>
  <ARMCrossStudioWindow activeProject="barcode_scanner" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="C:/Work/ble_scanner/barcode_scanner_device/src" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>
