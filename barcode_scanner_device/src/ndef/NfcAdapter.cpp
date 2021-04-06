@@ -36,6 +36,11 @@ boolean NfcAdapter::begin(boolean verbose)
     return true;
 }
 
+void NfcAdapter::wakeup()
+{
+    shield->wakeup();
+}
+
 boolean NfcAdapter::tagPresent(unsigned long timeout)
 {
     uint8_t success;

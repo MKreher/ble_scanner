@@ -29,6 +29,7 @@ class NfcAdapter {
 
         ~NfcAdapter(void);
         boolean begin(boolean verbose=true);
+        void wakeup();
         boolean tagPresent(unsigned long timeout=0); // tagAvailable
         NfcTag* read();
         boolean write(NdefMessage& ndefMessage);

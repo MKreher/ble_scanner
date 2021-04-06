@@ -18,6 +18,8 @@ extern "C"
     void destroy_nfc_adapter(NfcAdapter * nfcAdapter) { delete nfcAdapter; }
 
     bool nfc_begin(NfcAdapter * nfcAdapter, bool verbose) { return nfcAdapter->begin(verbose); }
+    
+    void nfc_wakeup(NfcAdapter * nfcAdapter) { nfcAdapter->wakeup(); }
 
     bool nfc_tag_present(NfcAdapter * nfcAdapter, unsigned long timeout)
     {

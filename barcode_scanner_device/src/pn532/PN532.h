@@ -165,6 +165,7 @@ public:
     PN532(nrf_drv_spi_t p_spi);
 
     void begin(void);
+    void wakeup(void);
 
     // Generic PN532 functions
     bool SAMConfig(void);

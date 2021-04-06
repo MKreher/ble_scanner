@@ -19,18 +19,25 @@ MifareClassic::~MifareClassic()
 
 NfcTag* MifareClassic::read(byte *uid, unsigned int uidLength)
 {
-    uint8_t default_keys[9][6] = {
-                                    { 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF },
-                                    { 0XD3, 0XF7, 0XD3, 0XF7, 0XD3, 0XF7 },
-                                    { 0XA0, 0XA1, 0XA2, 0XA3, 0XA4, 0XA5 },
-                                    { 0XB0, 0XB1, 0XB2, 0XB3, 0XB4, 0XB5 },
-                                    { 0X4D, 0X3A, 0X99, 0XC3, 0X51, 0XDD },
-                                    { 0X1A, 0X98, 0X2C, 0X7E, 0X45, 0X9A },
-                                    { 0XAA, 0XBB, 0XCC, 0XDD, 0XEE, 0XFF },
-                                    { 0X00, 0X00, 0X00, 0X00, 0X00, 0X00 },
-                                    { 0XAB, 0XCD, 0XEF, 0X12, 0X34, 0X56 }
+    uint8_t default_keys[16][6] = {
+                                    {0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5}, // A0 A1 A2 A3 A4 A5
+                                    {0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5}, // B0 B1 B2 B3 B4 B5
+                                    {0x4d, 0x3a, 0x99, 0xc3, 0x51, 0xdd}, // 4D 3A 99 C3 51 DD
+                                    {0x1a, 0x98, 0x2c, 0x7e, 0x45, 0x9a}, // 1A 98 2C 7E 45 9A
+                                    {0xd3, 0xf7, 0xd3, 0xf7, 0xd3, 0xf7}, // D3 F7 D3 F7 D3 F7
+                                    {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff}, // AA BB CC DD EE FF
+                                    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, // 00 00 00 00 00 00
+                                    {0xd3, 0xf7, 0xd3, 0xf7, 0xd3, 0xf7}, // d3 f7 d3 f7 d3 f7
+                                    {0xa0, 0xb0, 0xc0, 0xd0, 0xe0, 0xf0}, // a0 b0 c0 d0 e0 f0
+                                    {0xa1, 0xb1, 0xc1, 0xd1, 0xe1, 0xf1}, // a1 b1 c1 d1 e1 f1
+                                    {0x71, 0x4c, 0x5c, 0x88, 0x6e, 0x97}, // 71 4c 5c 88 6e 97
+                                    {0x58, 0x7e, 0xe5, 0xf9, 0x35, 0x0f}, // 58 7e e5 f9 35 0f
+                                    {0xa0, 0x47, 0x8c, 0xc3, 0x90, 0x91}, // a0 47 8c c3 90 91
+                                    {0x53, 0x3c, 0xb6, 0xc7, 0x23, 0xf6}, // 53 3c b6 c7 23 f6
+                                    {0x8f, 0xd0, 0xa4, 0xf2, 0x56, 0xe9}, // 8f d0 a4 f2 56 e9
+                                    {0xff, 0xff, 0xff, 0xff, 0xff, 0xff}  // FF FF FF FF FF FF
                                   };
-    int key_idx = 1;
+    int key_idx = 4;
     int currentBlock = 4;
     int messageStartIndex = 0;
     int messageLength = 0;

@@ -81,10 +81,12 @@ static const nrf_lcd_t * p_lcd = &nrf_lcd_wsepd154;
 extern const nrf_gfx_font_desc_t orkney_24ptFontInfo;
 static const nrf_gfx_font_desc_t * p_font = &orkney_24ptFontInfo;
 
-#define ADVERTISING_LED LED_1 // Is on when device is advertising
-#define CONNECTED_LED   LED_2 // Is on when device has connected
-#define LEDBUTTON_LED   LED_3 // LED to be toggled with the help of the LED Button Service
-#define FEEDBACK_LED    LED_4 // LED indicates a successfull scanning
+#define LED_CONNECTION_STATUS 2  // Is on when device is advertising (Blue)
+#define LED_FEEDBACK_OK       26 // LED indicates a successfull scanning (Green)
+#define LED_FEEDBACK_ERROR    27 // LED indicates an error (Red)
+#define BUZZER                10 // Buzzer
+
+static const uint8_t leds_list[7] = { LED_CONNECTION_STATUS, LED_FEEDBACK_OK, LED_FEEDBACK_ERROR, LED_1, LED_2,LED_3, LED_4 };
 
 #define UART_PIN_DISCONNECTED 0xFFFFFFFF
 
@@ -161,16 +163,6 @@ APP_TIMER_DEF(m_feedback_timer_id);
 static const nrf_drv_spi_t spi_pn532 = NRF_DRV_SPI_INSTANCE(PN532_SPI_INSTANCE);
 static NfcAdapter * m_nfc;
 static bool m_read_nfc = false;
-
-static struct payload_record
-{
-    char      type[1];
-    char      encoding[2];
-    char      payload[1024];
-    uint16_t  payload_length;
-} *m_payload_records;
-
-//static struct payload_record[] *m_payload_records;
 
 void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 {
@@ -286,10 +278,41 @@ static void timers_init(void)
  */
 static void leds_init(void) {
     //NRF_LOG_INFO("leds_init()");
+    
+    //bsp_board_init(BSP_INIT_LEDS);
+    nrf_gpio_cfg_output(LED_CONNECTION_STATUS);
+    nrf_gpio_pin_clear(LED_CONNECTION_STATUS);
+    nrf_gpio_cfg_output(LED_FEEDBACK_OK);
+    nrf_gpio_pin_clear(LED_FEEDBACK_OK);
+    nrf_gpio_cfg_output(LED_FEEDBACK_ERROR);
+    nrf_gpio_pin_clear(LED_FEEDBACK_ERROR);
 
-    bsp_board_init(BSP_INIT_LEDS);
+    nrf_gpio_pin_set(LED_CONNECTION_STATUS);
+    non_blocking_delay_ms(500);
+    nrf_gpio_pin_clear(LED_CONNECTION_STATUS);
+    nrf_gpio_pin_set(LED_FEEDBACK_OK);
+    non_blocking_delay_ms(500);
+    nrf_gpio_pin_clear(LED_FEEDBACK_OK);
+    nrf_gpio_pin_set(LED_FEEDBACK_ERROR);
+    non_blocking_delay_ms(500);
+    nrf_gpio_pin_clear(LED_FEEDBACK_ERROR);
 }
 
+
+/**@brief Function for the LEDs initialization.
+ *
+ * @details Initializes all LEDs used by the application.
+ */
+static void buzzer_init(void) {
+    //NRF_LOG_INFO("buzzer_init()");
+    
+    nrf_gpio_cfg_output(BUZZER);
+    nrf_gpio_pin_clear(BUZZER);
+
+    nrf_gpio_pin_set(BUZZER);
+    non_blocking_delay_ms(5000);
+    nrf_gpio_pin_clear(BUZZER);
+}
 
 static void log_execution_mode(const char * context_name)
 {
@@ -587,7 +610,8 @@ static void signal_feedback_positive()
 {
     NRF_LOG_INFO("signal_feedback_positive()");
     APP_ERROR_CHECK(app_timer_stop(m_feedback_timer_id));
-    bsp_board_led_on(bsp_board_pin_to_led_idx(FEEDBACK_LED));
+    //bsp_board_led_on(bsp_board_pin_to_led_idx(LED_FEEDBACK_OK));
+    nrf_gpio_pin_set(LED_FEEDBACK_OK);
     APP_ERROR_CHECK(app_timer_start(m_feedback_timer_id, APP_TIMER_TICKS(500), NULL));
 }
 
@@ -611,9 +635,9 @@ static void send_barcode_to_server_scheduled_handler(void * p_event_data, uint16
     send_barcode_to_server(barcode);
 }
 
-static void process_barcode(const char* m_scan_engine_inbound_barcode)
+static void process_barcode(const char* p_scan_engine_inbound_barcode)
 {
-    NRF_LOG_INFO("process_barcode(): BARCODE=%s", m_scan_engine_inbound_barcode);
+    NRF_LOG_INFO("process_barcode(): BARCODE=%s", p_scan_engine_inbound_barcode);
     
     // Log execution mode.
     log_execution_mode("process_barcode()");
@@ -622,16 +646,17 @@ static void process_barcode(const char* m_scan_engine_inbound_barcode)
     app_sched_event_put(NULL, NULL, signal_feedback_positive_scheduled_handler);
 
     // Send barcode to server
-    app_sched_event_put((void*) m_scan_engine_inbound_barcode, strlen(m_scan_engine_inbound_barcode), send_barcode_to_server_scheduled_handler);
+    app_sched_event_put((void*) p_scan_engine_inbound_barcode, strlen(p_scan_engine_inbound_barcode), send_barcode_to_server_scheduled_handler);
 
     // Display barcode on screen
-    app_sched_event_put((void*) m_scan_engine_inbound_barcode, strlen(m_scan_engine_inbound_barcode), display_barcode_scheduled_handler);
-    //epaper_demo_text(m_scan_engine_inbound_barcode);
+    app_sched_event_put((void*) p_scan_engine_inbound_barcode, strlen(p_scan_engine_inbound_barcode), display_barcode_scheduled_handler);
+    //epaper_demo_text(p_scan_engine_inbound_barcode);
 }    
 
-bool read_mifare_tag(uint8_t p_payload[], uint8_t *p_payload_length)
+bool read_mifare_tag(char * p_barcode)
 {
     NRF_LOG_INFO("read_mifare_tag()" );
+    nfc_wakeup(m_nfc);
     if (nfc_tag_present(m_nfc, 0))
     {
         NRF_LOG_DEBUG("Tag detected.");
@@ -662,28 +687,31 @@ bool read_mifare_tag(uint8_t p_payload[], uint8_t *p_payload_length)
             if (nfc_tag_has_ndef_message(tag))
             {
                 NRF_LOG_DEBUG("Tag %d has NDEF message.", nfc_tag_get_uid(tag));
-                NdefMessage* ndef_message = nfc_tag_get_ndef_message(tag);                
+
+                NdefMessage* ndef_message = nfc_tag_get_ndef_message(tag);
                 ndef_message_print(ndef_message);
-                uint8_t record_cnt = ndef_message_get_record_count(ndef_message);
-                // reserve m_payload_records
-                m_payload_records = malloc(sizeof(struct payload_record) * record_cnt);                
-                for (uint8_t i = 0; i<record_cnt; i++) {
-                    NdefRecord* ndef_record = ndef_message_get_record(ndef_message, i);
-                    uint8_t payload_length = ndef_record_get_payload_length(ndef_record);
-                    uint8_t payload[payload_length];
-                    ndef_record_get_payload(ndef_record, payload);
-                    NRF_LOG_INFO("Tag-Payload (%d bytes): %s", payload_length, payload);
-                    //TODO: Mehrere Records als Array zurückgeben
-                    struct payload_record new_payload_record;
-                    strcpy(new_payload_record.type, "t");
-                    strcpy(new_payload_record.encoding, "en");
-                    strcpy(new_payload_record.payload,  payload);
-                    new_payload_record.payload_length = payload_length;
-                    m_payload_records[i] = new_payload_record;
-                    memcpy(p_payload, &payload, payload_length);
-                    memcpy(p_payload_length, &payload_length, 1);
-                }
                 
+                // take the first record
+                NdefRecord* ndef_record = ndef_message_get_record(ndef_message, 0);
+                
+                //uint8_t record_tnf = ndef_record_get_tnf(ndef_record);                                    
+                //uint8_t record_type_length = ndef_record_get_type_length(ndef_record);
+                //uint8_t record_type[record_type_length];
+                //ndef_record_get_type(ndef_record, record_type);
+
+                uint8_t payload_length = ndef_record_get_payload_length(ndef_record);
+                uint8_t payload[payload_length];
+                ndef_record_get_payload(ndef_record, payload);
+                strcat(payload, "\0");
+                strcpy(p_barcode, payload);
+            
+                //struct payload_record new_payload_record;
+                //memcpy(new_payload_record.type, record_type, record_type_length);
+                //new_payload_record.type_length = record_type_length;
+                //memcpy(new_payload_record.payload, payload, payload_length);
+                //new_payload_record.payload_length = payload_length;
+                //m_payload_records[i] = new_payload_record;
+
                 destroy_nfc_tag(tag);
                 return true;
             }
@@ -787,18 +815,18 @@ void button2_scheduled_event_handler(void * p_event_data, uint16_t event_size)
 {
     NRF_LOG_INFO("Button_2 pushed");
     m_read_nfc = true;
-    uint8_t payload[128];
-    uint8_t payload_length;
     while (m_read_nfc == true)
     {
-        bool read_success = read_mifare_tag(payload, &payload_length);
+        char barcode[16];
+        bool read_success = read_mifare_tag(barcode);
         if (read_success)
         {
           m_read_nfc = false;
           //TODO: handle read success
-          NRF_LOG_INFO("NFC read successfully:");
-          NRF_LOG_INFO("Read from %d bytes from NFC: %s", payload_length, payload);
           NRF_LOG_INFO("Stop NFC polling.");
+          NRF_LOG_INFO("NFC read successfully:");
+          NRF_LOG_INFO("Read barcode %s:", barcode);
+          process_barcode(barcode);
           return;
         }
         //app_sched_execute();
@@ -1070,7 +1098,8 @@ static void serial_receive_timeout_handler()
 
 static void feedback_timeout_handler_timeout_handler()
 {
-    bsp_board_led_off(bsp_board_pin_to_led_idx(FEEDBACK_LED));
+    //bsp_board_led_off(bsp_board_pin_to_led_idx(LED_FEEDBACK_OK));
+    nrf_gpio_pin_clear(LED_FEEDBACK_OK);
 }
 
 static void timers_create(void)
@@ -1191,18 +1220,19 @@ void nfc_init()
 /**@brief Function for application main entry.
  */
 
-  int main(void) {
+int main(void) {
     // Initialize.
     log_init();
     lfclk_init();
     power_management_init();
-    leds_init();
     scheduler_init();
+    timers_init();
+    timers_create();
+    leds_init();
+    //buzzer_init();
     buttons_init();
     gpio_init();
     serial_init();
-    timers_init();
-    timers_create();
     utils_init();
     coap_ipv6_init();
     nfc_init();

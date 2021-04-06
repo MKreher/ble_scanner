@@ -18,6 +18,7 @@ typedef struct NdefRecord NdefRecord;
 NfcAdapter* create_nfc_adapter(nrf_drv_spi_t p_spi);
 void destroy_nfc_adapter(NfcAdapter* nfcAdapter);
 bool nfc_begin(NfcAdapter* nfcAdapter, bool verbose);
+void nfc_wakeup(NfcAdapter* nfcAdapter);
 bool nfc_tag_present(NfcAdapter* nfcAdapter, unsigned long timeout);
 NfcTag* nfc_read(NfcAdapter* nfcAdapter);
 bool nfc_write(NfcAdapter* nfcAdapter, NdefMessage* ndefMessage);

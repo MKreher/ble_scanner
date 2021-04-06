@@ -32,6 +32,16 @@ void PN532::begin()
 
 /**************************************************************************/
 /*!
+    @brief  Wakeup the HW
+*/
+/**************************************************************************/
+void PN532::wakeup()
+{
+    m_pn532_hal->wakeup();
+}
+
+/**************************************************************************/
+/*!
     @brief  Prints a hexadecimal value in plain characters
 
     @param  data      Pointer to the uint8_t data
