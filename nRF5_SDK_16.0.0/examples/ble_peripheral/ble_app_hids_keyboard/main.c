@@ -1575,7 +1575,7 @@ int main(void)
     ble_stack_init();
     scheduler_init();
     gap_params_init();
-    gatt_init();
+    gatt_init();    
     advertising_init();
     services_init();
     sensor_simulator_init();
