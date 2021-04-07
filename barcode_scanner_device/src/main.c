@@ -85,6 +85,7 @@ static const nrf_gfx_font_desc_t * p_font = &orkney_24ptFontInfo;
 #define LED_FEEDBACK_OK       26 // LED indicates a successfull scanning (Green)
 #define LED_FEEDBACK_ERROR    27 // LED indicates an error (Red)
 #define BUZZER                10 // Buzzer
+#define VIBRATION_MOTOR       11 // Vibration motor
 
 static const uint8_t leds_list[7] = { LED_CONNECTION_STATUS, LED_FEEDBACK_OK, LED_FEEDBACK_ERROR, LED_1, LED_2,LED_3, LED_4 };
 
@@ -312,6 +313,18 @@ static void buzzer_init(void) {
     nrf_gpio_pin_set(BUZZER);
     non_blocking_delay_ms(5000);
     nrf_gpio_pin_clear(BUZZER);
+}
+
+
+/**@brief Function for the vibration motor initialization.
+ *
+ * @details Initializes the vibration motor.
+ */
+static void vibrator_init(void) {
+    NRF_LOG_INFO("vibrator_init()");
+    
+    nrf_gpio_cfg_output(VIBRATION_MOTOR);
+    nrf_gpio_pin_set(VIBRATION_MOTOR);
 }
 
 static void log_execution_mode(const char * context_name)
@@ -612,6 +625,7 @@ static void signal_feedback_positive()
     APP_ERROR_CHECK(app_timer_stop(m_feedback_timer_id));
     //bsp_board_led_on(bsp_board_pin_to_led_idx(LED_FEEDBACK_OK));
     nrf_gpio_pin_set(LED_FEEDBACK_OK);
+    //nrf_gpio_pin_set(VIBRATION_MOTOR);
     APP_ERROR_CHECK(app_timer_start(m_feedback_timer_id, APP_TIMER_TICKS(500), NULL));
 }
 
@@ -1100,6 +1114,7 @@ static void feedback_timeout_handler_timeout_handler()
 {
     //bsp_board_led_off(bsp_board_pin_to_led_idx(LED_FEEDBACK_OK));
     nrf_gpio_pin_clear(LED_FEEDBACK_OK);
+    //nrf_gpio_pin_clear(VIBRATION_MOTOR);
 }
 
 static void timers_create(void)
@@ -1229,6 +1244,7 @@ int main(void) {
     timers_init();
     timers_create();
     leds_init();
+    vibrator_init();
     //buzzer_init();
     buttons_init();
     gpio_init();
