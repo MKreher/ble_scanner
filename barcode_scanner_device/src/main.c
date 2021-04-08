@@ -69,6 +69,7 @@
 #include <string.h>
 
 #include "utils.h"
+#include "module_ble.h"
 #include "coap_service.h"
 #include "waveshare_epd.h"
 #include "ImageData.h"
@@ -1251,6 +1252,7 @@ int main(void) {
     serial_init();
     utils_init();
     coap_ipv6_init();
+    //start_ble_services();
     nfc_init();
     display_init();
     

@@ -14,12 +14,12 @@
 #include "utils.h"
 
 #define TICKS_PER_MILLISECOND APP_TIMER_TICKS(1) // Factor for converting ticks to milliseconds
+#define RANDOM_VECTOR_DEVICE_ID_SIZE         4                                          /** Length of random ID vector. Must be <= 32. */
 
 APP_TIMER_DEF(m_non_blocking_delay_timer_id);
-
-
 static bool m_is_non_blocking_delay_wait = false;
 
+static uint8_t m_random_vector_device_id[RANDOM_VECTOR_DEVICE_ID_SIZE];        /**< Device random ID. Used for NFC BLE pairng on iOS. */
 
 void stop_non_blocking_delay()
 {
@@ -76,4 +76,45 @@ void utils_init()
     // timer for non blocking delays
     ret_code_t ret_code = app_timer_create(&m_non_blocking_delay_timer_id, APP_TIMER_MODE_SINGLE_SHOT, non_blocking_delay_timeout_handler);
     APP_ERROR_CHECK(ret_code);
+}
+
+
+/**@brief Generate random number.
+ */
+uint32_t random_vector_generate(uint8_t * p_buff, uint8_t size)
+{
+    uint32_t err_code;
+    uint8_t  bytes_available = 0;
+
+    nrf_drv_rng_bytes_available(&bytes_available);
+    uint8_t retries = 0;
+    
+    while (bytes_available < size)
+    {
+        retries++;
+        NRF_LOG_WARNING("Too few random bytes available. Trying again \r\n");
+        nrf_drv_rng_bytes_available(&bytes_available);
+        nrf_delay_ms(5);
+        
+        if (retries > 5)    // Return after n attempts.
+        {
+            return NRF_ERROR_TIMEOUT;
+        }
+    }
+    
+    NRF_LOG_INFO("Available random bytes: %d \r\n", bytes_available);
+
+    err_code = nrf_drv_rng_rand(p_buff, size);
+    RETURN_IF_ERROR(err_code);
+    
+    NRF_LOG_INFO("Random value (hex): ");
+    
+    for (uint8_t i = 0; i < size; i++)
+    {
+        NRF_LOG_RAW_INFO("%02x", p_buff[i]);
+    }
+    
+    NRF_LOG_RAW_INFO("\r\n");
+
+    return NRF_SUCCESS;
 }

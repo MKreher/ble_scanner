@@ -22,6 +22,11 @@
  </Memory4>
  <Project>
   <ProjectSessionItem path="barcode_scanner"/>
+  <ProjectSessionItem path="barcode_scanner;barcode_scanner"/>
+  <ProjectSessionItem path="barcode_scanner;barcode_scanner;Application"/>
+  <ProjectSessionItem path="barcode_scanner;barcode_scanner;nRF_BLE"/>
+  <ProjectSessionItem path="barcode_scanner;barcode_scanner;nRF_IoT"/>
+  <ProjectSessionItem path="barcode_scanner;barcode_scanner;nRF_Libraries"/>
  </Project>
  <Register1>
   <RegisterWindow visibleNodes="CPU - Current Context/r0;CPU - Current Context/r1;CPU - Current Context/r2;CPU - Current Context/r3;CPU - Current Context/r4;CPU - Current Context/r5;CPU - Current Context/r6;CPU - Current Context/r7;CPU - Current Context/r8;CPU - Current Context/r9;CPU - Current Context/r10;CPU - Current Context/r11;CPU - Current Context/r12;CPU - Current Context/sp(r13);CPU - Current Context/lr(r14);CPU - Current Context/pc(r15);CPU - Current Context/apsr;CPU/r0;CPU/r1;CPU/r2;CPU/r3;CPU/r4;CPU/r5;CPU/r6;CPU/r7;CPU/r8;CPU/r9;CPU/r10;CPU/r11;CPU/r12;CPU/sp(r13);CPU/lr(r14);CPU/pc(r15);CPU/xpsr;CPU/msp;CPU/psp;CPU/cfbp;CPU/internal" binaryNodes="" asciiNodes="" openNodes="CPU - Current Context" name="barcode_scanner" decimalNodes="" octalNodes="" unsignedNodes=""/>
@@ -53,6 +58,20 @@
  <Watch4>
   <Watches active="0" update="Never"/>
  </Watch4>
- <Files/>
+ <Files>
+  <SessionOpenFile windowGroup="DockEditLeft" x="10" y="767" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/modules/module_ble.c" selected="1" top="749" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="16" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/modules/module_ble.h" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/main.c" selected="0" top="282" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="77" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/ble/ble_services/ble_hids/ble_hids.h" selected="0" top="77" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="25" y="615" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/sdk_config.h" selected="0" top="592" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/ble/ble_services/ble_ipsp/ble_ipsp.c" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="50" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/ble/ble_services/ble_lbs/ble_lbs.c" selected="0" top="33" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="barcode_scanner.emProject" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="25" y="53" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/libraries/fds/fds.c" selected="0" top="35" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="317" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/iot/medium/ipv6_medium_ble.c" selected="0" top="650" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="170" useTextEdit="1" openedFrom="C:/Work/ble_scanner/nRF5_SDK_16.0.0/components/iot/medium/ipv6_medium_ble.c" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/ble/ble_services/ble_ipsp/ble_ipsp.h" selected="0" top="135" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="969" useTextEdit="1" openedFrom="C:/Work/ble_scanner/barcode_scanner_device/src/modules/module_ble.c" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/ble/peer_manager/peer_manager.c" selected="0" top="969" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="415" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../nRF5_SDK_16.0.0/components/ble/peer_manager/peer_data_storage.c" selected="0" top="415" codecName="Default"/>
+ </Files>
  <ARMCrossStudioWindow activeProject="barcode_scanner" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="C:/Work/ble_scanner/barcode_scanner_device/src" debugSearchPath="" autoConnectCapabilities="3199"/>
 </session>
