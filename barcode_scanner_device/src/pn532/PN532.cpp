@@ -334,7 +334,8 @@ bool PN532::readPassiveTargetID(
     pn532_packetbuffer[2] = cardbaudrate;
 
     if (m_pn532_hal->writeCommand(pn532_packetbuffer, COMMAND_INLISTPASSIVETARGET_BASE_LENGTH))
-    {
+    {        
+        NRF_LOG_DEBUG("readPassiveTargetID: Write command failed");
         return 0x0; // command failed
     }
 
@@ -342,6 +343,7 @@ bool PN532::readPassiveTargetID(
     if (m_pn532_hal->readResponse(
             pn532_packetbuffer, REPLY_INLISTPASSIVETARGET_106A_TARGET_LENGTH, timeout) < 0)
     {
+        NRF_LOG_DEBUG("readPassiveTargetID: No Response from NFC device");
         return 0x0;
     }
 
@@ -361,7 +363,8 @@ bool PN532::readPassiveTargetID(
 
     uint8_t response_data[pn532_packetbuffer[3]];
     memcpy(response_data, &pn532_packetbuffer[PN532_DATA_OFFSET + 1], pn532_packetbuffer[3]);
-
+    
+    NRF_LOG_DEBUG("readPassiveTargetID: Response data:");
     NRF_LOG_HEXDUMP_DEBUG(response_data, sizeof(response_data));
 
     if (response_data[0] != 1)

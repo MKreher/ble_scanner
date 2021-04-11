@@ -8,6 +8,7 @@
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 #include "nrf_pwr_mgmt.h"
+#include "nrf_delay.h"
 #include <stdint.h>
 #include <string.h>
 
@@ -37,7 +38,6 @@ void non_blocking_delay_timeout_handler()
 
     m_is_non_blocking_delay_wait = false;
 }
-
 
 void non_blocking_delay_ms(uint64_t delay)
 {
@@ -70,14 +70,12 @@ void non_blocking_delay_ms(uint64_t delay)
     //NRF_LOG_INFO("non_blocking_delay_ms(): END - %d ms (real wait time %d)", delay, timeDiff / TICKS_PER_MILLISECOND);
 }
 
-
 void utils_init()
 {
     // timer for non blocking delays
     ret_code_t ret_code = app_timer_create(&m_non_blocking_delay_timer_id, APP_TIMER_MODE_SINGLE_SHOT, non_blocking_delay_timeout_handler);
     APP_ERROR_CHECK(ret_code);
 }
-
 
 /**@brief Generate random number.
  */

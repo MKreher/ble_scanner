@@ -212,6 +212,7 @@ static void on_hids_evt(ble_hids_t * p_hids, ble_hids_evt_t * p_evt);
  */
 static void whitelist_set(pm_peer_id_list_skip_t skip)
 {
+    NRF_LOG_INFO("whitelist_set()");
     pm_peer_id_t peer_ids[BLE_GAP_WHITELIST_ADDR_MAX_COUNT];
     uint32_t     peer_id_count = BLE_GAP_WHITELIST_ADDR_MAX_COUNT;
 
@@ -233,6 +234,7 @@ static void whitelist_set(pm_peer_id_list_skip_t skip)
  */
 static void identities_set(pm_peer_id_list_skip_t skip)
 {
+    NRF_LOG_INFO("identities_set()");
     pm_peer_id_t peer_ids[BLE_GAP_DEVICE_IDENTITIES_MAX_COUNT];
     uint32_t     peer_id_count = BLE_GAP_DEVICE_IDENTITIES_MAX_COUNT;
 
@@ -248,6 +250,7 @@ static void identities_set(pm_peer_id_list_skip_t skip)
  */
 static void delete_bonds(void)
 {
+    NRF_LOG_INFO("delete_bonds()");
     ret_code_t err_code;
 
     NRF_LOG_INFO("Erase bonds!");
@@ -261,6 +264,8 @@ static void delete_bonds(void)
  */
 static void advertising_start(bool erase_bonds)
 {
+    NRF_LOG_INFO("advertising_start()");
+
     if (erase_bonds == true)
     {
         delete_bonds();
@@ -282,6 +287,8 @@ static void advertising_start(bool erase_bonds)
  */
 static void pm_evt_handler(pm_evt_t const * p_evt)
 {
+    NRF_LOG_INFO("pm_evt_handler()");
+
     pm_handler_on_pm_evt(p_evt);
     pm_handler_flash_clean(p_evt);
 
@@ -317,6 +324,7 @@ static void pm_evt_handler(pm_evt_t const * p_evt)
  */
 static void service_error_handler(uint32_t nrf_error)
 {
+    NRF_LOG_INFO("service_error_handler()");
     APP_ERROR_HANDLER(nrf_error);
 }
 
@@ -327,6 +335,7 @@ static void service_error_handler(uint32_t nrf_error)
  */
 static void ble_advertising_error_handler(uint32_t nrf_error)
 {
+    NRF_LOG_INFO("ble_advertising_error_handler()");
     APP_ERROR_HANDLER(nrf_error);
 }
 
@@ -335,6 +344,7 @@ static void ble_advertising_error_handler(uint32_t nrf_error)
  */
 static void battery_level_update(void)
 {
+    NRF_LOG_INFO("battery_level_update()");
     ret_code_t err_code;
     uint8_t  battery_level;
 
@@ -363,6 +373,7 @@ static void battery_level_update(void)
  */
 static void battery_level_meas_timeout_handler(void * p_context)
 {
+    NRF_LOG_INFO("battery_level_meas_timeout_handler()");
     UNUSED_PARAMETER(p_context);
     battery_level_update();
 }
@@ -374,9 +385,10 @@ static void battery_level_meas_timeout_handler(void * p_context)
  */
 static void ble_timers_init(void)
 {
+    NRF_LOG_INFO("ble_timers_init()");
     ret_code_t err_code;
 
-    // Initialization of the app timer library must be done in main.c
+    // Initialization of the app timer library is done in main.c
     //err_code = app_timer_init();
     //APP_ERROR_CHECK(err_code);
 
@@ -395,6 +407,7 @@ static void ble_timers_init(void)
  */
 static void gap_params_init(void)
 {
+    NRF_LOG_INFO("gap_params_init()");
     ret_code_t              err_code;
     ble_gap_conn_params_t   gap_conn_params;
     ble_gap_conn_sec_mode_t sec_mode;
@@ -425,6 +438,7 @@ static void gap_params_init(void)
  */
 static void gatt_init(void)
 {
+    NRF_LOG_INFO("gatt_init()");
     ret_code_t err_code = nrf_ble_gatt_init(&m_gatt, NULL);
     APP_ERROR_CHECK(err_code);
 }
@@ -439,6 +453,7 @@ static void gatt_init(void)
  */
 static void nrf_qwr_error_handler(uint32_t nrf_error)
 {
+    NRF_LOG_INFO("nrf_qwr_error_handler()");
     APP_ERROR_HANDLER(nrf_error);
 }
 
@@ -447,6 +462,7 @@ static void nrf_qwr_error_handler(uint32_t nrf_error)
  */
 static void qwr_init(void)
 {
+    NRF_LOG_INFO("qwr_init()");
     ret_code_t         err_code;
     nrf_ble_qwr_init_t qwr_init_obj = {0};
 
@@ -461,6 +477,7 @@ static void qwr_init(void)
  */
 static void dis_init(void)
 {
+    NRF_LOG_INFO("dis_init()");
     ret_code_t       err_code;
     ble_dis_init_t   dis_init_obj;
     ble_dis_pnp_id_t pnp_id;
@@ -486,6 +503,7 @@ static void dis_init(void)
  */
 static void bas_init(void)
 {
+    NRF_LOG_INFO("bas_init()");
     ret_code_t     err_code;
     ble_bas_init_t bas_init_obj;
 
@@ -509,6 +527,7 @@ static void bas_init(void)
  */
 static void hids_init(void)
 {
+    NRF_LOG_INFO("hids_init()");
     ret_code_t                    err_code;
     ble_hids_init_t               hids_init_obj;
     ble_hids_inp_rep_init_t     * p_input_report;
@@ -640,6 +659,7 @@ static void hids_init(void)
  */
 static void services_init(void)
 {
+    NRF_LOG_INFO("services_init()");
     qwr_init();
     dis_init();
     bas_init();
@@ -651,6 +671,7 @@ static void services_init(void)
  */
 static void sensor_simulator_init(void)
 {
+    NRF_LOG_INFO("sensor_simulator_init()");
     m_battery_sim_cfg.min          = MIN_BATTERY_LEVEL;
     m_battery_sim_cfg.max          = MAX_BATTERY_LEVEL;
     m_battery_sim_cfg.incr         = BATTERY_LEVEL_INCREMENT;
@@ -666,6 +687,7 @@ static void sensor_simulator_init(void)
  */
 static void conn_params_error_handler(uint32_t nrf_error)
 {
+    NRF_LOG_INFO("conn_params_error_handler()");
     APP_ERROR_HANDLER(nrf_error);
 }
 
@@ -674,6 +696,7 @@ static void conn_params_error_handler(uint32_t nrf_error)
  */
 static void conn_params_init(void)
 {
+    NRF_LOG_INFO("conn_params_init()");
     ret_code_t             err_code;
     ble_conn_params_init_t cp_init;
 
@@ -697,6 +720,7 @@ static void conn_params_init(void)
  */
 static void ble_timers_start(void)
 {
+    NRF_LOG_INFO("ble_timers_start()");
     ret_code_t err_code;
 
     err_code = app_timer_start(m_battery_timer_id, BATTERY_LEVEL_MEAS_INTERVAL, NULL);
@@ -741,6 +765,7 @@ static uint32_t send_key_scan_press_release(ble_hids_t * p_hids,
                                             uint16_t     pattern_offset,
                                             uint16_t   * p_actual_len)
 {
+    NRF_LOG_INFO("send_key_scan_press_release()");
     ret_code_t err_code;
     uint16_t offset;
     uint16_t data_len;
@@ -811,6 +836,7 @@ static uint32_t send_key_scan_press_release(ble_hids_t * p_hids,
  */
 static void buffer_init(void)
 {
+    NRF_LOG_INFO("buffer_init()");
     uint32_t buffer_count;
 
     BUFFER_LIST_INIT();
@@ -840,6 +866,7 @@ static uint32_t buffer_enqueue(ble_hids_t * p_hids,
                                uint16_t     pattern_len,
                                uint16_t     offset)
 {
+    NRF_LOG_INFO("buffer_enqueue()");
     buffer_entry_t * element;
     uint32_t         err_code = NRF_SUCCESS;
 
@@ -884,6 +911,7 @@ static uint32_t buffer_enqueue(ble_hids_t * p_hids,
  */
 static uint32_t buffer_dequeue(bool tx_flag)
 {
+    NRF_LOG_INFO("buffer_dequeue()");
     buffer_entry_t * p_element;
     uint32_t         err_code = NRF_SUCCESS;
     uint16_t         actual_len;
@@ -941,6 +969,7 @@ static uint32_t buffer_dequeue(bool tx_flag)
  */
 static void keys_send(uint8_t key_pattern_len, uint8_t * p_key_pattern)
 {
+    NRF_LOG_INFO("keys_send()");
     ret_code_t err_code;
     uint16_t actual_len;
 
@@ -979,6 +1008,7 @@ static void keys_send(uint8_t key_pattern_len, uint8_t * p_key_pattern)
  */
 static void on_hid_rep_char_write(ble_hids_evt_t * p_evt)
 {
+    NRF_LOG_INFO("on_hid_rep_char_write()");
     if (p_evt->params.char_write.char_id.rep_type == BLE_HIDS_REP_TYPE_OUTPUT)
     {
         ret_code_t err_code;
@@ -1063,21 +1093,26 @@ static void sleep_mode_enter(void)
  */
 static void on_hids_evt(ble_hids_t * p_hids, ble_hids_evt_t * p_evt)
 {
+    NRF_LOG_INFO("on_hids_evt()");
     switch (p_evt->evt_type)
     {
         case BLE_HIDS_EVT_BOOT_MODE_ENTERED:
+            NRF_LOG_INFO("HID boot mode entered.");
             m_in_boot_mode = true;
             break;
 
         case BLE_HIDS_EVT_REPORT_MODE_ENTERED:
+            NRF_LOG_INFO("HID report mode entered.");
             m_in_boot_mode = false;
             break;
 
         case BLE_HIDS_EVT_REP_CHAR_WRITE:
+            NRF_LOG_INFO("HID report char write.");
             on_hid_rep_char_write(p_evt);
             break;
 
         case BLE_HIDS_EVT_NOTIF_ENABLED:
+            NRF_LOG_INFO("HID notification enabled.");
             break;
 
         default:
@@ -1095,6 +1130,7 @@ static void on_hids_evt(ble_hids_t * p_hids, ble_hids_evt_t * p_evt)
  */
 static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
 {
+    NRF_LOG_INFO("on_adv_evt()");
     ret_code_t err_code;
 
     switch (ble_adv_evt)
@@ -1142,11 +1178,13 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
             break;
 
         case BLE_ADV_EVT_IDLE:
+             NRF_LOG_INFO("Sleep mode entered.");
             sleep_mode_enter();
             break;
 
         case BLE_ADV_EVT_WHITELIST_REQUEST:
         {
+            NRF_LOG_INFO("Whiteliste request.");
             ble_gap_addr_t whitelist_addrs[BLE_GAP_WHITELIST_ADDR_MAX_COUNT];
             ble_gap_irk_t  whitelist_irks[BLE_GAP_WHITELIST_ADDR_MAX_COUNT];
             uint32_t       addr_cnt = BLE_GAP_WHITELIST_ADDR_MAX_COUNT;
@@ -1172,6 +1210,7 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
 
         case BLE_ADV_EVT_PEER_ADDR_REQUEST:
         {
+            NRF_LOG_INFO("Peer address request.");
             pm_peer_data_bonding_t peer_bonding_data;
 
             // Only Give peer address if we have a handle to the bonded peer.
@@ -1205,6 +1244,7 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
  */
 static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 {
+    NRF_LOG_INFO("ble_evt_handler()");
     ret_code_t err_code;
 
     switch (p_ble_evt->header.evt_id)
@@ -1249,6 +1289,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
         } break;
 
         case BLE_GATTS_EVT_HVN_TX_COMPLETE:
+            NRF_LOG_DEBUG("HVN transmission complete.");
             // Send next key event
             (void) buffer_dequeue(true);
             break;
@@ -1282,6 +1323,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
  */
 static void ble_stack_init(void)
 {
+    NRF_LOG_INFO("ble_stack_init()");
     ret_code_t err_code;
 
     err_code = nrf_sdh_enable_request();
@@ -1364,6 +1406,7 @@ static void bsp_event_handler(bsp_event_t event)
  */
 static void peer_manager_init(void)
 {
+    NRF_LOG_INFO("peer_manager_init()");
     ble_gap_sec_params_t sec_param;
     ret_code_t           err_code;
 
@@ -1398,6 +1441,7 @@ static void peer_manager_init(void)
  */
 static void advertising_init(void)
 {
+    NRF_LOG_INFO("advertising_init()");
     uint32_t               err_code;
     uint8_t                adv_flags;
     ble_advertising_init_t init;
@@ -1457,6 +1501,7 @@ static void buttons_leds_init(bool * p_erase_bonds)
  */
 void start_ble_services(void)
 {
+    NRF_LOG_INFO("start_ble_services()");
     bool erase_bonds;
 
     // Initialize.

@@ -16,6 +16,7 @@
   <ProjectSessionItem path="thread_ncp_ftd_usb_pca10059_mbr"/>
   <ProjectSessionItem path="thread_ncp_ftd_usb_pca10059_mbr;thread_ncp_ftd_usb_pca10059_mbr"/>
   <ProjectSessionItem path="thread_ncp_ftd_usb_pca10059_mbr;thread_ncp_ftd_usb_pca10059_mbr;Application"/>
+  <ProjectSessionItem path="thread_ncp_ftd_usb_pca10059_mbr;thread_ncp_ftd_usb_pca10059_mbr;Board Definition"/>
  </Project>
  <Register1/>
  <Register2/>
@@ -41,6 +42,7 @@
  </Watch4>
  <Files>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../../../main.c" selected="1" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../../../../../../components/boards/boards.c" selected="0" top="0" codecName="Default"/>
  </Files>
  <ARMCrossStudioWindow activeProject="thread_ncp_ftd_usb_pca10059_mbr" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Release" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="C:/Work/ble_scanner/barcode_scanner_device/src" debugSearchPath="" autoConnectCapabilities="3199"/>
 </session>

@@ -87,7 +87,7 @@
 
 // PN532 NFC device
 #ifndef PN532_SPI_MOSI_PIN
-#define PN532_SPI_MOSI_PIN  31
+#define PN532_SPI_MOSI_PIN  29
 #endif
 
 #ifndef PN532_SPI_MISO_PIN
@@ -95,7 +95,7 @@
 #endif
 
 #ifndef PN532_SPI_SCK_PIN
-#define PN532_SPI_SCK_PIN   29
+#define PN532_SPI_SCK_PIN   31
 #endif
 
 #ifndef PN532_SPI_SS_PIN
@@ -8728,7 +8728,7 @@
 // <4=> Debug 
 
 #ifndef NRF_LOG_DEFAULT_LEVEL
-#define NRF_LOG_DEFAULT_LEVEL 3
+#define NRF_LOG_DEFAULT_LEVEL 4
 #endif
 
 // <q> NRF_LOG_DEFERRED  - Enable deffered logger.
