@@ -70,11 +70,12 @@
 
 #include "utils.h"
 #include "module_ble.h"
-#include "coap_service.h"
 #include "waveshare_epd.h"
 #include "ImageData.h"
 #include "em3000h.h"
 #include "NDEF_Wrapper.h"
+
+#include "ble_hid_service.h"
 
 // Waveshare ePaper
 static uint8_t epaper_pending;
@@ -603,19 +604,6 @@ static void barcode_module_init()
 }
 
 
-static void display_barcode(const char * barcode)
-{
-    NRF_LOG_INFO("display_barcode(): x %s x", barcode);
-    epaper_demo_text(barcode);
-}
-
-
-static void display_barcode_scheduled_handler(void * p_event_data, uint16_t event_size)
-{
-    const char * barcode = (const char *) p_event_data;
-    display_barcode(barcode);
-}
-
 static void signal_feedback_positive()
 {
     NRF_LOG_INFO("signal_feedback_positive()");
@@ -627,24 +615,59 @@ static void signal_feedback_positive()
     APP_ERROR_CHECK(app_timer_start(m_feedback_timer_id, APP_TIMER_TICKS(500), NULL));
 }
 
-
 static void signal_feedback_positive_scheduled_handler(void * p_event_data, uint16_t event_size)
 {
     signal_feedback_positive();
+}
+
+static void display_barcode(const char * barcode)
+{
+    NRF_LOG_INFO("display_barcode(): x %s x", barcode);
+    epaper_demo_text(barcode);
+}
+
+static void display_barcode_scheduled_handler(void * p_event_data, uint16_t event_size)
+{
+    const char * barcode = (const char *) p_event_data;
+    display_barcode(barcode);
 }
 
 static void send_barcode_to_server(const char * barcode)
 {    
     NRF_LOG_INFO("send_barcode_to_server(): %s", barcode);
 
-    coap_send_barcode(barcode);
-    mqtt_send_barcode(barcode);    
+    //coap_send_barcode(barcode);
+    //mqtt_send_barcode(barcode);    
+}
+
+static void send_barcode_to_hid(const char * barcode)
+{    
+    NRF_LOG_INFO("send_barcode_to_hid(): %s", barcode);
+
+    uint8_t barcode_keys[] =
+    {
+        0x10,       /* Key M */
+        0x0c,       /* Key I */
+        0x06,       /* Key C */
+        0x0b,       /* Key H */
+        0x04,       /* Key A */
+        0x28        /* Key Return */
+    };
+
+    hid_send_keys(barcode_keys, sizeof(barcode_keys));
+
 }
 
 static void send_barcode_to_server_scheduled_handler(void * p_event_data, uint16_t event_size)
 {    
     const char * barcode = (const char *) p_event_data;
     send_barcode_to_server(barcode);
+}
+
+static void send_barcode_to_hid_scheduled_handler(void * p_event_data, uint16_t event_size)
+{    
+    const char * barcode = (const char *) p_event_data;
+    send_barcode_to_hid(barcode);
 }
 
 static void process_barcode(const char* p_scan_engine_inbound_barcode)
@@ -663,6 +686,9 @@ static void process_barcode(const char* p_scan_engine_inbound_barcode)
     // Display barcode on screen
     app_sched_event_put((void*) p_scan_engine_inbound_barcode, strlen(p_scan_engine_inbound_barcode), display_barcode_scheduled_handler);
     //epaper_demo_text(p_scan_engine_inbound_barcode);
+
+    // Send barcode as keys to HID
+    app_sched_event_put((void*) p_scan_engine_inbound_barcode, strlen(p_scan_engine_inbound_barcode), send_barcode_to_hid_scheduled_handler);
 }    
 
 bool read_mifare_tag(char * p_barcode)
@@ -985,8 +1011,8 @@ static void button_event_handler_MOCK(uint8_t pin_no, uint8_t button_action) {
     case BUTTON_1:
         if (button_action == APP_BUTTON_PUSH)
         {
-          coap_send_barcode("4711-0815");
-          mqtt_send_barcode("4711-0815");
+          //coap_send_barcode("4711-0815");
+          //mqtt_send_barcode("4711-0815");
         }
         break;
     default:
@@ -1230,11 +1256,9 @@ void nfc_init()
 }
 
 
-
 /**@brief Function for application main entry.
  */
-
- int main(void) {
+int main(void) {
     // Initialize.
     log_init();
     lfclk_init();
@@ -1249,8 +1273,8 @@ void nfc_init()
     gpio_init();
     serial_init();
     utils_init();
-    coap_ipv6_init();
-    //start_ble_services();
+    //coap_ipv6_init();
+    start_ble_services();
     nfc_init();
     display_init();
     
