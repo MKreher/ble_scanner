@@ -24,9 +24,7 @@
   <ProjectSessionItem path="barcode_scanner"/>
   <ProjectSessionItem path="barcode_scanner;barcode_scanner"/>
   <ProjectSessionItem path="barcode_scanner;barcode_scanner;Application"/>
-  <ProjectSessionItem path="barcode_scanner;barcode_scanner;Board Definition"/>
-  <ProjectSessionItem path="barcode_scanner;barcode_scanner;nRF_BLE_Services"/>
-  <ProjectSessionItem path="barcode_scanner;barcode_scanner;nRF_Log"/>
+  <ProjectSessionItem path="barcode_scanner;barcode_scanner;hid_keymap"/>
  </Project>
  <Register1>
   <RegisterWindow visibleNodes="CPU - Current Context/r0;CPU - Current Context/r1;CPU - Current Context/r2;CPU - Current Context/r3;CPU - Current Context/r4;CPU - Current Context/r5;CPU - Current Context/r6;CPU - Current Context/r7;CPU - Current Context/r8;CPU - Current Context/r9;CPU - Current Context/r10;CPU - Current Context/r11;CPU - Current Context/r12;CPU - Current Context/sp(r13);CPU - Current Context/lr(r14);CPU - Current Context/pc(r15);CPU - Current Context/apsr;CPU/r0;CPU/r1;CPU/r2;CPU/r3;CPU/r4;CPU/r5;CPU/r6;CPU/r7;CPU/r8;CPU/r9;CPU/r10;CPU/r11;CPU/r12;CPU/sp(r13);CPU/lr(r14);CPU/pc(r15);CPU/xpsr;CPU/msp;CPU/psp;CPU/cfbp;CPU/internal" binaryNodes="" asciiNodes="" openNodes="CPU - Current Context" name="barcode_scanner" decimalNodes="" octalNodes="" unsignedNodes=""/>
@@ -47,7 +45,12 @@
   <Trace enabled="Yes"/>
  </TraceWindow>
  <Watch1>
-  <Watches active="1" update="Never"/>
+  <Watches active="1" update="Never">
+   <Watchpoint expression="barcode_len" name="barcode_len" radix="-1" linenumber="423" filename="../src/ble_services/ble_hid_service.c"/>
+   <Watchpoint expression="p_barcode" name="p_barcode" radix="-1" linenumber="423" filename="../src/ble_services/ble_hid_service.c"/>
+   <Watchpoint expression="m_tx_key_events" name="m_tx_key_events" radix="-1" linenumber="458" filename="../src/ble_services/ble_hid_service.c"/>
+   <Watchpoint expression="n" name="n" radix="-1" linenumber="443" filename="../src/ble_services/ble_hid_service.c"/>
+  </Watches>
  </Watch1>
  <Watch2>
   <Watches active="0" update="Never"/>
@@ -59,11 +62,9 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="C:/Work/ble_scanner/barcode_scanner_device/src/ble_services/ble_hid_service.c" useBinaryEdit="0" left="0" path="../src/modules/module_ble.c" selected="0" top="0" codecName="UTF-8"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="938" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/main.c" selected="0" top="937" codecName="UTF-8"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="11" y="495" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/ble_services/ble_hid_service.c" selected="1" top="319" codecName="UTF-8"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="11" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/ble_services/ble_hid_service.h" selected="0" top="0" codecName="UTF-8"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="41" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/ble_services/usb_hid_keycodes.h" selected="0" top="27" codecName="UTF-8"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="19" y="3" useTextEdit="1" openedFrom="C:/Work/ble_scanner/barcode_scanner_device/src/ble_services/ble_hid_service.c" useBinaryEdit="0" left="0" path="../src/hid_keymap/hid_keymap.c" selected="0" top="0" codecName="UTF-8"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="6" y="421" useTextEdit="1" openedFrom="C:/Work/ble_scanner/barcode_scanner_device/src/main.c" useBinaryEdit="0" left="0" path="../src/ble_services/ble_hid_service.c" selected="0" top="393" codecName="UTF-8"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="1238" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/main.c" selected="1" top="1244" codecName="UTF-8"/>
  </Files>
- <ARMCrossStudioWindow activeProject="barcode_scanner" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="C:/Work/ble_scanner/barcode_scanner_device/src/ble_services" debugSearchPath="" autoConnectCapabilities="3711"/>
+ <ARMCrossStudioWindow activeProject="barcode_scanner" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="C:/Work/ble_scanner/barcode_scanner_device/src/hid_keymap" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>

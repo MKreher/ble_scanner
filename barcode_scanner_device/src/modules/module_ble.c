@@ -476,7 +476,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
         case BLE_GAP_EVT_DISCONNECTED:
             NRF_LOG_INFO("Disconnected");
             // Dequeue all keys without transmission.
-            (void) hid_dequeue_keys(false);
+            //(void) hid_dequeue_keys(false);
 
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
 
@@ -501,7 +501,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
         case BLE_GATTS_EVT_HVN_TX_COMPLETE:
             NRF_LOG_DEBUG("HVN transmission complete.");
             // Send next key event
-            (void) hid_dequeue_keys(true);
+            //(void) hid_dequeue_keys(true);
             break;
 
         case BLE_GATTC_EVT_TIMEOUT:

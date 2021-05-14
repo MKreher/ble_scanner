@@ -628,46 +628,23 @@ static void display_barcode(const char * barcode)
 
 static void display_barcode_scheduled_handler(void * p_event_data, uint16_t event_size)
 {
+    log_execution_mode("display_barcode_scheduled_handler()"); 
     const char * barcode = (const char *) p_event_data;
     display_barcode(barcode);
 }
 
-static void send_barcode_to_server(const char * barcode)
-{    
-    NRF_LOG_INFO("send_barcode_to_server(): %s", barcode);
-
-    //coap_send_barcode(barcode);
-    //mqtt_send_barcode(barcode);    
-}
-
-static void send_barcode_to_hid(const char * barcode)
-{    
-    NRF_LOG_INFO("send_barcode_to_hid(): %s", barcode);
-
-    uint8_t barcode_keys[] =
-    {
-        0x10,       /* Key M */
-        0x0c,       /* Key I */
-        0x06,       /* Key C */
-        0x0b,       /* Key H */
-        0x04,       /* Key A */
-        0x28        /* Key Return */
-    };
-
-    hid_send_keys(barcode_keys, sizeof(barcode_keys));
-
-}
-
 static void send_barcode_to_server_scheduled_handler(void * p_event_data, uint16_t event_size)
-{    
-    const char * barcode = (const char *) p_event_data;
-    send_barcode_to_server(barcode);
+{   
+    log_execution_mode("send_barcode_to_server_scheduled_handler()"); 
+    char * barcode = (char *) p_event_data;
 }
 
 static void send_barcode_to_hid_scheduled_handler(void * p_event_data, uint16_t event_size)
-{    
-    const char * barcode = (const char *) p_event_data;
-    send_barcode_to_hid(barcode);
+{   
+    log_execution_mode("send_barcode_to_hid_scheduled_handler()"); 
+    char * barcode = (char *) p_event_data;
+    hid_send_barcode(barcode, event_size);
+    //hid_send_barcode((uint8_t *)p_scan_engine_inbound_barcode, strlen(p_scan_engine_inbound_barcode));
 }
 
 static void process_barcode(const char* p_scan_engine_inbound_barcode)
@@ -680,15 +657,15 @@ static void process_barcode(const char* p_scan_engine_inbound_barcode)
     // Signal positiv feedback
     app_sched_event_put(NULL, NULL, signal_feedback_positive_scheduled_handler);
 
+    // Send barcode as keys to HID
+    app_sched_event_put((void*) p_scan_engine_inbound_barcode, strlen(p_scan_engine_inbound_barcode), send_barcode_to_hid_scheduled_handler);
+
     // Send barcode to server
     app_sched_event_put((void*) p_scan_engine_inbound_barcode, strlen(p_scan_engine_inbound_barcode), send_barcode_to_server_scheduled_handler);
 
     // Display barcode on screen
     app_sched_event_put((void*) p_scan_engine_inbound_barcode, strlen(p_scan_engine_inbound_barcode), display_barcode_scheduled_handler);
     //epaper_demo_text(p_scan_engine_inbound_barcode);
-
-    // Send barcode as keys to HID
-    app_sched_event_put((void*) p_scan_engine_inbound_barcode, strlen(p_scan_engine_inbound_barcode), send_barcode_to_hid_scheduled_handler);
 }    
 
 bool read_mifare_tag(char * p_barcode)
@@ -1254,6 +1231,8 @@ void nfc_init()
 
     // destroy_nfc_adapter(g_nfc);
 }
+
+
 
 
 /**@brief Function for application main entry.

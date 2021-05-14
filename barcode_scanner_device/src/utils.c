@@ -70,6 +70,17 @@ void non_blocking_delay_ms(uint64_t delay)
     //NRF_LOG_INFO("non_blocking_delay_ms(): END - %d ms (real wait time %d)", delay, timeDiff / TICKS_PER_MILLISECOND);
 }
 
+void non_blocking_delay_ms2(uint64_t delay)
+{
+
+    uint64_t i = 0;
+    while (i < delay)
+    {
+        nrf_delay_ms(1);
+        i++;
+    }
+}
+
 void utils_init()
 {
     // timer for non blocking delays

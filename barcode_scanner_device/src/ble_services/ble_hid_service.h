@@ -9,6 +9,6 @@
 
 void hids_init(uint16_t a_conn_handle);
 void hid_dequeue_keys(bool tx_flag);
-void hid_send_keys(uint8_t * p_keys, uint8_t keys_len);
+void hid_send_barcode(uint8_t * p_barcode, uint8_t barcode_len);
 
 #endif // BLE_HID_BARCODE_H__

@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <string.h>
+#include <math.h>
 #include "nordic_common.h"
 #include "nrf.h"
 #include "nrf_assert.h"
@@ -28,6 +29,9 @@
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 
+#include "utils.h"
+#include "hid_keymap.h"
+
 #define OUTPUT_REPORT_INDEX                 0                                          /**< Index of Output Report. */
 #define OUTPUT_REPORT_MAX_LEN               1                                          /**< Maximum length of Output Report. */
 #define INPUT_REPORT_KEYS_INDEX             0                                          /**< Index of Input Report. */
@@ -37,7 +41,7 @@
 #define FEATURE_REPORT_MAX_LEN              2                                          /**< Maximum length of Feature Report. */
 #define FEATURE_REPORT_INDEX                0                                          /**< Index of Feature Report. */
 
-#define MAX_BUFFER_ENTRIES                  5                                          /**< Number of elements that can be enqueued */
+#define MAX_BUFFER_ENTRIES                  20                                         /**< Number of elements that can be enqueued */
 
 #define BASE_USB_HID_SPEC_VERSION           0x0101                                     /**< Version number of base USB HID Specification implemented by this application. */
 
@@ -49,63 +53,18 @@
 
 #define MAX_KEYS_IN_ONE_REPORT              (INPUT_REPORT_KEYS_MAX_LEN - SCAN_CODE_POS)/**< Maximum number of key presses that can be sent in one Input Report. */
 
-/**Buffer queue access macros
- *
- * @{ */
-/** Initialization of buffer list */
-#define BUFFER_LIST_INIT()     \
-    do                         \
-    {                          \
-        buffer_list.rp    = 0; \
-        buffer_list.wp    = 0; \
-        buffer_list.count = 0; \
-    } while (0)
-
-/** Provide status of data list is full or not */
-#define BUFFER_LIST_FULL() \
-    ((MAX_BUFFER_ENTRIES == buffer_list.count - 1) ? true : false)
-
-/** Provides status of buffer list is empty or not */
-#define BUFFER_LIST_EMPTY() \
-    ((0 == buffer_list.count) ? true : false)
-
-#define BUFFER_ELEMENT_INIT(i)                 \
-    do                                         \
-    {                                          \
-        buffer_list.buffer[(i)].p_data = NULL; \
-    } while (0)
-
-/** @} */
-
-/** Abstracts buffer element */
-typedef struct hid_key_buffer
-{
-    uint8_t      data_offset; /**< Max Data that can be buffered for all entries */
-    uint8_t      data_len;    /**< Total length of data */
-    uint8_t    * p_data;      /**< Scanned key pattern */
-    ble_hids_t * p_instance;  /**< Identifies peer and service instance */
-} buffer_entry_t;
-
-STATIC_ASSERT(sizeof(buffer_entry_t) % 4 == 0);
-
-/** Circular buffer list */
-typedef struct
-{
-    buffer_entry_t buffer[MAX_BUFFER_ENTRIES]; /**< Maximum number of entries that can enqueued in the list */
-    uint8_t        rp;                         /**< Index to the read location */
-    uint8_t        wp;                         /**< Index to write location */
-    uint8_t        count;                      /**< Number of elements in the list */
-} buffer_list_t;
-
-STATIC_ASSERT(sizeof(buffer_list_t) % 4 == 0);
-
 BLE_HIDS_DEF(m_hids,                                                /**< Structure used to identify the HID service. */
              NRF_SDH_BLE_TOTAL_LINK_COUNT,
              INPUT_REPORT_KEYS_MAX_LEN,
              OUTPUT_REPORT_MAX_LEN,
              FEATURE_REPORT_MAX_LEN);
 
-static buffer_list_t     buffer_list;                               /**< List to enqueue not just data to be sent, but also related information like the handle, connection handle etc */
+#define HID_TX_TIMER_INTERVAL         APP_TIMER_TICKS(1)            /**< Timer fires every 1 milliseconds */
+APP_TIMER_DEF(m_hid_tx_timer_id);                                   /**< HID transmission timer. */
+
+static uint8_t**         m_tx_key_events = NULL;
+static uint8_t           m_tx_key_event_count = 0;
+static uint8_t           m_tx_key_offset = 0;                        /**< char offset of the current transmission */
 
 static bool              m_in_boot_mode = false;                    /**< Current protocol mode. */
 static uint16_t          m_conn_handle  = BLE_CONN_HANDLE_INVALID;  /**< Handle of the current connection. */
@@ -117,284 +76,81 @@ static uint16_t          m_conn_handle  = BLE_CONN_HANDLE_INVALID;  /**< Handle 
   https://www.usb.org/hid
 */
 
-
-// forward declaration
+// forward declarations
 static void on_hids_evt(ble_hids_t * p_hids, ble_hids_evt_t * p_evt);
+static void hid_tx_timeout_handler();
 
-
-/**@brief   Function for transmitting a key scan Press & Release Notification.
+/**@brief Function for the Timer initialization.
  *
- * @warning This handler is an example only. You need to analyze how you wish to send the key
- *          release.
- *
- * @param[in]  p_instance     Identifies the service for which Key Notifications are requested.
- * @param[in]  p_key_pattern  Pointer to key pattern.
- * @param[in]  pattern_len    Length of key pattern. 0 < pattern_len < 7.
- * @param[in]  pattern_offset Offset applied to Key Pattern for transmission.
- * @param[out] actual_len     Provides actual length of Key Pattern transmitted, making buffering of
- *                            rest possible if needed.
- * @return     NRF_SUCCESS on success, NRF_ERROR_RESOURCES in case transmission could not be
- *             completed due to lack of transmission buffer or other error codes indicating reason
- *             for failure.
- *
- * @note       In case of NRF_ERROR_RESOURCES, remaining pattern that could not be transmitted
- *             can be enqueued \ref buffer_enqueue function.
- *             In case a pattern of 'cofFEe' is the p_key_pattern, with pattern_len as 6 and
- *             pattern_offset as 0, the notifications as observed on the peer side would be
- *             1>    'c', 'o', 'f', 'F', 'E', 'e'
- *             2>    -  , 'o', 'f', 'F', 'E', 'e'
- *             3>    -  ,   -, 'f', 'F', 'E', 'e'
- *             4>    -  ,   -,   -, 'F', 'E', 'e'
- *             5>    -  ,   -,   -,   -, 'E', 'e'
- *             6>    -  ,   -,   -,   -,   -, 'e'
- *             7>    -  ,   -,   -,   -,   -,  -
- *             Here, '-' refers to release, 'c' refers to the key character being transmitted.
- *             Therefore 7 notifications will be sent.
- *             In case an offset of 4 was provided, the pattern notifications sent will be from 5-7
- *             will be transmitted.
+ * @details Initializes the timer module.
  */
-static uint32_t send_key_scan_press_release(ble_hids_t * p_hids,
-                                            uint8_t    * p_key_pattern,
-                                            uint16_t     pattern_len,
-                                            uint16_t     pattern_offset,
-                                            uint16_t   * p_actual_len)
+static void timers_init(void)
 {
-    NRF_LOG_INFO("send_key_scan_press_release()");
     ret_code_t err_code;
-    uint16_t offset;
-    uint16_t data_len;
-    uint8_t  data[INPUT_REPORT_KEYS_MAX_LEN];
 
-    // HID Report Descriptor enumerates an array of size 6, the pattern hence shall not be any
-    // longer than this.
-    STATIC_ASSERT((INPUT_REPORT_KEYS_MAX_LEN - 2) == 6);
-
-    ASSERT(pattern_len <= (INPUT_REPORT_KEYS_MAX_LEN - 2));
-
-    offset   = pattern_offset;
-    data_len = pattern_len;
-
-    do
-    {
-        // Reset the data buffer.
-        memset(data, 0, sizeof(data));
-
-        // Copy the scan code.
-        memcpy(data + SCAN_CODE_POS + offset, p_key_pattern + offset, data_len - offset);
-
-        //if (bsp_button_is_pressed(SHIFT_BUTTON_ID))
-        //{
-        //    data[MODIFIER_KEY_POS] |= SHIFT_KEY_CODE;
-        //}
-        
-        
-        if (!m_in_boot_mode)
-        {
-            err_code = ble_hids_inp_rep_send(p_hids,
-                                             INPUT_REPORT_KEYS_INDEX,
-                                             INPUT_REPORT_KEYS_MAX_LEN,
-                                             data,
-                                             m_conn_handle);
-        }
-        else
-        {
-            err_code = ble_hids_boot_kb_inp_rep_send(p_hids,
-                                                     INPUT_REPORT_KEYS_MAX_LEN,
-                                                     data,
-                                                     m_conn_handle);
-        }
-
-        if (err_code != NRF_SUCCESS)
-        {
-            break;
-        }
-
-        offset++;
-    }
-    while (offset <= data_len);
-
-    *p_actual_len = offset;
-
-    return err_code;
+    // Create HID transmission timer.
+    err_code = app_timer_create(&m_hid_tx_timer_id,
+                                APP_TIMER_MODE_REPEATED,
+                                hid_tx_timeout_handler);
+    APP_ERROR_CHECK(err_code);
 }
 
-
-
-/**@brief   Function for initializing the buffer queue used to key events that could not be
- *          transmitted
- *
- * @warning This handler is an example only. You need to analyze how you wish to buffer or buffer at
- *          all.
- *
- * @note    In case of HID keyboard, a temporary buffering could be employed to handle scenarios
- *          where encryption is not yet enabled or there was a momentary link loss or there were no
- *          Transmit buffers.
- */
-static void buffer_init(void)
+static void hid_tx_timer_start(void)
 {
-    NRF_LOG_INFO("buffer_init()");
-    uint32_t buffer_count;
-
-    BUFFER_LIST_INIT();
-
-    for (buffer_count = 0; buffer_count < MAX_BUFFER_ENTRIES; buffer_count++)
-    {
-        BUFFER_ELEMENT_INIT(buffer_count);
-    }
-}
-
-
-/**@brief Function for enqueuing key scan patterns that could not be transmitted either completely
- *        or partially.
- *
- * @warning This handler is an example only. You need to analyze how you wish to send the key
- *          release.
- *
- * @param[in]  p_hids         Identifies the service for which Key Notifications are buffered.
- * @param[in]  p_key_pattern  Pointer to key pattern.
- * @param[in]  pattern_len    Length of key pattern.
- * @param[in]  offset         Offset applied to Key Pattern when requesting a transmission on
- *                            dequeue, @ref buffer_dequeue.
- * @return     NRF_SUCCESS on success, else an error code indicating reason for failure.
- */
-static uint32_t buffer_enqueue(ble_hids_t * p_hids,
-                               uint8_t    * p_key_pattern,
-                               uint16_t     pattern_len,
-                               uint16_t     offset)
-{
-    NRF_LOG_INFO("buffer_enqueue()");
-    buffer_entry_t * element;
-    uint32_t         err_code = NRF_SUCCESS;
-
-    if (BUFFER_LIST_FULL())
-    {
-        // Element cannot be buffered.
-        err_code = NRF_ERROR_NO_MEM;
-    }
-    else
-    {
-        // Make entry of buffer element and copy data.
-        element              = &buffer_list.buffer[(buffer_list.wp)];
-        element->p_instance  = p_hids;
-        element->p_data      = p_key_pattern;
-        element->data_offset = offset;
-        element->data_len    = pattern_len;
-
-        buffer_list.count++;
-        buffer_list.wp++;
-
-        if (buffer_list.wp == MAX_BUFFER_ENTRIES)
-        {
-            buffer_list.wp = 0;
-        }
-    }
-
-    return err_code;
-}
-
-
-/**@brief   Function to dequeue key scan patterns that could not be transmitted either completely of
- *          partially.
- *
- * @warning This handler is an example only. You need to analyze how you wish to send the key
- *          release.
- *
- * @param[in]  tx_flag   Indicative of whether the dequeue should result in transmission or not.
- * @note       A typical example when all keys are dequeued with transmission is when link is
- *             disconnected.
- *
- * @return     NRF_SUCCESS on success, else an error code indicating reason for failure.
- */
-static uint32_t buffer_dequeue(bool tx_flag)
-{
-    NRF_LOG_DEBUG("buffer_dequeue()");
-    buffer_entry_t * p_element;
-    uint32_t         err_code = NRF_SUCCESS;
-    uint16_t         actual_len;
-
-    if (BUFFER_LIST_EMPTY())
-    {
-        err_code = NRF_ERROR_NOT_FOUND;
-    }
-    else
-    {
-        bool remove_element = true;
-
-        p_element = &buffer_list.buffer[(buffer_list.rp)];
-
-        if (tx_flag)
-        {
-            err_code = send_key_scan_press_release(p_element->p_instance,
-                                                   p_element->p_data,
-                                                   p_element->data_len,
-                                                   p_element->data_offset,
-                                                   &actual_len);
-            // An additional notification is needed for release of all keys, therefore check
-            // is for actual_len <= element->data_len and not actual_len < element->data_len
-            if ((err_code == NRF_ERROR_RESOURCES) && (actual_len <= p_element->data_len))
-            {
-                // Transmission could not be completed, do not remove the entry, adjust next data to
-                // be transmitted
-                p_element->data_offset = actual_len;
-                remove_element         = false;
-            }
-        }
-
-        if (remove_element)
-        {
-            BUFFER_ELEMENT_INIT(buffer_list.rp);
-
-            buffer_list.rp++;
-            buffer_list.count--;
-
-            if (buffer_list.rp == MAX_BUFFER_ENTRIES)
-            {
-                buffer_list.rp = 0;
-            }
-        }
-    }
-
-    return err_code;
-}
-
-
-/**@brief Function for sending sample key presses to the peer.
- *
- * @param[in]   key_pattern_len   Pattern length.
- * @param[in]   p_key_pattern     Pattern to be sent.
- */
-void keys_send(uint8_t * p_key_pattern, uint8_t key_pattern_len)
-{
-    NRF_LOG_INFO("keys_send()");
+    NRF_LOG_INFO("hid_tx_timer_start()");
     ret_code_t err_code;
-    uint16_t actual_len;
 
-    err_code = send_key_scan_press_release(&m_hids,
-                                           p_key_pattern,
-                                           key_pattern_len,
-                                           0,
-                                           &actual_len);
-    // An additional notification is needed for release of all keys, therefore check
-    // is for actual_len <= key_pattern_len and not actual_len < key_pattern_len.
-    if ((err_code == NRF_ERROR_RESOURCES) && (actual_len <= key_pattern_len))
-    {
-        // Buffer enqueue routine return value is not intentionally checked.
-        // Rationale: Its better to have a a few keys missing than have a system
-        // reset. Recommendation is to work out most optimal value for
-        // MAX_BUFFER_ENTRIES to minimize chances of buffer queue full condition
-        UNUSED_VARIABLE(buffer_enqueue(&m_hids, p_key_pattern, key_pattern_len, actual_len));
-    }
+    err_code = app_timer_start(m_hid_tx_timer_id, HID_TX_TIMER_INTERVAL, NULL);
+    APP_ERROR_CHECK(err_code);
+}
 
+static void hid_tx_timer_stop(void)
+{
+    ret_code_t err_code;
 
-    if ((err_code != NRF_SUCCESS) &&
-        (err_code != NRF_ERROR_INVALID_STATE) &&
-        (err_code != NRF_ERROR_RESOURCES) &&
-        (err_code != NRF_ERROR_BUSY) &&
-        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-       )
-    {
-        APP_ERROR_HANDLER(err_code);
-    }
+    err_code = app_timer_stop(m_hid_tx_timer_id);
+    APP_ERROR_CHECK(err_code);
+}
+
+static void hid_tx_timeout_handler()
+{
+      if (m_tx_key_offset == sizeof(m_tx_key_event_count))
+      {
+          NRF_LOG_INFO("Transfer completed.");
+          // transfer completed
+          hid_tx_timer_stop();
+          m_tx_key_offset = 0;
+          m_tx_key_event_count = 0;
+          if (m_tx_key_events != NULL)
+          {
+              free(m_tx_key_events);
+          }
+          return;
+      }
+
+      if (m_conn_handle != BLE_CONN_HANDLE_INVALID)
+      {
+          //NRF_LOG_INFO("Transmission....");
+          uint8_t* input_report = m_tx_key_events[m_tx_key_offset];
+          
+          ret_code_t err_code;
+          err_code = ble_hids_inp_rep_send(&m_hids,
+                                           INPUT_REPORT_KEYS_INDEX,
+                                           INPUT_REPORT_KEYS_MAX_LEN,
+                                           input_report,
+                                           m_conn_handle);
+          if ((err_code == NRF_ERROR_RESOURCES) && (m_tx_key_offset <= m_tx_key_event_count))
+          {
+              // Transmission could not be completed, so retransmit next time
+              //NRF_LOG_INFO("NRF_ERROR_RESOURCES");
+          }
+          else
+          {
+              // transfer next key
+              m_tx_key_offset++;
+              //NRF_LOG_INFO("transfer next key");
+          }
+      }
 }
 
 
@@ -488,7 +244,7 @@ void hids_init(uint16_t a_conn_handle)
 {
     NRF_LOG_INFO("hids_init()");
 
-    buffer_init();
+    //buffer_init();
 
     m_conn_handle = a_conn_handle;
 
@@ -616,12 +372,52 @@ void hids_init(uint16_t a_conn_handle)
 
     err_code = ble_hids_init(&m_hids, &hids_init_obj);
     APP_ERROR_CHECK(err_code);
+
+    timers_init();
 }
 
-void hid_dequeue_keys(bool tx_flag) {
-    buffer_dequeue(tx_flag);
-}
+void hid_send_barcode(uint8_t * p_barcode, uint8_t barcode_len) {
+    NRF_LOG_INFO("hid_send_barcode()");
+    
+    m_tx_key_offset = 0;
+    m_tx_key_event_count = barcode_len * 2; // after every key we must send a NULL keycode to signal key release
+    uint8_t n=0;
 
-void hid_send_keys(uint8_t * p_keys, uint8_t keys_len) {
-    keys_send(p_keys, keys_len);
-}
+    if (m_tx_key_events != NULL)
+    {
+        NRF_LOG_INFO("Free allocated memory for keycode array.");
+        free(m_tx_key_events);
+    }
+
+    m_tx_key_events = (uint8_t **) malloc(sizeof(uint8_t*) * m_tx_key_event_count);
+
+    if (m_tx_key_events == NULL)
+    {
+        NRF_LOG_INFO("Could not allocate memory for keycode array.");
+        return;
+    }
+
+    uint8_t* NULL_KEY = get_hid_report_for_char(0);
+    uint8_t* keydata;
+
+    for (uint8_t i=0; i<barcode_len; i++)
+    {        
+        keydata = get_hid_report_for_char(p_barcode[i]);
+        //NRF_LOG_HEXDUMP_INFO(keydata, INPUT_REPORT_KEYS_MAX_LEN);
+        m_tx_key_events[n++] = keydata;
+        m_tx_key_events[n++] = NULL_KEY;
+    }
+
+    NRF_LOG_INFO("Keycodes:");
+
+    uint8_t* keycode;
+
+    for (uint8_t x=0; x<m_tx_key_event_count; x++)
+    {
+        keycode = m_tx_key_events[x];
+        
+        NRF_LOG_HEXDUMP_INFO(keycode, INPUT_REPORT_KEYS_MAX_LEN);
+    }
+
+    //hid_tx_timer_start();
+ }
