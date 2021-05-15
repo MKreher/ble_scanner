@@ -62,9 +62,9 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="19" y="3" useTextEdit="1" openedFrom="C:/Work/ble_scanner/barcode_scanner_device/src/ble_services/ble_hid_service.c" useBinaryEdit="0" left="0" path="../src/hid_keymap/hid_keymap.c" selected="0" top="0" codecName="UTF-8"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="6" y="421" useTextEdit="1" openedFrom="C:/Work/ble_scanner/barcode_scanner_device/src/main.c" useBinaryEdit="0" left="0" path="../src/ble_services/ble_hid_service.c" selected="0" top="393" codecName="UTF-8"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="1238" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/main.c" selected="1" top="1244" codecName="UTF-8"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="3" useTextEdit="1" openedFrom="C:/Work/ble_scanner/barcode_scanner_device/src/ble_services/ble_hid_service.c" useBinaryEdit="0" left="0" path="../src/hid_keymap/hid_keymap.c" selected="0" top="3" codecName="UTF-8"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="421" useTextEdit="1" openedFrom="C:/Work/ble_scanner/barcode_scanner_device/src/main.c" useBinaryEdit="0" left="0" path="../src/ble_services/ble_hid_service.c" selected="0" top="421" codecName="UTF-8"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="78" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../src/main.c" selected="1" top="78" codecName="UTF-8"/>
  </Files>
- <ARMCrossStudioWindow activeProject="barcode_scanner" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="C:/Work/ble_scanner/barcode_scanner_device/src/hid_keymap" debugSearchPath="" autoConnectCapabilities="3711"/>
+ <ARMCrossStudioWindow activeProject="barcode_scanner" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="C:/Work/ble_scanner/barcode_scanner_device/src/hid_keymap" debugSearchPath="" autoConnectCapabilities="3199"/>
 </session>

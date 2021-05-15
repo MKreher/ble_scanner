@@ -75,8 +75,6 @@
 #include "em3000h.h"
 #include "NDEF_Wrapper.h"
 
-#include "ble_hid_service.h"
-
 // Waveshare ePaper
 static uint8_t epaper_pending;
 static const nrf_lcd_t * p_lcd = &nrf_lcd_wsepd154;
@@ -161,6 +159,7 @@ NRF_SERIAL_UART_DEF(m_serial_uart, 0);
 
 APP_TIMER_DEF(m_serial_receive_timer_id);
 APP_TIMER_DEF(m_feedback_timer_id);
+APP_TIMER_DEF(m_display_timer_id);
 
 // PN532
 static const nrf_drv_spi_t spi_pn532 = NRF_DRV_SPI_INSTANCE(PN532_SPI_INSTANCE);
@@ -337,6 +336,34 @@ static void log_execution_mode(const char * context_name)
         NRF_LOG_INFO("%s: executing in interrupt handler mode", context_name);
     }
 }
+
+
+static void start_display_timer(void)
+{
+    NRF_LOG_INFO("start_display_timer()");
+    ret_code_t ret_code;
+    ret_code = app_timer_start(m_display_timer_id, APP_TIMER_TICKS(50), NULL);
+    APP_ERROR_CHECK(ret_code);
+}
+
+static void stop_display_timer(void)
+{
+    NRF_LOG_INFO("stop_display_timer");
+    ret_code_t err_code;
+
+    err_code = app_timer_stop(m_display_timer_id);
+    APP_ERROR_CHECK(err_code);
+}
+
+static void start_serial_receive_timer(void)
+{
+    NRF_LOG_INFO("start_serial_receive_timer()");
+    ret_code_t ret_code;
+    ret_code = app_timer_start(m_serial_receive_timer_id, APP_TIMER_TICKS(25), NULL);
+    APP_ERROR_CHECK(ret_code);
+}
+
+
 
 
 static void epaper_demo_clear(void)
@@ -644,7 +671,6 @@ static void send_barcode_to_hid_scheduled_handler(void * p_event_data, uint16_t 
     log_execution_mode("send_barcode_to_hid_scheduled_handler()"); 
     char * barcode = (char *) p_event_data;
     hid_send_barcode(barcode, event_size);
-    //hid_send_barcode((uint8_t *)p_scan_engine_inbound_barcode, strlen(p_scan_engine_inbound_barcode));
 }
 
 static void process_barcode(const char* p_scan_engine_inbound_barcode)
@@ -655,17 +681,15 @@ static void process_barcode(const char* p_scan_engine_inbound_barcode)
     log_execution_mode("process_barcode()");
     
     // Signal positiv feedback
-    app_sched_event_put(NULL, NULL, signal_feedback_positive_scheduled_handler);
+    //app_sched_event_put(NULL, NULL, signal_feedback_positive_scheduled_handler);
+    signal_feedback_positive();
 
     // Send barcode as keys to HID
-    app_sched_event_put((void*) p_scan_engine_inbound_barcode, strlen(p_scan_engine_inbound_barcode), send_barcode_to_hid_scheduled_handler);
+    //app_sched_event_put((void*) p_scan_engine_inbound_barcode, strlen(p_scan_engine_inbound_barcode), send_barcode_to_hid_scheduled_handler);
+    hid_send_barcode((uint8_t *)p_scan_engine_inbound_barcode, strlen(p_scan_engine_inbound_barcode));
+    
 
-    // Send barcode to server
-    app_sched_event_put((void*) p_scan_engine_inbound_barcode, strlen(p_scan_engine_inbound_barcode), send_barcode_to_server_scheduled_handler);
-
-    // Display barcode on screen
-    app_sched_event_put((void*) p_scan_engine_inbound_barcode, strlen(p_scan_engine_inbound_barcode), display_barcode_scheduled_handler);
-    //epaper_demo_text(p_scan_engine_inbound_barcode);
+    start_display_timer();
 }    
 
 bool read_mifare_tag(char * p_barcode)
@@ -1111,12 +1135,31 @@ static void serial_receive_timeout_handler()
     m_number_of_bytes_transfered = 0;
 }
 
-static void feedback_timeout_handler_timeout_handler()
+static void feedback_timeout_handler()
 {
     //bsp_board_led_off(bsp_board_pin_to_led_idx(LED_FEEDBACK_OK));
     nrf_gpio_pin_clear(LED_FEEDBACK_OK);
     nrf_gpio_pin_clear(BUZZER);
     nrf_gpio_pin_clear(VIBRATION_MOTOR);    
+}
+
+static void display_timeout_handler()
+{    
+    NRF_LOG_INFO("display_timeout_handler()");
+    if (g_ble_tx_busy)
+    {           
+        return;
+    }
+        
+    stop_display_timer();
+
+
+    NRF_LOG_INFO("!!!!!!!!!!!!!!!!!!!!!! AFTER BLE TRANSFER !!!!!!!!!!!!!!!!!!!!!!!!!!!" );
+
+    // Display barcode on screen
+    app_sched_event_put((void*) m_scan_engine_inbound_barcode, strlen(m_scan_engine_inbound_barcode), display_barcode_scheduled_handler);
+    //display_barcode(m_scan_engine_inbound_barcode);
+    //epaper_demo_text(p_scan_engine_inbound_barcode);
 }
 
 static void timers_create(void)
@@ -1128,19 +1171,13 @@ static void timers_create(void)
     APP_ERROR_CHECK(ret_code);
     
     // Timer for signaling feedback to the user via LED or Buzzer
-    ret_code = app_timer_create(&m_feedback_timer_id, APP_TIMER_MODE_SINGLE_SHOT, feedback_timeout_handler_timeout_handler);
+    ret_code = app_timer_create(&m_feedback_timer_id, APP_TIMER_MODE_SINGLE_SHOT, feedback_timeout_handler);
+    APP_ERROR_CHECK(ret_code);
+
+    // Timer for show something to the user via Display
+    ret_code = app_timer_create(&m_display_timer_id, APP_TIMER_MODE_REPEATED, display_timeout_handler);
     APP_ERROR_CHECK(ret_code);
 }
-
-
-static void start_serial_receive_timer(void)
-{
-    NRF_LOG_INFO("start_serial_receive_timer()");
-    ret_code_t ret_code;
-    ret_code = app_timer_start(m_serial_receive_timer_id, APP_TIMER_TICKS(25), NULL);
-    APP_ERROR_CHECK(ret_code);
-}
-
 
 static void serial_sleep_handler(void)
 {
@@ -1237,7 +1274,8 @@ void nfc_init()
 
 /**@brief Function for application main entry.
  */
-int main(void) {
+int main(void)
+{
     // Initialize.
     log_init();
     lfclk_init();
@@ -1253,14 +1291,16 @@ int main(void) {
     serial_init();
     utils_init();
     //coap_ipv6_init();
-    start_ble_services();
     nfc_init();
     display_init();
     
     // Test if non-blocking delay works in main(). Remove it later.
     //non_blocking_delay_ms(1000);
 
-    // Start execution.
+    bool erase_bonds = false;
+    start_ble_services(erase_bonds);
+
+   // Start execution.
     NRF_LOG_INFO("TicTac Barcode Scanner started.");
     
     // Enter main loop.
