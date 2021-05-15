@@ -673,9 +673,9 @@ static void send_barcode_to_hid_scheduled_handler(void * p_event_data, uint16_t 
     hid_send_barcode(barcode, event_size);
 }
 
-static void process_barcode(const char* p_scan_engine_inbound_barcode)
+static void process_barcode()
 {
-    NRF_LOG_INFO("process_barcode(): BARCODE=%s", p_scan_engine_inbound_barcode);
+    NRF_LOG_INFO("process_barcode(): BARCODE=%s", m_scan_engine_inbound_barcode);
     
     // Log execution mode.
     log_execution_mode("process_barcode()");
@@ -686,7 +686,7 @@ static void process_barcode(const char* p_scan_engine_inbound_barcode)
 
     // Send barcode as keys to HID
     //app_sched_event_put((void*) p_scan_engine_inbound_barcode, strlen(p_scan_engine_inbound_barcode), send_barcode_to_hid_scheduled_handler);
-    hid_send_barcode((uint8_t *)p_scan_engine_inbound_barcode, strlen(p_scan_engine_inbound_barcode));
+    hid_send_barcode((uint8_t *)m_scan_engine_inbound_barcode, strlen(m_scan_engine_inbound_barcode));
     
 
     start_display_timer();
@@ -817,7 +817,7 @@ void button1_scheduled_event_handler(void * p_event_data, uint16_t event_size)
                 m_is_new_barcode_from_scan_engine = false;
                 m_scan_engine_comm_state = IDLE;
                 
-                process_barcode(m_scan_engine_inbound_barcode);
+                process_barcode();
             }
             if (NRF_LOG_PROCESS() == false)
             {
@@ -865,7 +865,8 @@ void button2_scheduled_event_handler(void * p_event_data, uint16_t event_size)
           NRF_LOG_INFO("Stop NFC polling.");
           NRF_LOG_INFO("NFC read successfully:");
           NRF_LOG_INFO("Read barcode %s:", barcode);
-          process_barcode(barcode);
+          memcpy(m_scan_engine_inbound_barcode, barcode, 16);
+          process_barcode();
           return;
         }
         //app_sched_execute();
