@@ -18,7 +18,7 @@ extern bool g_ble_tx_busy;
 
 void start_ble_services(bool erase_bond);
 void hid_send_barcode(uint8_t * p_barcode, uint8_t barcode_len);
-
+bool hid_is_connected(void);
 #endif
 
 /** @} */

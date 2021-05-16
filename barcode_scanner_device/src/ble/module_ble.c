@@ -1118,13 +1118,19 @@ void hid_send_barcode(uint8_t * p_barcode, uint8_t barcode_len)
         NRF_LOG_HEXDUMP_INFO(keycode, INPUT_REPORT_KEYS_MAX_LEN);
     }
     
-    g_ble_tx_busy = true;
-
     hid_tx_timer_start();
 
  }
 
+bool hid_is_connected()
+{
+    if (m_conn_handle == BLE_CONN_HANDLE_INVALID)
+    {
+        return false;
+    }
 
+    return true;
+}
 
 void start_ble_services(bool p_erase_bond)
 {

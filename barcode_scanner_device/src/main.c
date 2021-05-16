@@ -120,6 +120,8 @@ static const uint8_t leds_list[7] = { LED_CONNECTION_STATUS, LED_FEEDBACK_OK, LE
 #define APPL_ADDR(...)
 #endif // APP_ENABLE_LOGS
 
+#define TICKS_PER_MILLISECOND APP_TIMER_TICKS(1) // Factor for converting ticks to milliseconds
+
 typedef enum
 {
     IDLE,
@@ -165,6 +167,12 @@ APP_TIMER_DEF(m_display_timer_id);
 static const nrf_drv_spi_t spi_pn532 = NRF_DRV_SPI_INSTANCE(PN532_SPI_INSTANCE);
 static NfcAdapter * m_nfc;
 static bool m_read_nfc = false;
+
+static uint32_t m_display_wait_for_ble_tx_starttime;
+static const uint32_t m_ble_tx_transfer_wait_timeout_millis = 5000; // max wait for BLE transmission
+
+static bool is_trigger_button_push_busy = false;
+static bool is_trigger_button_release_busy = false;
 
 void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 {
@@ -340,9 +348,11 @@ static void log_execution_mode(const char * context_name)
 
 static void start_display_timer(void)
 {
-    NRF_LOG_INFO("start_display_timer()");
-    ret_code_t ret_code;
-    ret_code = app_timer_start(m_display_timer_id, APP_TIMER_TICKS(50), NULL);
+    NRF_LOG_INFO("start_display_timer()");    
+
+    m_display_wait_for_ble_tx_starttime = app_timer_cnt_get();
+
+    ret_code_t ret_code = app_timer_start(m_display_timer_id, APP_TIMER_TICKS(50), NULL);
     APP_ERROR_CHECK(ret_code);
 }
 
@@ -686,8 +696,18 @@ static void process_barcode()
 
     // Send barcode as keys to HID
     //app_sched_event_put((void*) p_scan_engine_inbound_barcode, strlen(p_scan_engine_inbound_barcode), send_barcode_to_hid_scheduled_handler);
-    hid_send_barcode((uint8_t *)m_scan_engine_inbound_barcode, strlen(m_scan_engine_inbound_barcode));
     
+    if (hid_is_connected())
+    {
+        NRF_LOG_INFO("*** HID is connected.");
+        g_ble_tx_busy = true;
+        hid_send_barcode((uint8_t *)m_scan_engine_inbound_barcode, strlen(m_scan_engine_inbound_barcode));    
+    }   
+    else
+    {
+        NRF_LOG_INFO("*** HID is NOT connected.");
+        g_ble_tx_busy = false;
+    }
 
     start_display_timer();
 }    
@@ -767,84 +787,86 @@ bool read_mifare_tag(char * p_barcode)
 }
 
 
-/**@brief Button 1 handler function to be called by the scheduler.
+/**@brief Button 1 push event handler function to be called by the scheduler.
  */
-void button1_scheduled_event_handler(void * p_event_data, uint16_t event_size)
+void button1_scheduled_push_event_handler(void * p_event_data, uint16_t event_size)
 {
-    NRF_LOG_INFO("button1_scheduled_event_handler()");
+    NRF_LOG_INFO("button1_scheduled_push_event_handler()");
 
     // Log execution mode.
-    if (current_int_priority_get() == APP_IRQ_PRIORITY_THREAD)
-    {
-        NRF_LOG_INFO("button1_scheduled_event_handler() [executing in thread/main mode]");
-    }
-    else
-    {
-        NRF_LOG_INFO("button1_scheduled_event_handler() [executing in interrupt handler mode]");
-    }
+    log_execution_mode("button1_scheduled_push_event_handler()");
     
-    uint8_t button_action = *((uint8_t*) p_event_data);
     bool se_command_resp = false;
-    if (button_action == APP_BUTTON_PUSH)
+    NRF_LOG_INFO("Button_1 pushed");
+    // Start barcode decode session
+    NRF_LOG_INFO("Send comannd CMD_WAKEUP.");
+    se_command_resp = em2000h_send_command(CMD_WAKEUP, 1, false);
+    NRF_LOG_INFO("CMD_WAKEUP returned %d", se_command_resp);
+    NRF_LOG_INFO("Send comannd CMD_START_DECODE.");
+    se_command_resp = em2000h_send_command(CMD_START_DECODE, 6, true);
+    NRF_LOG_INFO("CMD_START_DECODE returned %d", se_command_resp);
+    
+    // Waiting for barcode
+    NRF_LOG_INFO("Waiting for barcode - BEFORE");
+    while (m_scan_engine_comm_state == AWAITING_BARCODE)
     {
-        NRF_LOG_INFO("Button_1 pushed");
-        // Start barcode decode session
+        NRF_LOG_INFO("Waiting for barcode...");
+        
+        if (m_scan_engine_cancel_operation) {
+            NRF_LOG_INFO("Waiting for barcode... CANCEL");
+            m_is_new_barcode_from_scan_engine = false;
+            m_scan_engine_comm_state = IDLE;                
+            break;
+        }
+
+        if (m_is_new_barcode_from_scan_engine) {
+            // Here we have received successfully a barcode from the scan engine
+            NRF_LOG_INFO("******************************");
+            NRF_LOG_INFO("*** Processing BARCODE: %s ***", m_scan_engine_inbound_barcode);
+            NRF_LOG_INFO("******************************");                
+            m_is_new_barcode_from_scan_engine = false;
+            m_scan_engine_comm_state = IDLE;
+            
+            process_barcode();
+        }
+        if (NRF_LOG_PROCESS() == false)
+        {
+            nrf_pwr_mgmt_run();
+        }
+    }
+
+    NRF_LOG_INFO("button1_scheduled_push_event_handler() - end");
+}
+
+/**@brief Button 1 release event handler function to be called by the scheduler.
+ */
+void button1_scheduled_release_event_handler(void * p_event_data, uint16_t event_size)
+{
+    NRF_LOG_INFO("button1_scheduled_release_event_handler()");
+
+    // Log execution mode.
+    log_execution_mode("button1_scheduled_release_event_handler()");
+
+    NRF_LOG_INFO("Button_1 released");
+
+    print_state();
+
+    // Stop barcode decode session
+    if (m_scan_engine_cancel_operation)
+    {
+        bool se_command_resp = false;
         NRF_LOG_INFO("Send comannd CMD_WAKEUP.");
         se_command_resp = em2000h_send_command(CMD_WAKEUP, 1, false);
         NRF_LOG_INFO("CMD_WAKEUP returned %d", se_command_resp);
-        NRF_LOG_INFO("Send comannd CMD_START_DECODE.");
-        se_command_resp = em2000h_send_command(CMD_START_DECODE, 6, true);
-        NRF_LOG_INFO("CMD_START_DECODE returned %d", se_command_resp);
-        
-        // Waiting for barcode
-        NRF_LOG_INFO("Waiting for barcode - BEFORE");
-        while (m_scan_engine_comm_state == AWAITING_BARCODE)
-        {
-            NRF_LOG_INFO("Waiting for barcode...");
-            
-            if (m_scan_engine_cancel_operation) {
-                NRF_LOG_INFO("Waiting for barcode... CANCEL");
-                m_is_new_barcode_from_scan_engine = false;
-                m_scan_engine_comm_state = IDLE;                
-                break;
-            }
-
-            if (m_is_new_barcode_from_scan_engine) {
-                // Here we have received successfully a barcode from the scan engine
-                NRF_LOG_INFO("******************************");
-                NRF_LOG_INFO("*** Processing BARCODE: %s ***", m_scan_engine_inbound_barcode);
-                NRF_LOG_INFO("******************************");                
-                m_is_new_barcode_from_scan_engine = false;
-                m_scan_engine_comm_state = IDLE;
-                
-                process_barcode();
-            }
-            if (NRF_LOG_PROCESS() == false)
-            {
-                nrf_pwr_mgmt_run();
-            }
-        }
-        NRF_LOG_INFO("Waiting for barcode - AFTER");
-    }
-    else if (button_action == APP_BUTTON_RELEASE)
-    {
-        NRF_LOG_INFO("Button_1 released");
-
-        print_state();
-
-        // Stop barcode decode session
-        if (m_scan_engine_cancel_operation)
-        {
-            NRF_LOG_INFO("Send comannd CMD_WAKEUP.");
-            se_command_resp = em2000h_send_command(CMD_WAKEUP, 1, false);
-            NRF_LOG_INFO("CMD_WAKEUP returned %d", se_command_resp);
-            NRF_LOG_INFO("Send comannd CMD_STOP_DECODE.");
-            se_command_resp = em2000h_send_command(CMD_STOP_DECODE, 6, true);
-            NRF_LOG_INFO("CMD_STOP_DECODE returned %d", se_command_resp);
-        }
+        NRF_LOG_INFO("Send comannd CMD_STOP_DECODE.");
+        se_command_resp = em2000h_send_command(CMD_STOP_DECODE, 6, true);
+        NRF_LOG_INFO("CMD_STOP_DECODE returned %d", se_command_resp);
     }
 
-    NRF_LOG_INFO("button1_scheduled_event_handler() - end");
+    is_trigger_button_push_busy = false;
+    is_trigger_button_release_busy = false;
+
+    NRF_LOG_INFO("button1_scheduled_release_event_handler() - end");
 }
 
 
@@ -938,7 +960,6 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
     switch (pin_no)
     {
         case BUTTON_1:
-
             /* TODO: Prevent subsequent invocations of the handler functions: dont call the handle functions if the function still working
             if (nrf_atomic_flag_set_fetch(g_functiony_xy_is_busy))
             {
@@ -949,8 +970,16 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
               when finished.
             */
             NRF_LOG_INFO("Button_1 handle");
+
             if (button_action == APP_BUTTON_PUSH)
             {
+                if (is_trigger_button_push_busy)
+                {
+                    NRF_LOG_INFO("***Button 1 PUSH is busy.");
+                    return;
+                }
+                is_trigger_button_push_busy = true;
+
                 m_scan_engine_comm_state = IDLE;
 
                 memset(m_scan_engine_inbound_message_hex, 0, sizeof(m_scan_engine_inbound_message_hex));
@@ -963,14 +992,25 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
 
                 //stop_non_blocking_delay();
                 m_scan_engine_cancel_operation = false;
+                
+                app_sched_event_put(&button_action, sizeof(button_action), button1_scheduled_push_event_handler);
             }
             else if (button_action == APP_BUTTON_RELEASE) 
             {
-               if (m_scan_engine_comm_state == AWAITING_BARCODE) {
-                  m_scan_engine_cancel_operation = true;
-               }
+                if (is_trigger_button_release_busy)
+                {
+                    NRF_LOG_INFO("***Button 1 RELEASE is busy.");
+                    return;
+                }
+                is_trigger_button_release_busy = true;
+
+                if (m_scan_engine_comm_state == AWAITING_BARCODE)
+                {
+                    m_scan_engine_cancel_operation = true;
+                }
+
+                app_sched_event_put(&button_action, sizeof(button_action), button1_scheduled_release_event_handler);                
             }            
-            app_sched_event_put(&button_action, sizeof(button_action), button1_scheduled_event_handler);
             break;
         case BUTTON_2:
             NRF_LOG_INFO("Button_2 handle");
@@ -1001,28 +1041,6 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
             break;
     }
 }
-
-
-static void button_event_handler_MOCK(uint8_t pin_no, uint8_t button_action) {
-    NRF_LOG_INFO("button_event_handler_MOCK() called.");
-  
-    ret_code_t err_code;
-
-    switch (pin_no)
-    {
-    case BUTTON_1:
-        if (button_action == APP_BUTTON_PUSH)
-        {
-          //coap_send_barcode("4711-0815");
-          //mqtt_send_barcode("4711-0815");
-        }
-        break;
-    default:
-        APP_ERROR_HANDLER(pin_no);
-        break;
-    }
-}
-
 
 /**@brief Function for initializing the button handler module.
  */
@@ -1147,15 +1165,28 @@ static void feedback_timeout_handler()
 static void display_timeout_handler()
 {    
     NRF_LOG_INFO("display_timeout_handler()");
-    if (g_ble_tx_busy)
-    {           
-        return;
+
+    uint32_t diff_time_millis = app_timer_cnt_diff_compute(app_timer_cnt_get(), m_display_wait_for_ble_tx_starttime) / TICKS_PER_MILLISECOND;
+
+    //NRF_LOG_INFO("start time: %d, current time: %d, diff timer: %d", m_display_wait_for_ble_tx_starttime, current_time, diff_time);
+
+    // Check if wait for a unreasonable time (timeout)
+    if (diff_time_millis < m_ble_tx_transfer_wait_timeout_millis)
+    {
+        // no wait timeout, check if BLE transfer finished.
+        if (g_ble_tx_busy)
+        {
+            // not finished wait further
+            return;
+        }
     }
-        
+    else
+    {
+        // wait timeout
+        NRF_LOG_WARNING("Timeout while waiting with display for BLE transfer.");
+    }
+    
     stop_display_timer();
-
-
-    NRF_LOG_INFO("!!!!!!!!!!!!!!!!!!!!!! AFTER BLE TRANSFER !!!!!!!!!!!!!!!!!!!!!!!!!!!" );
 
     // Display barcode on screen
     app_sched_event_put((void*) m_scan_engine_inbound_barcode, strlen(m_scan_engine_inbound_barcode), display_barcode_scheduled_handler);
